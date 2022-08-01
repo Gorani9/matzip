@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+ABS_PATH=$(readlink -f "$0")
+ABS_DIR=$(dirname "$ABS_PATH")
+source "${ABS_DIR}"/profile.sh
+source "${ABS_DIR}"/switch.sh
+
+IDLE_PORT=$(find_idle_port)
+
+echo "> Health Check Start!"
+echo "> IDLE_PORT: $IDLE_PORT"
+echo "> curl -s http://matzip-server.shop:$IDLE_PORT/"
+sleep 10
+
+for RETRY_COUNT in {1..10}
+do
+  RESPONSE=$(curl -s http://3.36.209.141:"${IDLE_PORT}")
+  UP_COUNT=$(echo "${RESPONSE}" | grep -c 'prod')
+
+  if [ "${UP_COUNT}" -ge 1 ]
+  then
+      echo "> Health check success"
+      switch_proxy
+      break
+  else
+      echo "> Health check response: ${RESPONSE}"
+  fi
+
+  if [ "${RETRY_COUNT}" -eq 10 ]
+  then
+    echo "> Health check failed. Quit."
+    exit 1
+  fi
+
+  echo "> Health check connection failed. Retrying..."
+  sleep 10
+done

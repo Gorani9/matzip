@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  matzip-nginx:
+    image: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - /etc/nginx/:/etc/nginx/
+
+  matzip-spring1:
+    build: .
+    image: spring
+    container_name: prod1
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./:/root/
+    environment:
+      active: prod1
+
+  matzip-spring2:
+    build: .
+    image: spring
+    container_name: prod2
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./:/root/
+    environment:
+      active: prod2
