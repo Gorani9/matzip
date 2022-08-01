@@ -28,18 +28,28 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
     
+    - name: Grant execution permission to gradlew
+      run: chmod +x gradlew
+      working-directory: server
+      
     - name: Build with gradlew
-      run: |
-        pwd \
-        cd server \
-        chmod +x gradlew \
-        ./gradlew clean build
+      run: ./gradlew clean build
+      working-directory: server
+      
+    - name: Make directory for delivery
+      run: mkdir deploy
+      working-directory: server
+      
+    - name: Copy jar
+      run: cp ./build/libs/*.jar ./deploy
+      working-directory: server
+      
+    - name: Copy appspec
+      run: cp appspec.yml ./server/deploy/
         
-    - name: Prepare Deliver
-      run: |
-        mkdir deploy \
-        cp ./build/libs/*.jar ./deploy/ \
-        zip -r -qq -j ./matzip-server-build.zip ./deploy
+    - name: Prepare deliver
+      run: zip -r -qq -j ./matzip-server-build.zip ./deploy
+      working-directory: server
 
     - name: Deliver to AWS S3
       env:
@@ -50,7 +60,7 @@ jobs:
         --region ap-northeast-2 \
         --acl private \ 
         ./matzip-server-build.zip s3://matzip-server-build/
-        
+      working-directory: server
 
     - name: Deploy
       env:
