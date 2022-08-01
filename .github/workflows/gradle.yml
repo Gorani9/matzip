@@ -27,6 +27,14 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
+
+    - name: Setup MySQL
+      uses: samin/mysql-action@v1
+      with:
+        character set server: 'utf8'
+        mysql database: 'matzip_db'
+        mysql user: 'matzip_admin'
+        mysql password: 'matzipLocal1!'
     
     - name: Grant execution permission to gradlew
       run: chmod +x gradlew
