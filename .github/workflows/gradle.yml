@@ -30,8 +30,10 @@ jobs:
     
     - name: Build with gradlew
       run: |
-        chmod +x ./server/gradlew \
-        ./server/gradlew clean build
+        pwd \
+        cd server \
+        chmod +x gradlew \
+        ./gradlew clean build
         
     - name: Prepare Deliver
       run: |
