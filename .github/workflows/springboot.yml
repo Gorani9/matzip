@@ -5,7 +5,7 @@
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-name: Java Spring Boot CI/CD
+name: Java Spring Boot & Gradle CI/CD
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
       run: ./gradlew clean build
       working-directory: server
       env:
-        DB_URL: ${{ secrets.DB_URL }}
+        DB_URL: jdbc:mysql://localhost:3306/matzip_db
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       
@@ -57,7 +57,16 @@ jobs:
       working-directory: server
       
     - name: Copy appspec
-      run: cp appspec.yml ./server/deploy/
+      run: cp ./appspec.yml ./server/deploy/
+      
+    - name: Copy scripts
+      run: cp ./scripts/* ./server/deploy/
+      
+    - name: Copy Dockerfile
+      run: cp ./Dockerfile ./server/deploy/
+      
+    - name: Copy docker-compose
+      run: cp ./docker-compose.yml ./server/deploy
         
     - name: Prepare deliver
       run: zip -r -qq -j ./matzip-server-build.zip ./deploy
