@@ -5,7 +5,7 @@ ABS_DIR=$(dirname "$ABS_PATH")
 source "${ABS_DIR}"/profile.sh
 
 IDLE_PORT=$(find_idle_port)
-REPOSITORY=/home/ec2-user/deploy
+REPOSITORY=/home/ec2-user/deploy/build
 
 echo "> Copy Jar files"
 echo "> cp $REPOSITORY/*.jar $REPOSITORY/"
@@ -29,8 +29,9 @@ echo "> Execute $JAR_NAME in profile=$IDLE_PROFILE"
 
 cd $REPOSITORY || exit
 
-docker build -t spring ./
-docker run -it --name "$IDLE_PROFILE" -d \
+sudo docker rm "$IDLE_PROFILE"
+sudo docker build -t spring ./
+sudo docker run -it --name "$IDLE_PROFILE" -d \
 -e active="$IDLE_PROFILE" \
 -e DB_URL="$DB_URL" \
 -e DB_USERNAME="$DB_USERNAME" \

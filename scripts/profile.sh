@@ -2,14 +2,21 @@
 
 function find_idle_profile()
 {
-    RESPONSE_CODE=$(sudo curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/ping/)
+ #   RESPONSE_CODE=$(sudo curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/ping/)
+	CURRENT_URL=$(cat /etc/nginx/conf.d/service-url.inc | grep -c 8081);
 
-    if [ "${RESPONSE_CODE}" -ge 400 ]
-    then
-        CURRENT_PROFILE=prod2
-    else
-        CURRENT_PROFILE=prod1
-    fi
+	if [ "${CURRENT_URL}" -eq 1 ]
+	then
+		CURRENT_PROFILE=prod1
+	else
+		CURRENT_PROFILE=prod2
+	fi
+#    if [ "${RESPONSE_CODE}" -ge 400 ]
+#    then
+#        CURRENT_PROFILE=prod2
+#    else
+#        CURRENT_PROFILE=prod1
+#    fi
 
     if [ "${CURRENT_PROFILE}" == prod1 ]
     then
