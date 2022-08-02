@@ -10,7 +10,7 @@ REPOSITORY=/home/ec2-user/deploy
 echo "> Copy Jar files"
 echo "> cp $REPOSITORY/*.jar $REPOSITORY/"
 
-cp $REPOSITORY/zip/*.jar $REPOSITORY
+cp $REPOSITORY/*.jar $REPOSITORY
 
 echo "> Deploy new application"
 JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
@@ -31,5 +31,5 @@ cd $REPOSITORY || exit
 
 docker build -t spring ./
 docker run -it --name "$IDLE_PROFILE" -d \
--e active="$IDLE_PROFILE" DB_URL="$DB_URL" DB_USERNAME="$DB_USERNAME" DB_PASSWORD="$DB_PASSWORD" \
+-e active="$IDLE_PROFILE" "DB_URL=$DB_URL" "DB_USERNAME=$DB_USERNAME" "DB_PASSWORD=$DB_PASSWORD" \
 -p "$IDLE_PORT":"$IDLE_PORT" spring
