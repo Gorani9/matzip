@@ -24,7 +24,6 @@ echo "> Execute $JAR_NAME in profile=$IDLE_PROFILE"
 
 cd $REPOSITORY || exit
 
-sudo docker rm "$IDLE_PROFILE"
 sudo docker build -t spring ./
 sudo docker run -it --name "$IDLE_PROFILE" -d \
 -e active="$IDLE_PROFILE" \
