@@ -9,7 +9,7 @@ function switch_proxy() {
 
     echo "> Idle port: $IDLE_PORT"
     echo "> Change port"
-    echo "set \$service_url http://host.docker.internal:${IDLE_PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
+    echo "set \$service_url http://172.17.0.1:${IDLE_PORT};" | sudo tee /etc/nginx/conf.d/service-url.inc
 
     sudo docker exec -d nginx nginx -s reload
     echo "> docker exec -d nginx nginx -s reload"

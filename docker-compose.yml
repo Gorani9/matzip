@@ -8,8 +8,6 @@ services:
       - "80:80"
     volumes:
       - /etc/nginx/:/etc/nginx/
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   matzip-spring1:
     build: .
