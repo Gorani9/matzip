@@ -8,7 +8,7 @@
 name: Java Spring Boot & Gradle CI
 
 on:
-  pull_requests:
+  pull_request:
     branches: [ "main" ]
 
 permissions:
