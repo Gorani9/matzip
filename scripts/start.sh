@@ -24,6 +24,10 @@ echo "> Execute $JAR_NAME in profile=$IDLE_PROFILE"
 
 cd $REPOSITORY || exit
 
+DB_URL=$(aws ssm get-parameters --region ap-northeast-2 --names DB_URL --query Parameters[0].Value | sed 's/"//g')
+DB_USERNAME=$(aws ssm get-parameters --region ap-northeast-2 --names DB_USERNAME --query Parameters[0].Value | sed 's/"//g')
+DB_PASSWORD=$(aws ssm get-parameters --region ap-northeast-2 --names DB_PASSWORD --query Parameters[0].Value | sed 's/"//g')
+
 sudo docker build -t spring ./
 sudo docker run -it --name "$IDLE_PROFILE" -d \
 -e active="$IDLE_PROFILE" \
