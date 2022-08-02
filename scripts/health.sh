@@ -15,7 +15,7 @@ sleep 10
 for RETRY_COUNT in {1..10}
 do
   RESPONSE=$(curl -s http://localhost:"${IDLE_PORT}"/ping/)
-  UP_COUNT=$(echo "${RESPONSE}" | grep -c 'prod')
+  UP_COUNT=$(echo "${RESPONSE}" | grep -c 'pong')
 
   if [ "${UP_COUNT}" -ge 1 ]
   then
