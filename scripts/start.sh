@@ -31,5 +31,8 @@ cd $REPOSITORY || exit
 
 docker build -t spring ./
 docker run -it --name "$IDLE_PROFILE" -d \
--e active="$IDLE_PROFILE" "DB_URL=$DB_URL" "DB_USERNAME=$DB_USERNAME" "DB_PASSWORD=$DB_PASSWORD" \
+-e active="$IDLE_PROFILE" \
+-e DB_URL="$DB_URL" \
+-e DB_USERNAME="$DB_USERNAME" \
+-e DB_PASSWORD="$DB_PASSWORD" \
 -p "$IDLE_PORT":"$IDLE_PORT" spring
