@@ -5,12 +5,7 @@ ABS_DIR=$(dirname "$ABS_PATH")
 source "${ABS_DIR}"/profile.sh
 
 IDLE_PORT=$(find_idle_port)
-REPOSITORY=/home/ec2-user/deploy/build
-
-echo "> Copy Jar files"
-echo "> cp $REPOSITORY/*.jar $REPOSITORY/"
-
-cp $REPOSITORY/*.jar $REPOSITORY
+REPOSITORY=/home/ec2-user/deploy
 
 echo "> Deploy new application"
 JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
