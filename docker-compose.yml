@@ -18,6 +18,9 @@ services:
       - ./:/root/
     environment:
       active: prod1
+      DB_URL: "${DB_URL}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
 
   matzip-spring2:
     build: .
@@ -29,3 +32,6 @@ services:
       - ./:/root/
     environment:
       active: prod2
+      DB_URL: "${DB_URL}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
