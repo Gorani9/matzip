@@ -2,13 +2,13 @@
 
 function find_idle_profile()
 {
-    RESPONSE_CODE=$(sudo curl -s -o /dev/null -w "%{http_code}" http://matzip-server.shop/)
+    RESPONSE_CODE=$(sudo curl -s -o /dev/null -w "%{http_code}" http://localhost/ping/)
 
     if [ "${RESPONSE_CODE}" -ge 400 ]
     then
         CURRENT_PROFILE=prod2
     else
-        CURRENT_PROFILE=$(sudo curl -s http://matzip-server.shop/)
+        CURRENT_PROFILE=$(sudo curl -s http://localhost/ping/)
     fi
 
     if [ "${CURRENT_PROFILE}" == prod1 ]

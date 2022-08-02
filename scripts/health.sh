@@ -9,12 +9,12 @@ IDLE_PORT=$(find_idle_port)
 
 echo "> Health Check Start!"
 echo "> IDLE_PORT: $IDLE_PORT"
-echo "> curl -s http://matzip-server.shop:$IDLE_PORT/"
+echo "> curl -s http://localhost:$IDLE_PORT/ping/"
 sleep 10
 
 for RETRY_COUNT in {1..10}
 do
-  RESPONSE=$(curl -s http://3.36.209.141:"${IDLE_PORT}")
+  RESPONSE=$(curl -s http://localhost:"${IDLE_PORT}"/ping/)
   UP_COUNT=$(echo "${RESPONSE}" | grep -c 'prod')
 
   if [ "${UP_COUNT}" -ge 1 ]
