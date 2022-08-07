@@ -51,7 +51,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Test with gradlew
-      run: ./gradlew build --no-daemon
+      run: ./gradlew test --no-daemon
       working-directory: server
       env:
         DB_URL: jdbc:mysql://localhost:3306/matzip_db
