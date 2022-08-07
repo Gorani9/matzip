@@ -40,15 +40,18 @@ jobs:
       run: chmod +x gradlew
       working-directory: server
 
-    - name: Cache gradle packages
-      uses: actions/cache@v2
+    - name: Cache gradle
+      uses: actions/cache@v3
       with:
-        path: ~/.g2
-        key: ${{ runner.os }}-g2-${{ hashFiles('**/*.gradle*') }}
-        restore-keys: ${{ runner.os }}-g2
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
     - name: Build with gradlew
-      run: ./gradlew clean build --no-daemon -x test
+      run: ./gradlew build --no-daemon -x test
       working-directory: server
       env:
         DB_URL: jdbc:mysql://localhost:3306/matzip_db
