@@ -1,6 +1,10 @@
 spring:
   profiles:
     active: local
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+jwt-secret-key: matzip-server
 
 ---
 

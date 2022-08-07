@@ -1,4 +1,4 @@
-package com.matzip.server.feature;
+package com.matzip.server.domain;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
