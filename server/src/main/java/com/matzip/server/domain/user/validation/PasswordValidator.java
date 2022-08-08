@@ -1,4 +1,4 @@
-package com.matzip.server.domain.user.dto;
+package com.matzip.server.domain.user.validation;
 
 import org.springframework.stereotype.Component;
 

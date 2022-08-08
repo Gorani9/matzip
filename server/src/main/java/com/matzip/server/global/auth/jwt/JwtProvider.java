@@ -3,7 +3,6 @@ package com.matzip.server.global.auth.jwt;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.service.UserPrincipalDetailsService;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.impl.DefaultClaims;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,16 +56,6 @@ public final class JwtProvider {
     public String generateAccessToken(Authentication authentication) {
         Claims claims = Jwts.claims().setSubject(authentication.getName());
         claims.put("roles", authentication.getAuthorities());
-        return generateTokenWithClaims(claims);
-    }
-
-    public String generateAccessToken(String username) {
-        Claims claims = new DefaultClaims();
-        claims.setSubject(username);
-        return generateTokenWithClaims(claims);
-    }
-
-    private String generateTokenWithClaims(Claims claims) {
         Date now = new Date();
         long accessTokenValidTime = 2 * 60 * 60 * 1000L;
         return tokenPrefix + Jwts.builder()

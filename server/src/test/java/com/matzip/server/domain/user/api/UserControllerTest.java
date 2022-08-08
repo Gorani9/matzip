@@ -116,20 +116,18 @@ class UserControllerTest {
 
     @Test
     void checkDuplicateUsername() throws Exception {
-        UserDto.DuplicateRequest duplicateRequest1 = new UserDto.DuplicateRequest(USER1);
-        UserDto.DuplicateRequest duplicateRequest2 = new UserDto.DuplicateRequest(USER2);
         UserDto.DuplicateResponse duplicateResponse1 = new UserDto.DuplicateResponse(true);
         UserDto.DuplicateResponse duplicateResponse2 = new UserDto.DuplicateResponse(false);
-        mockMvc.perform(get("/api/v1/users/duplicate/")
+        mockMvc.perform(get("/api/v1/users/exists/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateRequest1)))
+                        .param("username", USER1))
                 .andExpect(status().isOk())
                 .andExpect(content().string(objectMapper.writeValueAsString(duplicateResponse1)));
         assertThat(userRepository.count()).isEqualTo(1);
 
-        mockMvc.perform(get("/api/v1/users/duplicate/")
+        mockMvc.perform(get("/api/v1/users/exists/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateRequest2)))
+                        .param("username", USER2))
                 .andExpect(status().isOk())
                 .andExpect(content().string(objectMapper.writeValueAsString(duplicateResponse2)));
         assertThat(userRepository.count()).isEqualTo(1);
