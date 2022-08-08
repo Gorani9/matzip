@@ -40,7 +40,7 @@ public class SecurityConfig {
 
     private final String[] GET_WHITELIST = new String[] {
             "/ping/",
-            "/api/v1/users/duplicate/",
+            "/api/v1/users/exists/",
     };
 
     private final String[] POST_WHITELIST = new String[] {

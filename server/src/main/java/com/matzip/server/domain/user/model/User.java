@@ -28,6 +28,7 @@ public class User extends BaseTimeEntity {
         this.username = signUpRequest.getUsername();
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
         this.active = true;
+        this.role = "NORMAL";
     }
 
     public void changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {

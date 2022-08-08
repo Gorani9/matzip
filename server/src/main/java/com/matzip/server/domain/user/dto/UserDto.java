@@ -1,6 +1,7 @@
 package com.matzip.server.domain.user.dto;
 
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.domain.user.validation.Password;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
@@ -41,6 +42,13 @@ public class UserDto {
     @Getter
     public static class DuplicateResponse {
         private final Boolean isDuplicated;
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    public static class SignUpResponse {
+        private final Response response;
+        private final String token;
     }
 
     @Getter

@@ -8,7 +8,7 @@ public enum ErrorType {
 
     NOT_ALLOWED(3000),
 
-    USER_NOT_ALLOWED(3100),
+    USER_ACCESS_DENIED(3100),
 
 
     DATA_NOT_FOUND(4000),

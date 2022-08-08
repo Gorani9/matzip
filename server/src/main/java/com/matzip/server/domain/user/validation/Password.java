@@ -1,4 +1,4 @@
-package com.matzip.server.domain.user.dto;
+package com.matzip.server.domain.user.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;

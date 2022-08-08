@@ -17,7 +17,7 @@ public class MatzipAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException {
         Gson gson = new Gson();
         ErrorResponse errorResponse = new ErrorResponse(
-                ErrorType.USER_NOT_ALLOWED.getErrorCode(), ErrorType.USER_NOT_ALLOWED.name()
+                ErrorType.USER_ACCESS_DENIED.getErrorCode(), ErrorType.USER_ACCESS_DENIED.name()
         );
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");

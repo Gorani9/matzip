@@ -4,34 +4,33 @@ import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.global.auth.CurrentUser;
-import com.matzip.server.global.auth.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
-    private final JwtProvider jwtProvider;
 
     @PostMapping("/")
     public ResponseEntity<UserDto.Response> signUp(@RequestBody @Valid UserDto.SignUpRequest signUpRequest) {
-        UserDto.Response response = userService.createUser(signUpRequest);
+        UserDto.SignUpResponse signUpResponse = userService.createUser(signUpRequest);
         return ResponseEntity.ok()
-                .header("Authorization", jwtProvider.generateAccessToken(response.getUsername()))
-                .body(response);
+                .header("Authorization", signUpResponse.getToken())
+                .body(signUpResponse.getResponse());
     }
 
-    @GetMapping("/duplicate/")
+    @GetMapping("/exists/")
     public ResponseEntity<UserDto.DuplicateResponse> checkDuplicateUsername(
-            @RequestBody @Valid UserDto.DuplicateRequest duplicateRequest
+            @RequestParam @Valid @NotBlank String username
     ) {
-        return ResponseEntity.ok(userService.isUsernameTakenBySomeone(duplicateRequest));
+        return ResponseEntity.ok(userService.isUsernameTakenBySomeone(new UserDto.DuplicateRequest(username)));
     }
 
     @GetMapping("/me/")
