@@ -57,6 +57,7 @@ jobs:
         DB_URL: jdbc:mysql://localhost:3306/matzip_db
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
     - name: Make directory for delivery
       run: mkdir deploy

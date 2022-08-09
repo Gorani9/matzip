@@ -1,7 +1,7 @@
 package com.matzip.server.global.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.matzip.server.global.auth.dto.LoginRequest;
+import com.matzip.server.global.auth.dto.LoginDto;
 import com.matzip.server.global.auth.jwt.JwtProvider;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,13 +19,17 @@ import java.io.IOException;
 
 public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtProvider jwtProvider;
+    private final ObjectMapper objectMapper;
 
-    public MatzipAuthenticationFilter(AuthenticationManager authenticationManager, JwtProvider jwtProvider) {
+    public MatzipAuthenticationFilter(
+            AuthenticationManager authenticationManager, JwtProvider jwtProvider, ObjectMapper objectMapper
+    ) {
         super(authenticationManager);
         setRequiresAuthenticationRequestMatcher(
                 new AntPathRequestMatcher("/api/v1/users/login/", HttpMethod.POST.name())
         );
         this.jwtProvider = jwtProvider;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -33,10 +37,11 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult
     ) throws IOException {
         String token = jwtProvider.generateAccessToken(authResult);
+        LoginDto.LoginResponse loginResponse = new LoginDto.LoginResponse(authResult.getAuthorities().toString());
         response.addHeader(jwtProvider.getHeader(), token);
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
-        response.getWriter().write("{\n\"access_token:\": \"" + token + "\"\n}");
+        response.getWriter().write(objectMapper.writeValueAsString(loginResponse));
         response.setStatus(HttpServletResponse.SC_OK);
     }
 
@@ -52,7 +57,7 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
     public Authentication attemptAuthentication(
             HttpServletRequest request, HttpServletResponse response
     ) throws AuthenticationException {
-        LoginRequest parsedRequest;
+        LoginDto.LoginRequest parsedRequest;
         try {
             parsedRequest = parseRequest(request);
         } catch (IOException e) {
@@ -63,7 +68,7 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
         ));
     }
 
-    private LoginRequest parseRequest(HttpServletRequest request) throws IOException {
-        return new ObjectMapper().readValue(request.getReader(), LoginRequest.class);
+    private LoginDto.LoginRequest parseRequest(HttpServletRequest request) throws IOException {
+        return new ObjectMapper().readValue(request.getReader(), LoginDto.LoginRequest.class);
     }
 }

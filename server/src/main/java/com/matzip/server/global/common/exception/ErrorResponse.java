@@ -7,6 +7,7 @@ public class ErrorResponse {
     int errorCode;
     @JsonProperty("error_message")
     String errorMessage;
+    @JsonProperty("detail")
     String detail;
 
     public ErrorResponse(int errorCode, String errorMessage, String detail) {

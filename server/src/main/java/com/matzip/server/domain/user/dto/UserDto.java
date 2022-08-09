@@ -41,7 +41,7 @@ public class UserDto {
     @RequiredArgsConstructor
     @Getter
     public static class DuplicateResponse {
-        private final Boolean isDuplicated;
+        private final Boolean exists;
     }
 
     @RequiredArgsConstructor

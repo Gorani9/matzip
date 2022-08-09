@@ -1,11 +1,11 @@
 package com.matzip.server.domain.user.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.matzip.server.ExpectedStatus;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.repository.UserRepository;
-import com.matzip.server.global.auth.dto.LoginRequest;
+import com.matzip.server.global.auth.dto.LoginDto;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-
-import javax.transaction.Transactional;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,171 +35,212 @@ class UserControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    private final String USER1 = "foo";
-    private final String USER1_PASSWD = "fooPassword1!";
-    private final String USER2 = "bar";
-    private final String USER2_PASSWD = "barPassword1!";
-
-    private String userToken;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(USER1, USER1_PASSWD);
-        userToken = mockMvc.perform(post("/api/v1/users/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"))
-                .andReturn().getResponse().getHeader("Authorization");
-    }
-
     @AfterEach
     void tearDown() {
         userRepository.deleteAll();
     }
 
-    @Test
-    @Transactional
-    void signIn() throws Exception {
-        LoginRequest loginRequest = new LoginRequest(USER1, USER1_PASSWD);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(1);
-    }
-
-    @Test
-    @Transactional
-    void signInFail() throws Exception {
-        LoginRequest loginRequestWithWrongPassword = new LoginRequest(USER1, USER2_PASSWD);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequestWithWrongPassword)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(header().doesNotExist("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(1);
-
-        LoginRequest loginRequestWithWrongUsername = new LoginRequest(USER2, USER1_PASSWD);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequestWithWrongUsername)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(header().doesNotExist("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(1);
-    }
-
-    @Test
-    @Transactional
-    void signUp() throws Exception {
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(USER2, USER2_PASSWD);
-        mockMvc.perform(post("/api/v1/users/")
+    private String signUp(String username, String password, ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
+        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(2);
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        long afterUserCount = userRepository.count();
+        if (expectedStatus == ExpectedStatus.OK) {
+            resultActions.andExpect(header().exists("Authorization"));
+            assertThat(afterUserCount).isEqualTo(beforeUserCount + 1);
+            signIn(username, password, ExpectedStatus.OK);
+            return resultActions.andReturn().getResponse().getHeader("Authorization");
+        } else {
+            resultActions.andExpect(header().doesNotExist("Authorization"));
+            assertThat(afterUserCount).isEqualTo(beforeUserCount);
+            if (expectedStatus == ExpectedStatus.CONFLICT)
+                signIn(username, password, ExpectedStatus.OK);
+            else
+                signIn(username, password, ExpectedStatus.UNAUTHORIZED);
+            return null;
+        }
     }
 
-    @Test
-    @Transactional
-    void duplicateUsernameSignUp() throws Exception {
-        UserDto.SignUpRequest conflictSignUpRequest = new UserDto.SignUpRequest(USER1, USER1_PASSWD);
-        mockMvc.perform(post("/api/v1/users/")
+    private String signIn(String username, String password, ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        LoginDto.LoginRequest signUpRequest = new LoginDto.LoginRequest(username, password);
+        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/login/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(conflictSignUpRequest)))
-                .andExpect(status().isConflict());
-        assertThat(userRepository.count()).isEqualTo(1);
+                        .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+        if (expectedStatus == ExpectedStatus.OK) {
+            resultActions.andExpect(header().exists("Authorization"));
+            return resultActions.andReturn().getResponse().getHeader("Authorization");
+        } else {
+            resultActions.andExpect(header().doesNotExist("Authorization"));
+            return null;
+        }
     }
 
-    @Test
-    void checkDuplicateUsername() throws Exception {
-        UserDto.DuplicateResponse duplicateResponse1 = new UserDto.DuplicateResponse(true);
-        UserDto.DuplicateResponse duplicateResponse2 = new UserDto.DuplicateResponse(false);
+    private void checkDuplicateUsername(String username, Boolean exists) throws Exception {
+        long beforeUserCount = userRepository.count();
+        UserDto.DuplicateResponse duplicateResponse = new UserDto.DuplicateResponse(exists);
         mockMvc.perform(get("/api/v1/users/exists/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param("username", USER1))
+                        .param("username", username))
                 .andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(duplicateResponse1)));
-        assertThat(userRepository.count()).isEqualTo(1);
-
-        mockMvc.perform(get("/api/v1/users/exists/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("username", USER2))
-                .andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(duplicateResponse2)));
-        assertThat(userRepository.count()).isEqualTo(1);
+                .andExpect(content().string(objectMapper.writeValueAsString(duplicateResponse)));
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
-    @Test
-    void getMe() throws Exception {
-        UserDto.FindRequest findRequest = new UserDto.FindRequest(USER1);
-        UserDto.Response expectedResponse = new UserDto.Response(userRepository.findByUsername(USER1));
+    private void getUserByUsername(String token, String username, ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username/" + username + "/")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == ExpectedStatus.OK) {
+            UserDto.Response response = new UserDto.Response(userRepository.findByUsername(username).orElseThrow());
+            resultActions.andExpect(content().string(objectMapper.writeValueAsString(response)));
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private void getMe(String token, String username) throws Exception {
+        long beforeUserCount = userRepository.count();
+        UserDto.Response response = new UserDto.Response(userRepository.findByUsername(username).orElseThrow());
         mockMvc.perform(get("/api/v1/users/me/")
-                        .header("Authorization", userToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(findRequest)))
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(expectedResponse)));
-        assertThat(userRepository.count()).isEqualTo(1);
+                .andExpect(content().string(objectMapper.writeValueAsString(response)));
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
-    @Test
-    @Transactional
-    void changePassword() throws Exception {
-        String newPassword = "newFooPassword2@";
+    private void changePassword(
+            String username, String oldPassword, String newPassword, ExpectedStatus expectedStatus
+    ) throws Exception {
+        String token = signIn(username, oldPassword, ExpectedStatus.OK);
+        long beforeUserCount = userRepository.count();
         UserDto.PasswordChangeRequest passwordChangeRequest = new UserDto.PasswordChangeRequest(newPassword);
         mockMvc.perform(put("/api/v1/users/me/password/")
-                        .header("Authorization", userToken)
+                        .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(passwordChangeRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
-        assertThat(userRepository.count()).isEqualTo(1);
-
-        LoginRequest loginRequest = new LoginRequest(USER1, newPassword);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(1);
-    }
-
-    void checkPasswordFail(String invalidPassword) throws Exception {
-        UserDto.PasswordChangeRequest passwordChangeRequest = new UserDto.PasswordChangeRequest(invalidPassword);
-        mockMvc.perform(put("/api/v1/users/me/password/")
-                        .header("Authorization", userToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(passwordChangeRequest)))
-                .andExpect(status().isBadRequest());
-        assertThat(userRepository.count()).isEqualTo(1);
-
-        LoginRequest invalidLoginRequest = new LoginRequest(USER1, invalidPassword);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidLoginRequest)))
-                .andExpect(status().isUnauthorized());
-        assertThat(userRepository.count()).isEqualTo(1);
-
-        LoginRequest validLoginRequest = new LoginRequest(USER1, USER1_PASSWD);
-        mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validLoginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(header().exists("Authorization"));
-        assertThat(userRepository.count()).isEqualTo(1);
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == ExpectedStatus.OK) {
+            signIn(username, oldPassword, ExpectedStatus.UNAUTHORIZED);
+            signIn(username, newPassword, ExpectedStatus.OK);
+        } else {
+            signIn(username, oldPassword, ExpectedStatus.OK);
+            signIn(username, newPassword, ExpectedStatus.UNAUTHORIZED);
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
     @Test
-    @Transactional
-    void changePasswordFail() throws Exception {
-        checkPasswordFail("short");
-        checkPasswordFail("long but no numeric nor special");
-        checkPasswordFail("NO SMALL CASE 11!!");
-        checkPasswordFail("no upper case 11!!");
-        checkPasswordFail("No Numeric !!");
-        checkPasswordFail("No Special 11");
+    void signInTest() throws Exception {
+        String token;
+
+        token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        assertThat(token).isNotNull();
+
+        token = signIn("foo", "fooPassword1!", ExpectedStatus.OK);
+        assertThat(token).isNotNull();
+
+        token = signIn("foo", "fooPassword", ExpectedStatus.UNAUTHORIZED);
+        assertThat(token).isNull();
+
+        token = signIn("fo", "fooPassword1!", ExpectedStatus.UNAUTHORIZED);
+        assertThat(token).isNull();
+    }
+
+    @Test
+    void signUpTest() throws Exception {
+        String token;
+
+        token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        assertThat(token).isNotNull();
+
+        token = signUp("foo2",
+                "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!",
+                ExpectedStatus.OK);
+        assertThat(token).isNotNull();
+
+        token = signUp("foo", "fooPassword1!", ExpectedStatus.CONFLICT);
+        assertThat(token).isNull();
+
+        token = signUp("bar", "short", ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+
+        token = signUp("bar",
+                "veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!",
+                ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+
+        token = signUp("bar", "noNumeric!", ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+
+        token = signUp("bar", "noSpecial1", ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+
+        token = signUp("bar", "no_upper_case1!", ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+
+        token = signUp("bar", "NO_LOWER_CASE1!", ExpectedStatus.BAD_REQUEST);
+        assertThat(token).isNull();
+    }
+
+    @Test
+    void checkDuplicateUsernameTest() throws Exception {
+        signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        signUp("bar", "barPassword1!", ExpectedStatus.OK);
+
+        checkDuplicateUsername("foo", true);
+        checkDuplicateUsername("foo2", false);
+        checkDuplicateUsername("bar", true);
+        checkDuplicateUsername("ba", false);
+    }
+
+    @Test
+    void getUserByUsernameTest() throws Exception {
+        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        signUp("bar", "barPassword1!", ExpectedStatus.OK);
+
+        getUserByUsername(token, "foo", ExpectedStatus.OK);
+        getUserByUsername(token, "bar", ExpectedStatus.OK);
+        getUserByUsername(token, "not_existing_user", ExpectedStatus.NOT_FOUND);
+        getUserByUsername(token, "not_found", ExpectedStatus.NOT_FOUND);
+    }
+
+    @Test
+    void getMeTest() throws Exception {
+        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        getMe(token, "foo");
+
+        token = signUp("bar", "barPassword1!", ExpectedStatus.OK);
+        getMe(token, "bar");
+    }
+
+    @Test
+    void changePasswordTest() throws Exception {
+        signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        signUp("bar", "barPassword1!", ExpectedStatus.OK);
+
+        changePassword("foo", "fooPassword1!", "short", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!",
+                "veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "noNumeric!", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "noSpecial1", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "no_upper_case1!", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "NO_LOWER_CASE1!", ExpectedStatus.BAD_REQUEST);
+
+        changePassword("foo", "fooPassword1!",
+                "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", ExpectedStatus.OK);
+        changePassword("bar", "barPassword1!", "newPassword1!", ExpectedStatus.OK);
     }
 }

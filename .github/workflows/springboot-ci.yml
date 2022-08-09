@@ -39,7 +39,7 @@ jobs:
     - name: Grant execution permission to gradlew
       run: chmod +x gradlew
       working-directory: server
-      
+
     - name: Cache gradle
       uses: actions/cache@v3
       with:
@@ -57,3 +57,4 @@ jobs:
         DB_URL: jdbc:mysql://localhost:3306/matzip_db
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}

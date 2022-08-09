@@ -17,9 +17,9 @@ public class UserPrincipalDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
-        if (user == null)
-            throw new UsernameNotFoundException(String.format("User with username '%s' not found.", username));
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username))
+        );
         if (!user.getActive())
             throw new UserNotActiveException(user.getUsername());
         return new UserPrincipal(user);

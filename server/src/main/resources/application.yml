@@ -6,6 +6,8 @@ spring:
 
 jwt-secret-key: matzip-server
 
+admin-password: ${ADMIN_PASSWORD}
+
 ---
 
 spring:
