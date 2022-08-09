@@ -7,11 +7,13 @@ import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
+@Validated
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -31,6 +33,14 @@ public class UserController {
             @RequestParam @Valid @NotBlank String username
     ) {
         return ResponseEntity.ok(userService.isUsernameTakenBySomeone(new UserDto.DuplicateRequest(username)));
+    }
+
+    @GetMapping("/username/{username}/")
+    public ResponseEntity<UserDto.Response> getUserByUsername(
+            @PathVariable("username") @Valid @NotBlank String username
+    ) {
+        return ResponseEntity.ok()
+                .body(userService.findUser(new UserDto.FindRequest(username)));
     }
 
     @GetMapping("/me/")

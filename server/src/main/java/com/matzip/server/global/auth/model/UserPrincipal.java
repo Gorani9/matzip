@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 @Getter
 public class UserPrincipal implements UserDetails {
@@ -19,10 +20,8 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = user.getRole();
-        if (role == null)
-            role = "NORMAL";
-        return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role));
+        String role = Optional.ofNullable(user.getRole()).orElse("NORMAL");
+        return Collections.singleton(new SimpleGrantedAuthority(role));
     }
 
     @Override
@@ -52,6 +51,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return user.getActive();
     }
 }

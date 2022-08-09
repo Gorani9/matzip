@@ -1,7 +1,7 @@
 package com.matzip.server.domain.user.service;
 
 import com.matzip.server.domain.user.dto.UserDto;
-import com.matzip.server.domain.user.exception.UserNotFoundException;
+import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -40,16 +40,17 @@ public class UserService {
     }
 
     public UserDto.Response findUser(UserDto.FindRequest findRequest) {
-        User user = userRepository.findByUsername(findRequest.getUsername());
-        if (user == null)
-            throw new UserNotFoundException(findRequest.getUsername());
+        User user = userRepository.findByUsername(findRequest.getUsername()).orElseThrow(
+                () -> new UsernameNotFoundException(findRequest.getUsername())
+        );
         return new UserDto.Response(user);
     }
 
     @Transactional
     public void changePassword(String username, UserDto.PasswordChangeRequest passwordChangeRequest) {
-        User user = userRepository.findByUsername(username);
-        user.changePassword(passwordChangeRequest, passwordEncoder);
-        userRepository.save(user);
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new UsernameNotFoundException(username)
+        );
+        userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder));
     }
 }

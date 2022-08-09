@@ -31,7 +31,23 @@ public class User extends BaseTimeEntity {
         this.role = "NORMAL";
     }
 
-    public void changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
+    public User changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
         this.password = passwordEncoder.encode(passwordChangeRequest.getPassword());
+        return this;
+    }
+
+    public User toAdmin() {
+        this.role = "ADMIN";
+        return this;
+    }
+
+    public User activate() {
+        this.active = true;
+        return this;
+    }
+
+    public User deactivate() {
+        this.active = false;
+        return this;
     }
 }
