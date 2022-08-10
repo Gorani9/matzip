@@ -86,6 +86,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Arrays.asList(CORS_WHITELIST));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        config.addExposedHeader("Authentication");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
