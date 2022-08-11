@@ -5,6 +5,8 @@ import com.matzip.server.domain.user.validation.Password;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 
 public class UserDto {
@@ -33,9 +35,22 @@ public class UserDto {
 
     @RequiredArgsConstructor
     @Getter
+    @Setter
     public static class PasswordChangeRequest {
+        private String username;
         @Password
         private final String password;
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    public static class SearchRequest {
+        @PositiveOrZero
+        private final Integer pageNumber;
+        @Positive
+        private final Integer pageSize;
+        @NotBlank
+        private final String username;
     }
 
     @RequiredArgsConstructor
@@ -64,7 +79,7 @@ public class UserDto {
             this.createdAt = user.getCreatedAt();
             this.modifiedAt = user.getModifiedAt();
             this.username = user.getUsername();
-            this.isActive = user.getActive();
+            this.isActive = user.getIsActive();
         }
     }
 }

@@ -20,15 +20,15 @@ public class AdminUserService {
     private final UserRepository userRepository;
 
     public Page<UserDto.Response> findUsers(AdminDto.UserSearchRequest userSearchRequest) {
-        Pageable pageable = PageRequest.of(
+        Pageable pageRequest = PageRequest.of(
                 userSearchRequest.getPageNumber(),
                 userSearchRequest.getPageSize(),
                 Sort.by("id").ascending());
         Page<User> users;
         if (userSearchRequest.getWithAdmin())
-            users = userRepository.findAll(pageable);
+            users = userRepository.findAll(pageRequest);
         else
-            users = userRepository.findAllByRoleEquals(pageable, "NORMAL");
+            users = userRepository.findAllByRoleEquals(pageRequest, "NORMAL");
         return users.map(UserDto.Response::new);
     }
 
@@ -41,7 +41,7 @@ public class AdminUserService {
     public void activateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getActive())
+        if (user.getIsActive())
             throw new UserAlreadyActiveException(id);
         userRepository.save(user.activate());
     }
@@ -50,7 +50,7 @@ public class AdminUserService {
     public void deactivateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (!user.getActive())
+        if (!user.getIsActive())
             throw new UserAlreadyInactiveException(id);
         else if (user.getRole().equals("ADMIN"))
             throw new DeactivateAdminUserException();
@@ -61,7 +61,7 @@ public class AdminUserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getActive())
+        if (user.getIsActive())
             throw new DeleteActiveUserException();
         userRepository.delete(user);
     }

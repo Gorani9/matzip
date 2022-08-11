@@ -20,15 +20,15 @@ public class User extends BaseTimeEntity {
 
     private String password;
 
-    private Boolean active;
+    private Boolean isActive = true;
 
-    private String role;
+    private Boolean isLocked = false;
+
+    private String role = "NORMAL";
 
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
-        this.active = true;
-        this.role = "NORMAL";
     }
 
     public User changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
@@ -42,12 +42,22 @@ public class User extends BaseTimeEntity {
     }
 
     public User activate() {
-        this.active = true;
+        this.isActive = true;
         return this;
     }
 
     public User deactivate() {
-        this.active = false;
+        this.isActive = false;
+        return this;
+    }
+
+    public User lock() {
+        this.isLocked = true;
+        return this;
+    }
+
+    public User unlock() {
+        this.isLocked = false;
         return this;
     }
 }

@@ -11,11 +11,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -94,6 +101,26 @@ class UserControllerTest {
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
+    private void searchUserByUsername(
+            MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus
+    ) throws Exception {
+        long beforeUserCount = userRepository.count();
+        ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username/")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .params(parameters))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == ExpectedStatus.OK) {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").ascending());
+            long count = userRepository
+                    .findAllByUsernameContainsIgnoreCase(pageable, parameters.getFirst("username"))
+                    .getTotalElements();
+            resultActions.andExpect(jsonPath("$.total_elements").value(count));
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
     private void getUserByUsername(String token, String username, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username/" + username + "/")
@@ -140,6 +167,16 @@ class UserControllerTest {
         }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private final int pageSize = 15;
+    private final int pageNumber = 0;
+
+    private MultiValueMap<String, String> pageParameters() {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.put("pageNumber", Collections.singletonList(String.valueOf(pageNumber)));
+        parameters.put("pageSize", Collections.singletonList(String.valueOf(pageSize)));
+        return parameters;
     }
 
     @Test
@@ -215,6 +252,32 @@ class UserControllerTest {
         getUserByUsername(token, "bar", ExpectedStatus.OK);
         getUserByUsername(token, "not_existing_user", ExpectedStatus.NOT_FOUND);
         getUserByUsername(token, "not_found", ExpectedStatus.NOT_FOUND);
+    }
+
+    @Test
+    void searchUserByUsernameTest() throws Exception {
+        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+
+        signUp("foo1", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo2", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo3", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo4", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo5", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo6", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo7", "fooPassword1!", ExpectedStatus.OK);
+        signUp("foo8", "fooPassword1!", ExpectedStatus.OK);
+
+        MultiValueMap<String, String> parameters = pageParameters();
+        parameters.put("username", Collections.singletonList("foo"));
+        searchUserByUsername(parameters, token, ExpectedStatus.OK);
+        parameters.put("username", Collections.singletonList("bar"));
+        searchUserByUsername(parameters, token, ExpectedStatus.OK);
+
+        parameters.put("pageNumber", Collections.singletonList("-1"));
+        searchUserByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
+        parameters = pageParameters();
+        parameters.put("pageSize", Collections.singletonList("0"));
+        searchUserByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
     }
 
     @Test

@@ -20,7 +20,7 @@ public class UserPrincipalDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username))
         );
-        if (!user.getActive())
+        if (!user.getIsActive())
             throw new UserNotActiveException(user.getUsername());
         return new UserPrincipal(user);
     }

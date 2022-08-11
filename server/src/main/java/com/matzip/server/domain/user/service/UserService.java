@@ -1,14 +1,17 @@
 package com.matzip.server.domain.user.service;
 
 import com.matzip.server.domain.user.dto.UserDto;
-import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
+import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.auth.jwt.JwtProvider;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,10 +49,20 @@ public class UserService {
         return new UserDto.Response(user);
     }
 
+    public Page<UserDto.Response> searchUser(UserDto.SearchRequest searchRequest) {
+        PageRequest pageRequest = PageRequest.of(
+                searchRequest.getPageNumber(),
+                searchRequest.getPageSize(),
+                Sort.by("createdAt").ascending()
+        );
+        Page<User> users = userRepository.findAllByUsernameContainsIgnoreCase(pageRequest, searchRequest.getUsername());
+        return users.map(UserDto.Response::new);
+    }
+
     @Transactional
-    public void changePassword(String username, UserDto.PasswordChangeRequest passwordChangeRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException(username)
+    public void changePassword(UserDto.PasswordChangeRequest passwordChangeRequest) {
+        User user = userRepository.findByUsername(passwordChangeRequest.getUsername()).orElseThrow(
+                () -> new UsernameNotFoundException(passwordChangeRequest.getUsername())
         );
         userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder));
     }

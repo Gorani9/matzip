@@ -149,11 +149,11 @@ class AdminUserControllerTest {
         User afterUser = userRepository.findById(id).orElseThrow();
         if (expectedStatus == ExpectedStatus.OK) {
             if (parameters.getOrDefault("activate", List.of()).contains("true")) {
-                assertFalse(beforeUser.getActive());
-                assertTrue(afterUser.getActive());
+                assertFalse(beforeUser.getIsActive());
+                assertTrue(afterUser.getIsActive());
             } else {
-                assertTrue(beforeUser.getActive());
-                assertFalse(afterUser.getActive());
+                assertTrue(beforeUser.getIsActive());
+                assertFalse(afterUser.getIsActive());
             }
         } else {
             assertThat(beforeUser.getRole()).isEqualTo(afterUser.getRole());
@@ -237,6 +237,12 @@ class AdminUserControllerTest {
         parameters.put("withAdmin", Collections.singletonList("true"));
         getUsers(parameters, adminToken, ExpectedStatus.OK);
         parameters.put("withAdmin", Collections.singletonList("Boolean"));
+        getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
+
+        parameters.put("pageNumber", Collections.singletonList("-1"));
+        getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
+        parameters = pageParameters();
+        parameters.put("pageSize", Collections.singletonList("0"));
         getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
     }
 

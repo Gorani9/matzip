@@ -5,6 +5,7 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 
 @Validated
 @Controller
@@ -32,7 +35,18 @@ public class UserController {
     public ResponseEntity<UserDto.DuplicateResponse> checkDuplicateUsername(
             @RequestParam @Valid @NotBlank String username
     ) {
-        return ResponseEntity.ok(userService.isUsernameTakenBySomeone(new UserDto.DuplicateRequest(username)));
+        return ResponseEntity.ok()
+                .body(userService.isUsernameTakenBySomeone(new UserDto.DuplicateRequest(username)));
+    }
+
+    @GetMapping("/username/")
+    public ResponseEntity<Page<UserDto.Response>> searchUserByUsername(
+            @RequestParam @Valid @PositiveOrZero Integer pageNumber,
+            @RequestParam @Valid @Positive Integer pageSize,
+            @RequestParam @Valid @NotBlank String username
+    ) {
+        return ResponseEntity.ok()
+                .body(userService.searchUser(new UserDto.SearchRequest(pageNumber, pageSize, username)));
     }
 
     @GetMapping("/username/{username}/")
@@ -45,7 +59,8 @@ public class UserController {
 
     @GetMapping("/me/")
     public ResponseEntity<UserDto.Response> getMe(@CurrentUser User user) {
-        return ResponseEntity.ok(userService.findUser(new UserDto.FindRequest(user.getUsername())));
+        return ResponseEntity.ok()
+                .body(userService.findUser(new UserDto.FindRequest(user.getUsername())));
     }
 
     @PutMapping("/me/password/")
@@ -53,7 +68,8 @@ public class UserController {
             @CurrentUser User user,
             @RequestBody @Valid UserDto.PasswordChangeRequest passwordChangeRequest
     ) {
-        userService.changePassword(user.getUsername(), passwordChangeRequest);
+        passwordChangeRequest.setUsername(user.getUsername());
+        userService.changePassword(passwordChangeRequest);
         return ResponseEntity.ok().build();
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
 @Validated
@@ -23,7 +24,7 @@ public class AdminUserController {
     @GetMapping("/")
     public ResponseEntity<Page<UserDto.Response>> getUsers(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam @Valid @PositiveOrZero Integer pageSize,
+            @RequestParam @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue = "false") Boolean withAdmin
     ) {
         return ResponseEntity.ok()
@@ -33,7 +34,7 @@ public class AdminUserController {
 
     @GetMapping("/{id}/")
     public ResponseEntity<UserDto.Response> getUserById(
-            @PathVariable("id") @Valid @PositiveOrZero Long id
+            @PathVariable("id") @Valid @Positive Long id
     ) {
         return ResponseEntity.ok()
                 .body(adminUserService.findUserById(id));
@@ -41,7 +42,7 @@ public class AdminUserController {
 
     @PatchMapping("/{id}/status/")
     public ResponseEntity<Object> changeUserStatus(
-            @PathVariable("id") @Valid @PositiveOrZero Long id,
+            @PathVariable("id") @Valid @Positive Long id,
             @RequestParam("activate") @Valid @NotNull Boolean activate
     ) {
         if (activate)
@@ -53,7 +54,7 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}/")
     public ResponseEntity<Object> deleteUser(
-            @PathVariable("id") @Valid @PositiveOrZero Long id
+            @PathVariable("id") @Valid @Positive Long id
     ) {
         adminUserService.deleteUser(id);
         return ResponseEntity.ok().build();
