@@ -49,13 +49,14 @@ public class UserService {
         return new UserDto.Response(user);
     }
 
-    public Page<UserDto.Response> searchUser(UserDto.SearchRequest searchRequest) {
+    public Page<UserDto.Response> searchUsers(UserDto.SearchRequest searchRequest) {
         PageRequest pageRequest = PageRequest.of(
                 searchRequest.getPageNumber(),
                 searchRequest.getPageSize(),
                 Sort.by("createdAt").ascending()
         );
-        Page<User> users = userRepository.findAllByUsernameContainsIgnoreCase(pageRequest, searchRequest.getUsername());
+        Page<User> users = userRepository
+                .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrue(pageRequest, searchRequest.getUsername());
         return users.map(UserDto.Response::new);
     }
 

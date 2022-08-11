@@ -101,7 +101,7 @@ class UserControllerTest {
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
-    private void searchUserByUsername(
+    private void searchUsersByUsername(
             MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus
     ) throws Exception {
         long beforeUserCount = userRepository.count();
@@ -255,7 +255,7 @@ class UserControllerTest {
     }
 
     @Test
-    void searchUserByUsernameTest() throws Exception {
+    void searchUsersByUsernameTest() throws Exception {
         String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
 
         signUp("foo1", "fooPassword1!", ExpectedStatus.OK);
@@ -269,15 +269,15 @@ class UserControllerTest {
 
         MultiValueMap<String, String> parameters = pageParameters();
         parameters.put("username", Collections.singletonList("foo"));
-        searchUserByUsername(parameters, token, ExpectedStatus.OK);
+        searchUsersByUsername(parameters, token, ExpectedStatus.OK);
         parameters.put("username", Collections.singletonList("bar"));
-        searchUserByUsername(parameters, token, ExpectedStatus.OK);
+        searchUsersByUsername(parameters, token, ExpectedStatus.OK);
 
         parameters.put("pageNumber", Collections.singletonList("-1"));
-        searchUserByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
+        searchUsersByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
         parameters = pageParameters();
         parameters.put("pageSize", Collections.singletonList("0"));
-        searchUserByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
+        searchUsersByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
     }
 
     @Test

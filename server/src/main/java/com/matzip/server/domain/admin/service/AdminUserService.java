@@ -1,8 +1,9 @@
 package com.matzip.server.domain.admin.service;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
-import com.matzip.server.domain.admin.exception.*;
-import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
+import com.matzip.server.domain.admin.exception.LockAdminUserException;
+import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,50 +20,65 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminUserService {
     private final UserRepository userRepository;
 
-    public Page<UserDto.Response> findUsers(AdminDto.UserSearchRequest userSearchRequest) {
+    public Page<AdminDto.Response> listUsers(AdminDto.UserListRequest userListRequest) {
         Pageable pageRequest = PageRequest.of(
-                userSearchRequest.getPageNumber(),
-                userSearchRequest.getPageSize(),
+                userListRequest.getPageNumber(),
+                userListRequest.getPageSize(),
                 Sort.by("id").ascending());
         Page<User> users;
-        if (userSearchRequest.getWithAdmin())
+        if (userListRequest.getWithAdmin())
             users = userRepository.findAll(pageRequest);
         else
             users = userRepository.findAllByRoleEquals(pageRequest, "NORMAL");
-        return users.map(UserDto.Response::new);
+        return users.map(AdminDto.Response::new);
     }
 
-    public UserDto.Response findUserById(Long id) {
-        return new UserDto.Response(userRepository.findById(id)
+    public Page<AdminDto.Response> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
+        PageRequest pageRequest = PageRequest.of(
+                userSearchRequest.getPageNumber(),
+                userSearchRequest.getPageSize(),
+                Sort.by("id").ascending()
+        );
+        Page<User> users;
+        if (userSearchRequest.getIsNonLocked() == null)
+            users = userRepository
+                    .findAllByUsernameContainsIgnoreCase(pageRequest, userSearchRequest.getUsername());
+        else if (userSearchRequest.getIsNonLocked())
+            users = userRepository
+                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrue(pageRequest, userSearchRequest.getUsername());
+        else
+            users = userRepository
+                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalse(pageRequest, userSearchRequest.getUsername());
+        return users.map(AdminDto.Response::new);
+    }
+
+    public AdminDto.Response findUserById(Long id) {
+        return new AdminDto.Response(userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id)));
     }
 
     @Transactional
-    public void activateUser(Long id) {
+    public void lockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getIsActive())
-            throw new UserAlreadyActiveException(id);
-        userRepository.save(user.activate());
+        userRepository.save(user.lock());
     }
 
     @Transactional
-    public void deactivateUser(Long id) {
+    public void unlockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (!user.getIsActive())
-            throw new UserAlreadyInactiveException(id);
-        else if (user.getRole().equals("ADMIN"))
-            throw new DeactivateAdminUserException();
-        userRepository.save(user.deactivate());
+        if (user.getRole().equals("ADMIN"))
+            throw new LockAdminUserException();
+        userRepository.save(user.unlock());
     }
 
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getIsActive())
-            throw new DeleteActiveUserException();
+        if (user.getRole().equals("ADMIN"))
+            throw new DeleteAdminUserException();
         userRepository.delete(user);
     }
 }

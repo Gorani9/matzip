@@ -20,9 +20,7 @@ public class User extends BaseTimeEntity {
 
     private String password;
 
-    private Boolean isActive = true;
-
-    private Boolean isLocked = false;
+    private Boolean isNonLocked = true;
 
     private String role = "NORMAL";
 
@@ -41,23 +39,13 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
-    public User activate() {
-        this.isActive = true;
-        return this;
-    }
-
-    public User deactivate() {
-        this.isActive = false;
-        return this;
-    }
-
     public User lock() {
-        this.isLocked = true;
+        this.isNonLocked = false;
         return this;
     }
 
     public User unlock() {
-        this.isLocked = false;
+        this.isNonLocked = true;
         return this;
     }
 }
