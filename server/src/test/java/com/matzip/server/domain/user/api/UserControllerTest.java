@@ -3,18 +3,21 @@ package com.matzip.server.domain.user.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.auth.dto.LoginDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +28,7 @@ import org.springframework.util.MultiValueMap;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -41,6 +45,12 @@ class UserControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${admin-password}")
+    private String adminPassword;
 
     @AfterEach
     void tearDown() {
@@ -167,6 +177,22 @@ class UserControllerTest {
         }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private void deleteMe(String token, String username, ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        mockMvc.perform(delete("/api/v1/users/me/")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        long afterUserCount = userRepository.count();
+        if (expectedStatus == ExpectedStatus.OK) {
+            assertTrue(userRepository.findByUsername(username).isEmpty());
+            assertThat(afterUserCount).isEqualTo(beforeUserCount - 1);
+        } else {
+            assertTrue(userRepository.findByUsername(username).isPresent());
+            assertThat(afterUserCount).isEqualTo(beforeUserCount);
+        }
     }
 
     private final int pageSize = 15;
@@ -305,5 +331,21 @@ class UserControllerTest {
         changePassword("foo", "fooPassword1!",
                 "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", ExpectedStatus.OK);
         changePassword("bar", "barPassword1!", "newPassword1!", ExpectedStatus.OK);
+    }
+
+    @Test
+    void deleteMeTest() throws Exception {
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
+            User user = new User(signUpRequest, passwordEncoder);
+            userRepository.save(user.toAdmin());
+        }
+        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        String adminToken = signIn("admin", adminPassword, ExpectedStatus.OK);
+
+        deleteMe(token, "foo", ExpectedStatus.OK);
+        signIn("foo", "fooPassword1!", ExpectedStatus.UNAUTHORIZED);
+        deleteMe(adminToken, "admin", ExpectedStatus.BAD_REQUEST);
+        signIn("admin", adminPassword, ExpectedStatus.OK);
     }
 }

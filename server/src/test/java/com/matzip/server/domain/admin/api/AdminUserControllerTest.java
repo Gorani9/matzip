@@ -371,10 +371,12 @@ class AdminUserControllerTest {
         Long barId = userRepository.findByUsername("bar").orElseThrow().getId();
 
         deleteUser(adminToken, barId, ExpectedStatus.OK);
+        signIn("bar", "barPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
         deleteUser(adminToken, barId, ExpectedStatus.NOT_FOUND);
 
         Long adminId = userRepository.findByUsername("admin").orElseThrow().getId();
         deleteUser(adminToken, adminId, ExpectedStatus.BAD_REQUEST);
+        signIn("admin", adminPassword, "ADMIN", ExpectedStatus.OK);
     }
 
 

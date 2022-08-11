@@ -1,5 +1,7 @@
 package com.matzip.server.domain.user.service;
 
+import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
+import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
@@ -66,5 +68,14 @@ public class UserService {
                 () -> new UsernameNotFoundException(passwordChangeRequest.getUsername())
         );
         userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder));
+    }
+
+    @Transactional
+    public void deleteMe(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserIdNotFoundException(id));
+        if (user.getRole().equals("ADMIN"))
+            throw new DeleteAdminUserException();
+        userRepository.delete(user);
     }
 }

@@ -63,6 +63,12 @@ public class UserController {
                 .body(userService.findUser(new UserDto.FindRequest(user.getUsername())));
     }
 
+    @DeleteMapping("/me/")
+    public ResponseEntity<Object> deleteMe(@CurrentUser User user) {
+        userService.deleteMe(user.getId());
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/me/password/")
     public ResponseEntity<Object> changePassword(
             @CurrentUser User user,
