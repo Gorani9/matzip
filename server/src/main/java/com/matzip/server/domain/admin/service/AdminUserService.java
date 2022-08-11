@@ -45,10 +45,10 @@ public class AdminUserService {
                     .findAllByUsernameContainsIgnoreCase(pageRequest, userSearchRequest.getUsername());
         else if (userSearchRequest.getIsNonLocked())
             users = userRepository
-                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrue(pageRequest, userSearchRequest.getUsername());
+                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(pageRequest, userSearchRequest.getUsername(), "NORMAL");
         else
             users = userRepository
-                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalse(pageRequest, userSearchRequest.getUsername());
+                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(pageRequest, userSearchRequest.getUsername(), "NORMAL");
         return users.map(AdminDto.Response::new);
     }
 

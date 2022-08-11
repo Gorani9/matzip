@@ -147,11 +147,11 @@ class AdminUserControllerTest {
                         .getTotalElements();
             } else if (Objects.equals(parameters.getFirst("isNonLocked"), "true")) {
                 count = userRepository
-                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrue(pageable, parameters.getFirst("username"))
+                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(pageable, parameters.getFirst("username"), "NORMAL")
                         .getTotalElements();
             } else {
                 count = userRepository
-                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalse(pageable, parameters.getFirst("username"))
+                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(pageable, parameters.getFirst("username"), "NORMAL")
                         .getTotalElements();
             }
             resultActions.andExpect(jsonPath("$.total_elements").value(count));

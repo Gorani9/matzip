@@ -7,6 +7,7 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.auth.dto.LoginDto;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,15 @@ class UserControllerTest {
 
     @Value("${admin-password}")
     private String adminPassword;
+
+    @BeforeEach
+    void setUp() {
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
+            User user = new User(signUpRequest, passwordEncoder);
+            userRepository.save(user.toAdmin());
+        }
+    }
 
     @AfterEach
     void tearDown() {
@@ -123,7 +133,7 @@ class UserControllerTest {
         if (expectedStatus == ExpectedStatus.OK) {
             Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").ascending());
             long count = userRepository
-                    .findAllByUsernameContainsIgnoreCase(pageable, parameters.getFirst("username"))
+                    .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(pageable, parameters.getFirst("username"), "NORMAL")
                     .getTotalElements();
             resultActions.andExpect(jsonPath("$.total_elements").value(count));
         }
@@ -335,11 +345,6 @@ class UserControllerTest {
 
     @Test
     void deleteMeTest() throws Exception {
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
-        }
         String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
         String adminToken = signIn("admin", adminPassword, ExpectedStatus.OK);
 

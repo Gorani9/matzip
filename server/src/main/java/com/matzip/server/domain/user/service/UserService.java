@@ -3,6 +3,7 @@ package com.matzip.server.domain.user.service;
 import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
 import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.exception.AdminUserAccessByNormalUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
@@ -48,6 +49,8 @@ public class UserService {
         User user = userRepository.findByUsername(findRequest.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException(findRequest.getUsername())
         );
+        if (user.getRole().equals("ADMIN"))
+            throw new AdminUserAccessByNormalUserException();
         return new UserDto.Response(user);
     }
 
@@ -58,7 +61,7 @@ public class UserService {
                 Sort.by("createdAt").ascending()
         );
         Page<User> users = userRepository
-                .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrue(pageRequest, searchRequest.getUsername());
+                .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(pageRequest, searchRequest.getUsername(), "NORMAL");
         return users.map(UserDto.Response::new);
     }
 
