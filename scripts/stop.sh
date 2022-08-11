@@ -6,7 +6,7 @@ source "${ABS_DIR}"/profile.sh
 
 IDLE_PROFILE=$(find_idle_profile)
 
-CONTAINER_ID=$(docker container ls -f "name=${IDLE_PROFILE}" -q)
+CONTAINER_ID=$(docker container ls -f "name=${IDLE_PROFILE}" -q -all)
 
 echo "> Current container id: ${CONTAINER_ID}"
 echo "> Idle profile: ${IDLE_PROFILE}"

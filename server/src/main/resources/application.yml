@@ -58,7 +58,7 @@ spring:
 
 logging:
   level:
-    root: debug
+    domain: debug
 
 ---
 
@@ -79,8 +79,12 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+        show_sql: false
+        format_sql: false
+
+logging:
+  level:
+    domain: debug
 
 server:
   port: 8081
@@ -104,8 +108,12 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+        show_sql: false
+        format_sql: false
+
+logging:
+  level:
+    domain: debug
 
 server:
   port: 8082
