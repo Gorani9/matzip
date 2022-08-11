@@ -40,13 +40,13 @@ public class UserController {
     }
 
     @GetMapping("/username/")
-    public ResponseEntity<Page<UserDto.Response>> searchUserByUsername(
+    public ResponseEntity<Page<UserDto.Response>> searchUsersByUsername(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam @Valid @Positive Integer pageSize,
             @RequestParam @Valid @NotBlank String username
     ) {
         return ResponseEntity.ok()
-                .body(userService.searchUser(new UserDto.SearchRequest(pageNumber, pageSize, username)));
+                .body(userService.searchUsers(new UserDto.SearchRequest(pageNumber, pageSize, username)));
     }
 
     @GetMapping("/username/{username}/")

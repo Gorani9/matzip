@@ -3,11 +3,9 @@ package com.matzip.server.global.common.exception;
 public enum ErrorType {
     INVALID_REQUEST(0),
 
-    USER_NOT_ACTIVE(100),
-    USER_ALREADY_ACTIVE(101),
-    USER_ALREADY_INACTIVE(102),
-    DELETE_ACTIVE_USER(103),
-    DEACTIVATE_ADMIN_USER(107),
+    USER_LOCKED(100),
+    LOCK_ADMIN_USER(101),
+    DELETE_ADMIN_USER(102),
 
 
     NOT_ALLOWED(3000),
