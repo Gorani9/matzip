@@ -36,6 +36,7 @@ public enum ErrorType {
     ;
 
     private final int errorCode;
+
     ErrorType(int errorCode) {
         this.errorCode = errorCode;
     }

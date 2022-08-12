@@ -19,7 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +52,7 @@ public class ImageService {
                 throw new UnsupportedFileExtensionException();
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentType(imageContentType.get());
+            objectMetadata.setContentLength(image.getSize());
             String fileName = generateFileName(uploadRequest.getUsername(), image.getOriginalFilename());
             try (InputStream inputStream = image.getInputStream()) {
                 amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata)

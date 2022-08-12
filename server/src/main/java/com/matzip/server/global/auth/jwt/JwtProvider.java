@@ -23,11 +23,9 @@ public final class JwtProvider {
     private final UserPrincipalDetailsService userPrincipalDetailsService;
 
     private final String tokenPrefix = "Bearer ";
-
+    private final long refreshTokenValidTime = 2 * 7 * 24 * 60 * 60 * 1000L;
     @Value("${jwt-secret-key}")
     private String secretKey;
-
-    private final long refreshTokenValidTime = 2 * 7 * 24 * 60 * 60 * 1000L;
 
     @PostConstruct
     private void init() {
