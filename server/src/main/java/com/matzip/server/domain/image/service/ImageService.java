@@ -12,6 +12,8 @@ import com.matzip.server.domain.image.exception.FileUploadException;
 import com.matzip.server.domain.image.exception.ImageDeleteByUnauthorizedUserException;
 import com.matzip.server.domain.image.exception.UnsupportedFileExtensionException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +29,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ImageService {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private final AmazonS3Client amazonS3Client;
 
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
@@ -58,6 +62,7 @@ public class ImageService {
                 amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata)
                         .withCannedAcl(CannedAccessControlList.PublicRead));
             } catch (IOException | SdkClientException e) {
+                logger.error(e.getMessage());
                 throw new FileUploadException();
             }
             String imageUrl = amazonS3Client.getUrl(bucketName, fileName).toString();
