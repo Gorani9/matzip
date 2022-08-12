@@ -37,21 +37,23 @@ public class AdminDto {
     }
 
     @Getter
-    public static class Response {
+    public static class UserResponse {
         private final Long id;
         private final LocalDateTime createdAt;
         private final LocalDateTime modifiedAt;
         private final String username;
         private final String role;
         private final Boolean isNonLocked;
+        private final String profileImageUrl;
 
-        public Response(User user) {
+        public UserResponse(User user) {
             this.id = user.getId();
             this.createdAt = user.getCreatedAt();
             this.modifiedAt = user.getModifiedAt();
             this.username = user.getUsername();
             this.role = user.getRole();
             this.isNonLocked = user.getIsNonLocked();
+            this.profileImageUrl = user.getProfileImageUrl();
         }
     }
 }

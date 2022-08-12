@@ -205,6 +205,19 @@ class UserControllerTest {
         }
     }
 
+    private void patchMe(
+            String token, UserDto.ModifyProfileRequest modifyProfileRequest, ExpectedStatus expectedStatus
+    ) throws Exception {
+        long beforeUserCount = userRepository.count();
+        mockMvc.perform(patch("/api/v1/users/me/")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(modifyProfileRequest)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
     private final int pageSize = 15;
     private final int pageNumber = 0;
 
@@ -352,5 +365,12 @@ class UserControllerTest {
         signIn("foo", "fooPassword1!", ExpectedStatus.UNAUTHORIZED);
         deleteMe(adminToken, "admin", ExpectedStatus.BAD_REQUEST);
         signIn("admin", adminPassword, ExpectedStatus.OK);
+    }
+
+    @Test
+    void patchMeTest() throws Exception {
+        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
+        patchMe(token, new UserDto.ModifyProfileRequest(""), ExpectedStatus.OK);
+        patchMe(token, new UserDto.ModifyProfileRequest("bad-url"), ExpectedStatus.BAD_REQUEST);
     }
 }

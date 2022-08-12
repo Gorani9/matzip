@@ -51,16 +51,26 @@ public class UserController {
 
     @GetMapping("/username/{username}/")
     public ResponseEntity<UserDto.Response> getUserByUsername(
+            @CurrentUser User user,
             @PathVariable("username") @Valid @NotBlank String username
     ) {
         return ResponseEntity.ok()
-                .body(userService.findUser(new UserDto.FindRequest(username)));
+                .body(userService.findUser(new UserDto.FindRequest(username), user.getRole()));
     }
 
     @GetMapping("/me/")
     public ResponseEntity<UserDto.Response> getMe(@CurrentUser User user) {
         return ResponseEntity.ok()
-                .body(userService.findUser(new UserDto.FindRequest(user.getUsername())));
+                .body(userService.getMe(user.getUsername()));
+    }
+
+    @PatchMapping("/me/")
+    public ResponseEntity<UserDto.Response> patchMe(
+            @CurrentUser User user,
+            @RequestBody @Valid UserDto.ModifyProfileRequest modifyProfileRequest
+    ) {
+        return ResponseEntity.ok()
+                .body(userService.patchMe(user.getUsername(), modifyProfileRequest));
     }
 
     @DeleteMapping("/me/")

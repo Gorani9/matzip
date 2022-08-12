@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminUserService {
     private final UserRepository userRepository;
 
-    public Page<AdminDto.Response> listUsers(AdminDto.UserListRequest userListRequest) {
+    public Page<AdminDto.UserResponse> listUsers(AdminDto.UserListRequest userListRequest) {
         Pageable pageRequest = PageRequest.of(
                 userListRequest.getPageNumber(),
                 userListRequest.getPageSize(),
@@ -30,10 +30,10 @@ public class AdminUserService {
             users = userRepository.findAll(pageRequest);
         else
             users = userRepository.findAllByRoleEquals(pageRequest, "NORMAL");
-        return users.map(AdminDto.Response::new);
+        return users.map(AdminDto.UserResponse::new);
     }
 
-    public Page<AdminDto.Response> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
+    public Page<AdminDto.UserResponse> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
         PageRequest pageRequest = PageRequest.of(
                 userSearchRequest.getPageNumber(),
                 userSearchRequest.getPageSize(),
@@ -49,11 +49,11 @@ public class AdminUserService {
         else
             users = userRepository
                     .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(pageRequest, userSearchRequest.getUsername(), "NORMAL");
-        return users.map(AdminDto.Response::new);
+        return users.map(AdminDto.UserResponse::new);
     }
 
-    public AdminDto.Response findUserById(Long id) {
-        return new AdminDto.Response(userRepository.findById(id)
+    public AdminDto.UserResponse findUserById(Long id) {
+        return new AdminDto.UserResponse(userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id)));
     }
 

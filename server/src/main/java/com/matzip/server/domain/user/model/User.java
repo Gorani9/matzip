@@ -4,6 +4,7 @@ import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.Column;
@@ -23,6 +24,9 @@ public class User extends BaseTimeEntity {
     private Boolean isNonLocked = true;
 
     private String role = "NORMAL";
+
+    @URL
+    private String profileImageUrl;
 
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
@@ -46,6 +50,12 @@ public class User extends BaseTimeEntity {
 
     public User unlock() {
         this.isNonLocked = true;
+        return this;
+    }
+
+    public User patch(UserDto.ModifyProfileRequest modifyProfileRequest) {
+        if (modifyProfileRequest.getProfileImageUrl() != null)
+            this.profileImageUrl = modifyProfileRequest.getProfileImageUrl();
         return this;
     }
 }

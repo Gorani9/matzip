@@ -74,6 +74,8 @@ public class ImageService {
 
     public void deleteImages(String username, List<String> urls) {
         for (String url : urls) {
+            if (url == null || url.isBlank())
+                continue;
             String key = getKeyFromUrl(url);
             String usernameFromKey = getUsernameFromKey(key);
             if (!usernameFromKey.equals(username))
