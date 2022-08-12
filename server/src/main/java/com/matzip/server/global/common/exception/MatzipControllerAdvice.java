@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import javax.validation.ConstraintViolationException;
 
@@ -28,6 +29,16 @@ public class MatzipControllerAdvice {
         return new ResponseEntity<>(
                 new ErrorResponse(ErrorType.INVALID_REQUEST.getErrorCode(), e.getMessage(),
                         "Validation failed for parameters or request body fields."),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        logger.info(e.getMessage());
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_TOO_LARGE.getErrorCode(), e.getMessage(),
+                        "File too large: 20MB per single file, 100MB per request"),
                 HttpStatus.BAD_REQUEST
         );
     }

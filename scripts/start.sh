@@ -28,6 +28,9 @@ DB_URL=$(aws ssm get-parameters --region ap-northeast-2 --names DB_URL --query P
 DB_USERNAME=$(aws ssm get-parameters --region ap-northeast-2 --names DB_USERNAME --query Parameters[0].Value | sed 's/"//g')
 DB_PASSWORD=$(aws ssm get-parameters --region ap-northeast-2 --names DB_PASSWORD --query Parameters[0].Value | sed 's/"//g')
 ADMIN_PASSWORD=$(aws ssm get-parameters --region ap-northeast-2 --names ADMIN_PASSWORD --query Parameters[0].Value | sed 's/"//g')
+AWS_ACCESS_KEY=$(aws ssm get-parameters --region ap-northeast-2 --names ACCESS_KEY --query Parameters[0].Value | sed 's/"//g')
+AWS_SECRET_ACCESS_KEY=$(aws ssm get-parameters --region ap-northeast-2 --names SECRET_ACCESS_KEY --query Parameters[0].Value | sed 's/"//g')
+AWS_BUCKET_NAME=$(aws ssm get-parameters --region ap-northeast-2 --names BUCKET_NAME --query Parameters[0].Value | sed 's/"//g')
 
 sudo docker build -t spring ./
 sudo docker run -it --name "$IDLE_PROFILE" -d \
@@ -36,4 +39,7 @@ sudo docker run -it --name "$IDLE_PROFILE" -d \
 -e DB_USERNAME="$DB_USERNAME" \
 -e DB_PASSWORD="$DB_PASSWORD" \
 -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+-e AWS_ACCESS_KEY="$AWS_ACCESS_KEY" \
+-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+-e AWS_BUCKET_NAME="$AWS_BUCKET_NAME" \
 -p "$IDLE_PORT":"$IDLE_PORT" spring
