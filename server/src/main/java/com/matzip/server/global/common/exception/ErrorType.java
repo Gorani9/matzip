@@ -7,11 +7,16 @@ public enum ErrorType {
     LOCK_ADMIN_USER(101),
     DELETE_ADMIN_USER(102),
 
+    FILE_TOO_LARGE(900),
+    UNSUPPORTED_FILE_EXTENSION(901),
+
 
     NOT_ALLOWED(3000),
 
     USER_ACCESS_DENIED(3100),
     ADMIN_USER_ACCESS_BY_NORMAL_USER(3101),
+
+    IMAGE_DELETE_BY_UNAUTHORIZED_USER(3900),
 
 
     DATA_NOT_FOUND(4000),
@@ -25,6 +30,9 @@ public enum ErrorType {
 
 
     SERVER_ERROR(10000),
+
+    FILE_UPLOAD_FAIL(10100),
+    FILE_DELETE_FAIL(10101),
     ;
 
     private final int errorCode;
