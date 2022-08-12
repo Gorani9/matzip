@@ -167,8 +167,8 @@ class AdminUserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == ExpectedStatus.OK) {
-            AdminDto.Response response = new AdminDto.Response(userRepository.findById(id).orElseThrow());
-            resultActions.andExpect(content().string(objectMapper.writeValueAsString(response)));
+            AdminDto.UserResponse userResponse = new AdminDto.UserResponse(userRepository.findById(id).orElseThrow());
+            resultActions.andExpect(content().string(objectMapper.writeValueAsString(userResponse)));
         }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);

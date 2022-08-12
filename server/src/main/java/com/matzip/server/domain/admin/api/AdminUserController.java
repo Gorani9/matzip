@@ -21,7 +21,7 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
 
     @GetMapping("/")
-    public ResponseEntity<Page<AdminDto.Response>> getUsers(
+    public ResponseEntity<Page<AdminDto.UserResponse>> getUsers(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue = "false") Boolean withAdmin
@@ -32,7 +32,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/username/")
-    public ResponseEntity<Page<AdminDto.Response>> searchUsersByUsername(
+    public ResponseEntity<Page<AdminDto.UserResponse>> searchUsersByUsername(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam @Valid @Positive Integer pageSize,
             @RequestParam @Valid @NotBlank String username,
@@ -44,7 +44,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}/")
-    public ResponseEntity<AdminDto.Response> getUserById(
+    public ResponseEntity<AdminDto.UserResponse> getUserById(
             @PathVariable("id") @Valid @Positive Long id
     ) {
         return ResponseEntity.ok()

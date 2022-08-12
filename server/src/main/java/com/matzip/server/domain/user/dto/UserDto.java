@@ -5,6 +5,7 @@ import com.matzip.server.domain.user.validation.Password;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
@@ -58,6 +59,13 @@ public class UserDto {
 
     @RequiredArgsConstructor
     @Getter
+    public static class ModifyProfileRequest {
+        @URL
+        private final String profileImageUrl;
+    }
+
+    @RequiredArgsConstructor
+    @Getter
     public static class DuplicateResponse {
         private final Boolean exists;
     }
@@ -72,9 +80,11 @@ public class UserDto {
     @Getter
     public static class Response {
         private final String username;
+        private final String profileImageUrl;
 
         public Response(User user) {
             this.username = user.getUsername();
+            this.profileImageUrl = user.getProfileImageUrl();
         }
     }
 }
