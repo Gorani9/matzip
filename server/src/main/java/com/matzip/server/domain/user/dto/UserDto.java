@@ -41,9 +41,9 @@ public class UserDto {
     @Getter
     @Setter
     public static class PasswordChangeRequest {
-        private String username;
         @Password
         private final String password;
+        private String username;
     }
 
     @RequiredArgsConstructor

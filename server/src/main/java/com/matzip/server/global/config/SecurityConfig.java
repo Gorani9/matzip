@@ -36,17 +36,17 @@ public class SecurityConfig {
     private final UserPrincipalDetailsService userPrincipalDetailsService;
     private final ObjectMapper objectMapper;
 
-    private final String[] GET_WHITELIST = new String[] {
+    private final String[] GET_WHITELIST = new String[]{
             "/ping/",
             "/api/v1/users/exists/",
     };
 
-    private final String[] POST_WHITELIST = new String[] {
+    private final String[] POST_WHITELIST = new String[]{
             "/api/v1/users/",
             "/api/v1/users/login/",
     };
 
-    private final String[] CORS_WHITELIST = new String[] {
+    private final String[] CORS_WHITELIST = new String[]{
             "http://localhost:3000",
             "https://zippy-heliotrope-6168d0.netlify.app",
     };
