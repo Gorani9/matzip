@@ -61,6 +61,8 @@ public class AdminUserService {
     public void lockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
+        if (user.getRole().equals("ADMIN"))
+            throw new LockAdminUserException();
         userRepository.save(user.lock());
     }
 
@@ -68,8 +70,6 @@ public class AdminUserService {
     public void unlockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getRole().equals("ADMIN"))
-            throw new LockAdminUserException();
         userRepository.save(user.unlock());
     }
 
