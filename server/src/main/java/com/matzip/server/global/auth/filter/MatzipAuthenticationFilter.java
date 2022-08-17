@@ -22,20 +22,20 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final ObjectMapper objectMapper;
 
     public MatzipAuthenticationFilter(
-            AuthenticationManager authenticationManager, JwtProvider jwtProvider, ObjectMapper objectMapper
-    ) {
+            AuthenticationManager authenticationManager, JwtProvider jwtProvider, ObjectMapper objectMapper) {
         super(authenticationManager);
         setRequiresAuthenticationRequestMatcher(
-                new AntPathRequestMatcher("/api/v1/users/login/", HttpMethod.POST.name())
-        );
+                new AntPathRequestMatcher("/api/v1/users/login", HttpMethod.POST.name()));
         this.jwtProvider = jwtProvider;
         this.objectMapper = objectMapper;
     }
 
     @Override
     protected void successfulAuthentication(
-            HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult
-    ) throws IOException {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain,
+            Authentication authResult) throws IOException {
         String token = jwtProvider.generateAccessToken(authResult);
         LoginDto.LoginResponse loginResponse = new LoginDto.LoginResponse(authResult.getAuthorities().toString());
         response.addHeader(jwtProvider.getHeader(), token);
@@ -47,25 +47,24 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     @Override
     protected void unsuccessfulAuthentication(
-            HttpServletRequest request, HttpServletResponse response, AuthenticationException failed
-    ) throws IOException, ServletException {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException failed) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     @Override
     public Authentication attemptAuthentication(
-            HttpServletRequest request, HttpServletResponse response
-    ) throws AuthenticationException {
+            HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         LoginDto.LoginRequest parsedRequest;
         try {
             parsedRequest = parseRequest(request);
         } catch (IOException e) {
             throw new com.matzip.server.global.common.exception.IOException();
         }
-        return super.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(
-                parsedRequest.getUsername(), parsedRequest.getPassword()
-        ));
+        return super.getAuthenticationManager().authenticate(
+                new UsernamePasswordAuthenticationToken(parsedRequest.getUsername(), parsedRequest.getPassword()));
     }
 
     private LoginDto.LoginRequest parseRequest(HttpServletRequest request) throws IOException {

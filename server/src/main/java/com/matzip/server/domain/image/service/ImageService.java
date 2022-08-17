@@ -40,8 +40,7 @@ public class ImageService {
 
     private String generateFileName(String username, String originalFileName) {
         String fileName = username + "-" + simpleDateFormat.format(new Date());
-        if (originalFileName == null)
-            return fileName;
+        if (originalFileName == null) return fileName;
         else {
             int extensionIndex = originalFileName.lastIndexOf('.');
             return fileName + originalFileName.substring(extensionIndex);
@@ -59,8 +58,9 @@ public class ImageService {
             objectMetadata.setContentLength(image.getSize());
             String fileName = generateFileName(uploadRequest.getUsername(), image.getOriginalFilename());
             try (InputStream inputStream = image.getInputStream()) {
-                amazonS3Client.putObject(new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata)
-                        .withCannedAcl(CannedAccessControlList.PublicRead));
+                amazonS3Client.putObject(
+                        new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata).withCannedAcl(
+                                CannedAccessControlList.PublicRead));
             } catch (IOException | SdkClientException e) {
                 logger.error(e.getMessage());
                 throw new FileUploadException();
@@ -83,12 +83,10 @@ public class ImageService {
 
     public void deleteImages(String username, List<String> urls) {
         for (String url : urls) {
-            if (url == null || url.isBlank())
-                continue;
+            if (url == null || url.isBlank()) continue;
             String key = getKeyFromUrl(url);
             String usernameFromKey = getUsernameFromKey(key);
-            if (!usernameFromKey.equals(username))
-                throw new ImageDeleteByUnauthorizedUserException();
+            if (!usernameFromKey.equals(username)) throw new ImageDeleteByUnauthorizedUserException();
             try {
                 amazonS3Client.deleteObject(new DeleteObjectRequest(bucketName, key));
             } catch (SdkClientException e) {

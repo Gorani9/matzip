@@ -6,8 +6,7 @@ public enum ExpectedStatus {
     UNAUTHORIZED(401),
     FORBIDDEN(403),
     NOT_FOUND(404),
-    CONFLICT(409)
-    ;
+    CONFLICT(409);
 
     private final int statusCode;
 

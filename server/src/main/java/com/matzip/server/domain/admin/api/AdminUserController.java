@@ -20,53 +20,44 @@ import javax.validation.constraints.PositiveOrZero;
 public class AdminUserController {
     private final AdminUserService adminUserService;
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<Page<AdminDto.UserResponse>> getUsers(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue = "false") Boolean withAdmin
-    ) {
+            @RequestParam(defaultValue="false") Boolean withAdmin) {
         return ResponseEntity.ok()
-                .body(adminUserService.listUsers(
-                        new AdminDto.UserListRequest(pageNumber, pageSize, withAdmin)));
+                .body(adminUserService.listUsers(new AdminDto.UserListRequest(pageNumber, pageSize, withAdmin)));
     }
 
-    @GetMapping("/username/")
+    @GetMapping("/username")
     public ResponseEntity<Page<AdminDto.UserResponse>> searchUsersByUsername(
             @RequestParam @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam @Valid @Positive Integer pageSize,
             @RequestParam @Valid @NotBlank String username,
-            @RequestParam(required = false) Boolean isNonLocked
-    ) {
-        return ResponseEntity.ok()
-                .body(adminUserService.searchUsers(
-                        new AdminDto.UserSearchRequest(pageNumber, pageSize, username, isNonLocked)));
+            @RequestParam(required=false) Boolean isNonLocked) {
+        return ResponseEntity.ok().body(adminUserService.searchUsers(
+                new AdminDto.UserSearchRequest(pageNumber, pageSize, username, isNonLocked)));
     }
 
-    @GetMapping("/{id}/")
-    public ResponseEntity<AdminDto.UserResponse> getUserById(
-            @PathVariable("id") @Valid @Positive Long id
-    ) {
-        return ResponseEntity.ok()
-                .body(adminUserService.findUserById(id));
+    @GetMapping("/{id}")
+    public ResponseEntity<AdminDto.UserResponse> getUserById(@PathVariable("id") @Valid @Positive Long id) {
+        return ResponseEntity.ok().body(adminUserService.findUserById(id));
     }
 
-    @PatchMapping("/{id}/lock/")
-    public ResponseEntity<Object> changeUserLockStatus(
-            @PathVariable("id") @Valid @Positive Long id,
-            @RequestParam(value = "activate", defaultValue = "false") Boolean activate
-    ) {
-        if (activate)
-            adminUserService.lockUser(id);
-        else
-            adminUserService.unlockUser(id);
+    @PostMapping("/{id}/lock")
+    public ResponseEntity<Object> lockUser(@PathVariable("id") @Valid @Positive Long id) {
+        adminUserService.lockUser(id);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}/")
-    public ResponseEntity<Object> deleteUser(
-            @PathVariable("id") @Valid @Positive Long id
-    ) {
+    @DeleteMapping("/{id}/lock")
+    public ResponseEntity<Object> unlockUser(@PathVariable("id") @Valid @Positive Long id) {
+        adminUserService.unlockUser(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteUser(@PathVariable("id") @Valid @Positive Long id) {
         adminUserService.deleteUser(id);
         return ResponseEntity.ok().build();
     }

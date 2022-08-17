@@ -12,11 +12,11 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "user")
+@Table(name="user")
 @RequiredArgsConstructor
 @Getter
 public class User extends BaseTimeEntity {
-    @Column(unique = true)
+    @Column(unique=true)
     private String username;
 
     private String password;

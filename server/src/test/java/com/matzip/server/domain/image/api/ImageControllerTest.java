@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class ImageControllerTest {
@@ -59,9 +59,9 @@ class ImageControllerTest {
 
     private String signUp() throws Exception {
         UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("foo", "fooPassword1!");
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
+        ResultActions resultActions = mockMvc.perform(post("/api/v1/users")
+                                                              .contentType(MediaType.APPLICATION_JSON)
+                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().is(ExpectedStatus.OK.getStatusCode()));
         resultActions.andExpect(header().exists("Authorization"));
         return resultActions.andReturn().getResponse().getHeader("Authorization");
@@ -77,7 +77,7 @@ class ImageControllerTest {
     }
 
     private List<String> uploadImages(String token, List<String> files) throws Exception {
-        MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.POST, "/api/v1/images/");
+        MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.POST, "/api/v1/images");
         for (String file : files) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 File imageFile = new File(file);
@@ -88,8 +88,8 @@ class ImageControllerTest {
             }
         }
         String responseString = mockMvc.perform(builder
-                        .header("Authorization", token)
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                                                        .header("Authorization", token)
+                                                        .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().is(ExpectedStatus.OK.getStatusCode()))
                 .andReturn().getResponse().getContentAsString();
         ImageDto.Response response = objectMapper.readValue(responseString, ImageDto.Response.class);
@@ -101,10 +101,10 @@ class ImageControllerTest {
 
     private void deleteImages(String token, List<String> urls) throws Exception {
         ImageDto.DeleteRequest deleteRequest = new ImageDto.DeleteRequest(urls);
-        mockMvc.perform(delete("/api/v1/images/")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(deleteRequest)))
+        mockMvc.perform(delete("/api/v1/images")
+                                .header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(deleteRequest)))
                 .andExpect(status().isOk());
         for (String url : urls) {
             assertFalse(existsInS3(url));

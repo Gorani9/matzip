@@ -18,10 +18,8 @@ public class UserPrincipalDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username))
-        );
-        if (!user.getIsNonLocked())
-            throw new LockedUserException(user.getUsername());
+                () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username)));
+        if (!user.getIsNonLocked()) throw new LockedUserException(user.getUsername());
         return new UserPrincipal(user);
     }
 }
