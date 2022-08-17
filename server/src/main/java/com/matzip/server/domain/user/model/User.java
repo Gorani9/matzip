@@ -1,5 +1,6 @@
 package com.matzip.server.domain.user.model;
 
+import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class User extends BaseTimeEntity {
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
     }
 
-    public User changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
+    public User changePassword(MeDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
         this.password = passwordEncoder.encode(passwordChangeRequest.getPassword());
         return this;
     }

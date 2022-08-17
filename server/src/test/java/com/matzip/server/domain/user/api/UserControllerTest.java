@@ -1,7 +1,6 @@
 package com.matzip.server.domain.user.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
@@ -18,30 +17,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
@@ -160,90 +149,6 @@ class UserControllerTest {
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
-    private void getMe(String token, String username) throws Exception {
-        long beforeUserCount = userRepository.count();
-        UserDto.Response response = new UserDto.Response(userRepository.findByUsername(username).orElseThrow());
-        mockMvc.perform(get("/api/v1/users/me").header("Authorization", token).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(response)));
-        long afterUserCount = userRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-    }
-
-    private void changePassword(
-            String username, String oldPassword, String newPassword, ExpectedStatus expectedStatus) throws Exception {
-        String token = signIn(username, oldPassword, ExpectedStatus.OK);
-        long beforeUserCount = userRepository.count();
-        UserDto.PasswordChangeRequest passwordChangeRequest = new UserDto.PasswordChangeRequest(newPassword);
-        mockMvc.perform(put("/api/v1/users/me/password").header("Authorization", token)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(passwordChangeRequest)))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (expectedStatus == ExpectedStatus.OK) {
-            signIn(username, oldPassword, ExpectedStatus.UNAUTHORIZED);
-            signIn(username, newPassword, ExpectedStatus.OK);
-        } else {
-            signIn(username, oldPassword, ExpectedStatus.OK);
-            signIn(username, newPassword, ExpectedStatus.UNAUTHORIZED);
-        }
-        long afterUserCount = userRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-    }
-
-    private void deleteMe(String token, String username, ExpectedStatus expectedStatus) throws Exception {
-        long beforeUserCount = userRepository.count();
-        mockMvc.perform(delete("/api/v1/users/me").header("Authorization", token)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterUserCount = userRepository.count();
-        if (expectedStatus == ExpectedStatus.OK) {
-            assertTrue(userRepository.findByUsername(username).isEmpty());
-            assertThat(afterUserCount).isEqualTo(beforeUserCount - 1);
-        } else {
-            assertTrue(userRepository.findByUsername(username).isPresent());
-            assertThat(afterUserCount).isEqualTo(beforeUserCount);
-        }
-    }
-
-    private void patchMe(
-            String token, String filename, String rawProfileString, ExpectedStatus expectedStatus) throws Exception {
-        Optional<String> file = Optional.ofNullable(filename);
-        Optional<String> profileString = Optional.ofNullable(rawProfileString);
-        long beforeUserCount = userRepository.count();
-        MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.PATCH, "/api/v1/users/me");
-        UserDto.Response responseBeforePatch = new UserDto.Response(userRepository.findByUsername("foo").orElseThrow());
-        if (file.isPresent()) {
-            try (InputStream inputStream = new FileInputStream(file.get())) {
-                File imageFile = new File(file.get());
-                String contentType = Files.probeContentType(Path.of(file.get()));
-                builder.file(new MockMultipartFile("profileImage", imageFile.getName(), contentType, inputStream));
-            } catch (IOException e) {
-                System.err.println("Error while putting into multipart " + e.getMessage());
-            }
-        }
-        profileString.ifPresent(s -> builder.file("profileString", s.getBytes()));
-        String content = mockMvc.perform(builder.header("Authorization", token)
-                                                 .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().is(expectedStatus.getStatusCode()))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        if (expectedStatus == ExpectedStatus.OK) {
-            String profileImageUrlFromResponse = JsonPath.read(content, "$.profile_image_url");
-            String profileStringFromResponse = JsonPath.read(content, "$.profile_string");
-            file.ifPresentOrElse(
-                    f -> assertThat(f).isNotEqualTo(profileImageUrlFromResponse),
-                    () -> assertThat(responseBeforePatch.getProfileImageUrl()).isEqualTo(
-                            profileImageUrlFromResponse));
-            profileString.ifPresentOrElse(
-                    s -> assertThat(s).isEqualTo(profileStringFromResponse),
-                    () -> assertThat(responseBeforePatch.getProfileString()).isEqualTo(
-                            profileStringFromResponse));
-        }
-        long afterUserCount = userRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-    }
-
     private MultiValueMap<String, String> pageParameters() {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.put("pageNumber", Collections.singletonList(String.valueOf(pageNumber)));
@@ -346,62 +251,5 @@ class UserControllerTest {
         parameters = pageParameters();
         parameters.put("pageSize", Collections.singletonList("0"));
         searchUsersByUsername(parameters, token, ExpectedStatus.BAD_REQUEST);
-    }
-
-    @Test
-    void getMeTest() throws Exception {
-        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
-        getMe(token, "foo");
-
-        token = signUp("bar", "barPassword1!", ExpectedStatus.OK);
-        getMe(token, "bar");
-    }
-
-    @Test
-    void changePasswordTest() throws Exception {
-        signUp("foo", "fooPassword1!", ExpectedStatus.OK);
-        signUp("bar", "barPassword1!", ExpectedStatus.OK);
-
-        changePassword("foo", "fooPassword1!", "short", ExpectedStatus.BAD_REQUEST);
-        changePassword(
-                "foo",
-                "fooPassword1!",
-                "veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!",
-                ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "noNumeric!", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "noSpecial1", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "no_upper_case1!", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "NO_LOWER_CASE1!", ExpectedStatus.BAD_REQUEST);
-
-        changePassword("foo", "fooPassword1!", "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", ExpectedStatus.OK);
-        changePassword("bar", "barPassword1!", "newPassword1!", ExpectedStatus.OK);
-    }
-
-    @Test
-    void deleteMeTest() throws Exception {
-        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
-        String adminToken = signIn("admin", adminPassword, ExpectedStatus.OK);
-
-        deleteMe(token, "foo", ExpectedStatus.OK);
-        signIn("foo", "fooPassword1!", ExpectedStatus.UNAUTHORIZED);
-        deleteMe(adminToken, "admin", ExpectedStatus.BAD_REQUEST);
-        signIn("admin", adminPassword, ExpectedStatus.OK);
-    }
-
-    @Test
-    void patchMeTest() throws Exception {
-        String token = signUp("foo", "fooPassword1!", ExpectedStatus.OK);
-
-        String dir = "src/test/java/com/matzip/server/domain/user/api/";
-        String testImage = dir + "test-image.jpeg";
-        String profileString = "profile String TEST!!";
-        String longProfileString = "profile String that is exactly 50 characters!!!!!!";
-        String veryLongProfileString = "profile String that is over 50 characters!!!!!!!!!!";
-
-        patchMe(token, testImage, profileString, ExpectedStatus.OK);
-        patchMe(token, null, longProfileString, ExpectedStatus.OK);
-        patchMe(token, testImage, null, ExpectedStatus.OK);
-        patchMe(token, null, null, ExpectedStatus.OK);
-        patchMe(token, null, veryLongProfileString, ExpectedStatus.BAD_REQUEST);
     }
 }

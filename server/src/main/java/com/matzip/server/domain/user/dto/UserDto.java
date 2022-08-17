@@ -4,9 +4,7 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
@@ -39,15 +37,6 @@ public class UserDto {
 
     @RequiredArgsConstructor
     @Getter
-    @Setter
-    public static class PasswordChangeRequest {
-        @Password
-        private final String password;
-        private String username;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
     public static class SearchRequest {
         @PositiveOrZero
         private final Integer pageNumber;
@@ -55,13 +44,6 @@ public class UserDto {
         private final Integer pageSize;
         @NotBlank
         private final String username;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    public static class ModifyProfileRequest {
-        private final MultipartFile profileImage;
-        private final String profileString;
     }
 
     @RequiredArgsConstructor
@@ -79,9 +61,9 @@ public class UserDto {
 
     @Getter
     public static class Response {
-        private final String username;
-        private final String profileImageUrl;
-        private final String profileString;
+        protected final String username;
+        protected final String profileImageUrl;
+        protected final String profileString;
 
         public Response(User user) {
             this.username = user.getUsername();
