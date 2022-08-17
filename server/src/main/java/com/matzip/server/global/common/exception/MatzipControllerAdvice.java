@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import javax.validation.ConstraintViolationException;
 
@@ -27,18 +28,28 @@ public class MatzipControllerAdvice {
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
         logger.info(e.getMessage());
         return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.INVALID_REQUEST.getErrorCode(), e.getMessage(),
-                                  "Validation failed for parameters or request body fields."),
+                new ErrorResponse(ErrorType.INVALID_REQUEST.getErrorCode(), ErrorType.INVALID_REQUEST.name(),
+                                  e.getMessage()),
                 HttpStatus.BAD_REQUEST
         );
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+    public ResponseEntity<ErrorResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         logger.info(e.getMessage());
         return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.FILE_TOO_LARGE.getErrorCode(), e.getMessage(),
-                                  "File too large: 20MB per single file, 100MB per request"),
+                new ErrorResponse(ErrorType.FILE_TOO_LARGE.getErrorCode(), ErrorType.FILE_TOO_LARGE.name(),
+                                  e.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> multipartException(MultipartException e) {
+        logger.info(e.getMessage());
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL.getErrorCode(), ErrorType.FILE_UPLOAD_FAIL.name(),
+                                  e.getMessage()),
                 HttpStatus.BAD_REQUEST
         );
     }
