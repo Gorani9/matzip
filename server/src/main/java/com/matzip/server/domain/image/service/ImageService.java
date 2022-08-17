@@ -6,7 +6,6 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.matzip.server.domain.image.dto.ImageDto;
 import com.matzip.server.domain.image.exception.FileDeleteException;
 import com.matzip.server.domain.image.exception.FileUploadException;
 import com.matzip.server.domain.image.exception.ImageDeleteByUnauthorizedUserException;
@@ -47,28 +46,31 @@ public class ImageService {
         }
     }
 
-    public ImageDto.Response uploadImages(ImageDto.UploadRequest uploadRequest) {
-        ImageDto.Response response = new ImageDto.Response(new LinkedList<>());
-        for (MultipartFile image : uploadRequest.getImages()) {
-            Optional<String> imageContentType = Optional.ofNullable(image.getContentType());
-            if (imageContentType.isEmpty() || !imageContentType.get().contains("image"))
-                throw new UnsupportedFileExtensionException();
-            ObjectMetadata objectMetadata = new ObjectMetadata();
-            objectMetadata.setContentType(imageContentType.get());
-            objectMetadata.setContentLength(image.getSize());
-            String fileName = generateFileName(uploadRequest.getUsername(), image.getOriginalFilename());
-            try (InputStream inputStream = image.getInputStream()) {
-                amazonS3Client.putObject(
-                        new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata).withCannedAcl(
-                                CannedAccessControlList.PublicRead));
-            } catch (IOException | SdkClientException e) {
-                logger.error(e.getMessage());
-                throw new FileUploadException();
-            }
-            String imageUrl = amazonS3Client.getUrl(bucketName, fileName).toString();
-            response.getUrls().add(imageUrl);
+    public List<String> uploadImages(String username, List<MultipartFile> images) {
+        List<String> imageUrls = new LinkedList<>();
+        for (MultipartFile image : images) {
+            imageUrls.add(uploadImage(username, image));
         }
-        return response;
+        return imageUrls;
+    }
+
+    public String uploadImage(String username, MultipartFile image) {
+        Optional<String> imageContentType = Optional.ofNullable(image.getContentType());
+        if (imageContentType.isEmpty() || !imageContentType.get().contains("image"))
+            throw new UnsupportedFileExtensionException();
+        ObjectMetadata objectMetadata = new ObjectMetadata();
+        objectMetadata.setContentType(imageContentType.get());
+        objectMetadata.setContentLength(image.getSize());
+        String fileName = generateFileName(username, image.getOriginalFilename());
+        try (InputStream inputStream = image.getInputStream()) {
+            amazonS3Client.putObject(
+                    new PutObjectRequest(bucketName, fileName, inputStream, objectMetadata).withCannedAcl(
+                            CannedAccessControlList.PublicRead));
+        } catch (IOException | SdkClientException e) {
+            logger.error(e.getMessage());
+            throw new FileUploadException();
+        }
+        return amazonS3Client.getUrl(bucketName, fileName).toString();
     }
 
     private String getUsernameFromKey(String key) {
@@ -83,15 +85,19 @@ public class ImageService {
 
     public void deleteImages(String username, List<String> urls) {
         for (String url : urls) {
-            if (url == null || url.isBlank()) continue;
-            String key = getKeyFromUrl(url);
-            String usernameFromKey = getUsernameFromKey(key);
-            if (!usernameFromKey.equals(username)) throw new ImageDeleteByUnauthorizedUserException();
-            try {
-                amazonS3Client.deleteObject(new DeleteObjectRequest(bucketName, key));
-            } catch (SdkClientException e) {
-                throw new FileDeleteException();
-            }
+            deleteImage(username, url);
+        }
+    }
+
+    public void deleteImage(String username, String url) {
+        if (url == null || url.isBlank()) return;
+        String key = getKeyFromUrl(url);
+        String usernameFromKey = getUsernameFromKey(key);
+        if (!usernameFromKey.equals(username)) throw new ImageDeleteByUnauthorizedUserException();
+        try {
+            amazonS3Client.deleteObject(new DeleteObjectRequest(bucketName, key));
+        } catch (SdkClientException e) {
+            throw new FileDeleteException();
         }
     }
 }

@@ -5,11 +5,13 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -26,7 +28,8 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserDto.Response> signUp(@RequestBody @Valid UserDto.SignUpRequest signUpRequest) {
         UserDto.SignUpResponse signUpResponse = userService.createUser(signUpRequest);
-        return ResponseEntity.ok().header("Authorization", signUpResponse.getToken())
+        return ResponseEntity.ok()
+                .header("Authorization", signUpResponse.getToken())
                 .body(signUpResponse.getResponse());
     }
 
@@ -58,8 +61,13 @@ public class UserController {
 
     @PatchMapping("/me")
     public ResponseEntity<UserDto.Response> patchMe(
-            @CurrentUser User user, @RequestBody @Valid UserDto.ModifyProfileRequest modifyProfileRequest) {
-        return ResponseEntity.ok().body(userService.patchMe(user.getUsername(), modifyProfileRequest));
+            @CurrentUser User user,
+            @RequestPart(required=false) MultipartFile profileImage,
+            @RequestPart(required=false) @Valid @Length(max=50) String profileString) {
+        return ResponseEntity.ok()
+                .body(userService.patchMe(
+                        user.getUsername(),
+                        new UserDto.ModifyProfileRequest(profileImage, profileString)));
     }
 
     @DeleteMapping("/me")

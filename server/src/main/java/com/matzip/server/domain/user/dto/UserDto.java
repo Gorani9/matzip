@@ -5,8 +5,8 @@ import com.matzip.server.domain.user.validation.Password;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.hibernate.validator.constraints.URL;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
@@ -60,8 +60,8 @@ public class UserDto {
     @RequiredArgsConstructor
     @Getter
     public static class ModifyProfileRequest {
-        @URL
-        private final String profileImageUrl;
+        private final MultipartFile profileImage;
+        private final String profileString;
     }
 
     @RequiredArgsConstructor
@@ -81,10 +81,12 @@ public class UserDto {
     public static class Response {
         private final String username;
         private final String profileImageUrl;
+        private final String profileString;
 
         public Response(User user) {
             this.username = user.getUsername();
             this.profileImageUrl = user.getProfileImageUrl();
+            this.profileString = user.getProfileString();
         }
     }
 }

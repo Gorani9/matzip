@@ -28,6 +28,8 @@ public class User extends BaseTimeEntity {
     @URL
     private String profileImageUrl;
 
+    private String profileString;
+
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
@@ -53,9 +55,11 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
-    public User patch(UserDto.ModifyProfileRequest modifyProfileRequest) {
-        if (modifyProfileRequest.getProfileImageUrl() != null)
-            this.profileImageUrl = modifyProfileRequest.getProfileImageUrl();
-        return this;
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setProfileString(String profileString) {
+        this.profileString = profileString;
     }
 }

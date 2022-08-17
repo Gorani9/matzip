@@ -19,8 +19,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,8 +45,10 @@ public class UserService {
             throw new UsernameAlreadyExistsException(signUpRequest.getUsername());
         User user = userRepository.save(new User(signUpRequest, passwordEncoder));
         UserPrincipal userPrincipal = new UserPrincipal(user);
-        String token = jwtProvider.generateAccessToken(
-                new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities()));
+        String token = jwtProvider.generateAccessToken(new MatzipAuthenticationToken(
+                userPrincipal,
+                null,
+                userPrincipal.getAuthorities()));
         return new UserDto.SignUpResponse(new UserDto.Response(user), token);
     }
 
@@ -58,10 +61,14 @@ public class UserService {
     }
 
     public Page<UserDto.Response> searchUsers(UserDto.SearchRequest searchRequest) {
-        PageRequest pageRequest = PageRequest.of(searchRequest.getPageNumber(), searchRequest.getPageSize(),
-                                                 Sort.by("createdAt").ascending());
+        PageRequest pageRequest = PageRequest.of(
+                searchRequest.getPageNumber(),
+                searchRequest.getPageSize(),
+                Sort.by("createdAt").ascending());
         Page<User> users = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(
-                pageRequest, searchRequest.getUsername(), "NORMAL");
+                pageRequest,
+                searchRequest.getUsername(),
+                "NORMAL");
         return users.map(UserDto.Response::new);
     }
 
@@ -87,9 +94,15 @@ public class UserService {
     @Transactional
     public UserDto.Response patchMe(String username, UserDto.ModifyProfileRequest modifyProfileRequest) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (modifyProfileRequest.getProfileImageUrl() != null)
-            imageService.deleteImages(username, Collections.singletonList(user.getProfileImageUrl()));
-        userRepository.save(user.patch(modifyProfileRequest));
+        Optional<MultipartFile> profileImage = Optional.ofNullable(modifyProfileRequest.getProfileImage());
+        Optional<String> profileString = Optional.ofNullable(modifyProfileRequest.getProfileString());
+        profileImage.ifPresent(i -> {
+            String profileImageUrl = imageService.uploadImage(username, i);
+            imageService.deleteImage(username, profileImageUrl);
+            user.setProfileImageUrl(profileImageUrl);
+        });
+        profileString.ifPresent(user::setProfileString);
+        userRepository.save(user);
         return new UserDto.Response(user);
     }
 }
