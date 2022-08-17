@@ -39,22 +39,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class AdminUserControllerTest {
+    private final int pageSize = 15;
+    private final int pageNumber = 0;
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     @Value("${admin-password}")
     private String adminPassword;
 
@@ -75,9 +73,8 @@ class AdminUserControllerTest {
     private String signUp(String username, String password) throws Exception {
         long beforeUserCount = userRepository.count();
         UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
+        ResultActions resultActions = mockMvc.perform(post("/api/v1/users").contentType(MediaType.APPLICATION_JSON)
+                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().is(ExpectedStatus.OK.getStatusCode()));
         long afterUserCount = userRepository.count();
         resultActions.andExpect(header().exists("Authorization"));
@@ -87,13 +84,12 @@ class AdminUserControllerTest {
     }
 
     private String signIn(
-            String username, String password, String expectedRole, ExpectedStatus expectedStatus
-    ) throws Exception {
+            String username, String password, String expectedRole, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         LoginDto.LoginRequest signUpRequest = new LoginDto.LoginRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/login/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
+        ResultActions resultActions = mockMvc.perform(
+                        post("/api/v1/users/login").contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(signUpRequest)))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
@@ -108,14 +104,11 @@ class AdminUserControllerTest {
     }
 
     private void getUsers(
-            MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus
-    ) throws Exception {
+            MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        ResultActions resultActions = mockMvc.perform(get("/api/v1/admin/users/")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .params(parameters))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
+        ResultActions resultActions = mockMvc.perform(
+                get("/api/v1/admin/users").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+                        .params(parameters)).andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == ExpectedStatus.OK) {
             if (parameters.getOrDefault("withAdmin", List.of()).contains("true")) {
                 resultActions.andExpect(jsonPath("$.total_elements").value(beforeUserCount));
@@ -130,28 +123,31 @@ class AdminUserControllerTest {
     }
 
     private void searchUsersByUsername(
-            MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus
-    ) throws Exception {
+            MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        ResultActions resultActions = mockMvc.perform(get("/api/v1/admin/users/username/")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .params(parameters))
+        ResultActions resultActions = mockMvc.perform(get("/api/v1/admin/users/username").header("Authorization", token)
+                                                              .contentType(MediaType.APPLICATION_JSON)
+                                                              .params(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
         if (expectedStatus == ExpectedStatus.OK) {
             long count;
             if (!parameters.containsKey("isNonLocked")) {
-                count = userRepository
-                        .findAllByUsernameContainsIgnoreCase(pageable, parameters.getFirst("username"))
+                count = userRepository.findAllByUsernameContainsIgnoreCase(pageable, parameters.getFirst("username"))
                         .getTotalElements();
             } else if (Objects.equals(parameters.getFirst("isNonLocked"), "true")) {
-                count = userRepository
-                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(pageable, parameters.getFirst("username"), "NORMAL")
+                count = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(
+                                pageable,
+                                parameters.getFirst(
+                                        "username"),
+                                "NORMAL")
                         .getTotalElements();
             } else {
-                count = userRepository
-                        .findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(pageable, parameters.getFirst("username"), "NORMAL")
+                count = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(
+                                pageable,
+                                parameters.getFirst(
+                                        "username"),
+                                "NORMAL")
                         .getTotalElements();
             }
             resultActions.andExpect(jsonPath("$.total_elements").value(count));
@@ -162,9 +158,8 @@ class AdminUserControllerTest {
 
     private void getUserById(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        ResultActions resultActions = mockMvc.perform(get("/api/v1/admin/users/" + id + "/")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON))
+        ResultActions resultActions = mockMvc.perform(
+                        get("/api/v1/admin/users/" + id).header("Authorization", token).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == ExpectedStatus.OK) {
             AdminDto.UserResponse userResponse = new AdminDto.UserResponse(userRepository.findById(id).orElseThrow());
@@ -174,25 +169,33 @@ class AdminUserControllerTest {
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
-    private void changeUserLockStatus(
-            MultiValueMap<String, String> parameters, String token, Long id, ExpectedStatus expectedStatus
-    ) throws Exception {
+    private void lockUser(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         User beforeUser = userRepository.findById(id).orElse(null);
-        mockMvc.perform(patch("/api/v1/admin/users/" + id + "/lock/")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .params(parameters))
+        mockMvc.perform(post("/api/v1/admin/users/" + id + "/lock").header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (beforeUser == null)
-            return;
+        if (beforeUser == null) return;
         User afterUser = userRepository.findById(id).orElseThrow();
         if (expectedStatus == ExpectedStatus.OK) {
-            if (parameters.getOrDefault("activate", List.of()).contains("true")) {
-                assertFalse(afterUser.getIsNonLocked());
-            } else {
-                assertTrue(afterUser.getIsNonLocked());
-            }
+            assertFalse(afterUser.getIsNonLocked());
+        } else {
+            assertThat(beforeUser.getRole()).isEqualTo(afterUser.getRole());
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private void unlockUser(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        User beforeUser = userRepository.findById(id).orElse(null);
+        mockMvc.perform(delete("/api/v1/admin/users/" + id + "/lock").header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (beforeUser == null) return;
+        User afterUser = userRepository.findById(id).orElseThrow();
+        if (expectedStatus == ExpectedStatus.OK) {
+            assertTrue(afterUser.getIsNonLocked());
         } else {
             assertThat(beforeUser.getRole()).isEqualTo(afterUser.getRole());
         }
@@ -202,37 +205,24 @@ class AdminUserControllerTest {
 
     private void deleteUser(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        mockMvc.perform(delete("/api/v1/admin/users/" + id + "/")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete("/api/v1/admin/users/" + id).header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         long afterUserCount = userRepository.count();
         if (expectedStatus == ExpectedStatus.OK) {
             assertTrue(userRepository.findById(id).isEmpty());
             assertThat(afterUserCount).isEqualTo(beforeUserCount - 1);
         } else if (expectedStatus != ExpectedStatus.FORBIDDEN) {
-            if (expectedStatus == ExpectedStatus.NOT_FOUND)
-                assertTrue(userRepository.findById(id).isEmpty());
-            else
-                assertTrue(userRepository.findById(id).isPresent());
+            if (expectedStatus == ExpectedStatus.NOT_FOUND) assertTrue(userRepository.findById(id).isEmpty());
+            else assertTrue(userRepository.findById(id).isPresent());
             assertThat(afterUserCount).isEqualTo(beforeUserCount);
         }
     }
-
-    private final int pageSize = 15;
-    private final int pageNumber = 0;
 
     private MultiValueMap<String, String> pageParameters() {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.put("pageNumber", Collections.singletonList(String.valueOf(pageNumber)));
         parameters.put("pageSize", Collections.singletonList(String.valueOf(pageSize)));
-        return parameters;
-    }
-
-    private MultiValueMap<String, String> makeParameters(String key, String value) {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        if (key != null)
-            parameters.put(key, Collections.singletonList(value));
         return parameters;
     }
 
@@ -247,9 +237,8 @@ class AdminUserControllerTest {
         getUserById(normalToken, 2L, ExpectedStatus.FORBIDDEN);
         getUserById(normalToken, 100L, ExpectedStatus.FORBIDDEN);
 
-        changeUserLockStatus(makeParameters("activate", "true"), normalToken, 0L, ExpectedStatus.FORBIDDEN);
-        changeUserLockStatus(makeParameters("activate", "false"), normalToken, 0L, ExpectedStatus.FORBIDDEN);
-        changeUserLockStatus(makeParameters(null, null), normalToken, 0L, ExpectedStatus.FORBIDDEN);
+        lockUser(normalToken, 0L, ExpectedStatus.FORBIDDEN);
+        unlockUser(normalToken, 0L, ExpectedStatus.FORBIDDEN);
 
         deleteUser(normalToken, 0L, ExpectedStatus.FORBIDDEN);
         deleteUser(normalToken, 1L, ExpectedStatus.FORBIDDEN);
@@ -339,27 +328,25 @@ class AdminUserControllerTest {
         signUp("foo", "fooPassword1!");
         Long fooId = userRepository.findByUsername("foo").orElseThrow().getId();
 
-        changeUserLockStatus(makeParameters("activate", "true"), adminToken, fooId, ExpectedStatus.OK);
+        lockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters("activate", "false"), adminToken, fooId, ExpectedStatus.OK);
+        unlockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.OK);
-        changeUserLockStatus(makeParameters("activate", "false"), adminToken, fooId, ExpectedStatus.OK);
+        unlockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.OK);
-        changeUserLockStatus(makeParameters("activate", "true"), adminToken, fooId, ExpectedStatus.OK);
+        lockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters("activate", "true"), adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
+        lockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters("activate", "false"), adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
+        unlockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters("activate", "false"), adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
+        unlockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters("activate", "true"), adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
+        lockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
-        changeUserLockStatus(makeParameters(null, null), adminToken, fooId, ExpectedStatus.OK);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.OK);
 
         Long adminId = userRepository.findByUsername("admin").orElseThrow().getId();
-        changeUserLockStatus(makeParameters("activate", "false"), adminToken, adminId, ExpectedStatus.BAD_REQUEST);
+        lockUser(adminToken, adminId, ExpectedStatus.BAD_REQUEST);
         signIn("admin", adminPassword, "ADMIN", ExpectedStatus.OK);
     }
 

@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 class PingPongControllerTest {
@@ -23,7 +23,7 @@ class PingPongControllerTest {
 
     @Test
     void pingTest() throws Exception {
-        mockMvc.perform(get("/ping/"))
+        mockMvc.perform(get("/ping"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("pong"));
     }

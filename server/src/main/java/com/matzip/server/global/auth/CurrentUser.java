@@ -10,6 +10,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(PARAMETER)
 @Retention(RUNTIME)
-@AuthenticationPrincipal(expression = "user")
+@AuthenticationPrincipal(expression="user")
 public @interface CurrentUser {
 }

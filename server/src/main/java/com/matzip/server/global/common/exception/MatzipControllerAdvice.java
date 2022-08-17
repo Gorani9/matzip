@@ -14,7 +14,7 @@ import javax.validation.ConstraintViolationException;
 public class MatzipControllerAdvice {
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    @ExceptionHandler(value = InvalidRequestException.class)
+    @ExceptionHandler(value=InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> badRequest(MatzipException e) {
         logger.info(e.detail);
         return new ResponseEntity<>(
@@ -23,12 +23,12 @@ public class MatzipControllerAdvice {
         );
     }
 
-    @ExceptionHandler(value = ConstraintViolationException.class)
+    @ExceptionHandler(value=ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
         logger.info(e.getMessage());
         return new ResponseEntity<>(
                 new ErrorResponse(ErrorType.INVALID_REQUEST.getErrorCode(), e.getMessage(),
-                        "Validation failed for parameters or request body fields."),
+                                  "Validation failed for parameters or request body fields."),
                 HttpStatus.BAD_REQUEST
         );
     }
@@ -38,12 +38,12 @@ public class MatzipControllerAdvice {
         logger.info(e.getMessage());
         return new ResponseEntity<>(
                 new ErrorResponse(ErrorType.FILE_TOO_LARGE.getErrorCode(), e.getMessage(),
-                        "File too large: 20MB per single file, 100MB per request"),
+                                  "File too large: 20MB per single file, 100MB per request"),
                 HttpStatus.BAD_REQUEST
         );
     }
 
-    @ExceptionHandler(value = NotAllowedException.class)
+    @ExceptionHandler(value=NotAllowedException.class)
     public ResponseEntity<ErrorResponse> notAllowed(MatzipException e) {
         logger.info(e.detail);
         return new ResponseEntity<>(
@@ -52,7 +52,7 @@ public class MatzipControllerAdvice {
         );
     }
 
-    @ExceptionHandler(value = DataNotFoundException.class)
+    @ExceptionHandler(value=DataNotFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(MatzipException e) {
         logger.info(e.detail);
         return new ResponseEntity<>(
@@ -61,7 +61,7 @@ public class MatzipControllerAdvice {
         );
     }
 
-    @ExceptionHandler(value = ConflictException.class)
+    @ExceptionHandler(value=ConflictException.class)
     public ResponseEntity<ErrorResponse> conflict(MatzipException e) {
         logger.info(e.detail);
         return new ResponseEntity<>(
@@ -70,7 +70,7 @@ public class MatzipControllerAdvice {
         );
     }
 
-    @ExceptionHandler(value = ServerErrorException.class)
+    @ExceptionHandler(value=ServerErrorException.class)
     public ResponseEntity<ErrorResponse> serverError(MatzipException e) {
         logger.info(e.detail);
         return new ResponseEntity<>(

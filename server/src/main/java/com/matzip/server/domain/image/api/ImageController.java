@@ -20,19 +20,16 @@ import java.util.List;
 public class ImageController {
     private final ImageService imageService;
 
-    @PostMapping("/")
+    @PostMapping
     ResponseEntity<ImageDto.Response> uploadImages(
-            @CurrentUser User user,
-            @RequestPart List<MultipartFile> images
-    ) {
+            @CurrentUser User user, @RequestPart List<MultipartFile> images) {
         return ResponseEntity.ok()
                 .body(imageService.uploadImages(new ImageDto.UploadRequest(user.getUsername(), images)));
     }
 
-    @DeleteMapping("/")
+    @DeleteMapping
     ResponseEntity<Object> deleteImages(
-            @CurrentUser User user,
-            @RequestBody @Valid ImageDto.DeleteRequest deleteRequest) {
+            @CurrentUser User user, @RequestBody @Valid ImageDto.DeleteRequest deleteRequest) {
         imageService.deleteImages(user.getUsername(), deleteRequest.getUrls());
         return ResponseEntity.ok().build();
     }

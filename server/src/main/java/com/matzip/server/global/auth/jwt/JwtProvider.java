@@ -37,9 +37,7 @@ public final class JwtProvider {
     }
 
     private Claims getClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(removeTokenPrefix(token)).getBody();
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(removeTokenPrefix(token)).getBody();
     }
 
     private String getSubjectFromToken(String token) {
@@ -56,12 +54,9 @@ public final class JwtProvider {
         claims.put("roles", authentication.getAuthorities());
         Date now = new Date();
         long accessTokenValidTime = 2 * 60 * 60 * 1000L;
-        return tokenPrefix + Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
+        return tokenPrefix + Jwts.builder().setClaims(claims).setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + accessTokenValidTime))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
+                .signWith(SignatureAlgorithm.HS256, secretKey).compact();
     }
 
     public boolean validateToken(String token) {

@@ -17,10 +17,7 @@ public class MatzipAuthenticationToken extends AbstractAuthenticationToken {
      *                    represented by this authentication object.
      */
     public MatzipAuthenticationToken(
-            UserDetails userPrincipal,
-            Object accessToken,
-            Collection<? extends GrantedAuthority> authorities
-    ) {
+            UserDetails userPrincipal, Object accessToken, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         super.setAuthenticated(authorities != null);
         this.userPrincipal = userPrincipal;
