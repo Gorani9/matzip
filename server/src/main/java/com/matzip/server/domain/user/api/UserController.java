@@ -3,6 +3,7 @@ package com.matzip.server.domain.user.api;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
+import com.matzip.server.domain.user.validation.UserProperty;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,11 +40,18 @@ public class UserController {
 
     @GetMapping("/username")
     public ResponseEntity<Page<UserDto.Response>> searchUsersByUsername(
-            @RequestParam @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
+            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="true") Boolean ascending,
             @RequestParam @Valid @NotBlank String username) {
         return ResponseEntity.ok()
-                .body(userService.searchUsers(new UserDto.SearchRequest(pageNumber, pageSize, username)));
+                .body(userService.searchUsers(new UserDto.SearchRequest(
+                        pageNumber,
+                        pageSize,
+                        sortedBy,
+                        ascending,
+                        username)));
     }
 
     @GetMapping("/username/{username}")

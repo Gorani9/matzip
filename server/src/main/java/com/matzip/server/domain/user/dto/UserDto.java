@@ -2,11 +2,13 @@ package com.matzip.server.domain.user.dto;
 
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
+import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
@@ -44,6 +46,10 @@ public class UserDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
+        @UserProperty
+        private final String sortedBy;
+        @NotNull
+        private final Boolean ascending;
         @NotBlank
         private final String username;
     }

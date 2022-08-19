@@ -2,6 +2,7 @@ package com.matzip.server.domain.admin.api;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.admin.service.AdminUserService;
+import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -22,21 +23,30 @@ public class AdminUserController {
 
     @GetMapping
     public ResponseEntity<Page<AdminDto.UserResponse>> getUsers(
-            @RequestParam @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
+            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="true") Boolean ascending,
             @RequestParam(defaultValue="false") Boolean withAdmin) {
         return ResponseEntity.ok()
-                .body(adminUserService.listUsers(new AdminDto.UserListRequest(pageNumber, pageSize, withAdmin)));
+                .body(adminUserService.listUsers(new AdminDto.UserListRequest(
+                        pageNumber,
+                        pageSize,
+                        sortedBy,
+                        ascending,
+                        withAdmin)));
     }
 
     @GetMapping("/username")
     public ResponseEntity<Page<AdminDto.UserResponse>> searchUsersByUsername(
-            @RequestParam @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
+            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
+            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="true") Boolean ascending,
             @RequestParam @Valid @NotBlank String username,
             @RequestParam(required=false) Boolean isNonLocked) {
         return ResponseEntity.ok().body(adminUserService.searchUsers(
-                new AdminDto.UserSearchRequest(pageNumber, pageSize, username, isNonLocked)));
+                new AdminDto.UserSearchRequest(pageNumber, pageSize, sortedBy, ascending, username, isNonLocked)));
     }
 
     @GetMapping("/{id}")

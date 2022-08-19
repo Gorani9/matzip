@@ -2,6 +2,7 @@ package com.matzip.server.domain.admin.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
+import com.matzip.server.Parameters;
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
@@ -24,13 +25,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.matzip.server.ExpectedStatus.BAD_REQUEST;
+import static com.matzip.server.ExpectedStatus.OK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -219,18 +220,11 @@ class AdminUserControllerTest {
         }
     }
 
-    private MultiValueMap<String, String> pageParameters() {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.put("pageNumber", Collections.singletonList(String.valueOf(pageNumber)));
-        parameters.put("pageSize", Collections.singletonList(String.valueOf(pageSize)));
-        return parameters;
-    }
-
     @Test
     void accessAdminApiTest() throws Exception {
         String normalToken = signUp("foo", "fooPassword1!");
 
-        getUsers(pageParameters(), normalToken, ExpectedStatus.FORBIDDEN);
+        getUsers(new Parameters(), normalToken, ExpectedStatus.FORBIDDEN);
 
         getUserById(normalToken, 0L, ExpectedStatus.FORBIDDEN);
         getUserById(normalToken, 1L, ExpectedStatus.FORBIDDEN);
@@ -256,19 +250,39 @@ class AdminUserControllerTest {
         signUp("foo5", "fooPassword1!");
         signUp("foo6", "fooPassword1!");
 
-        MultiValueMap<String, String> parameters = pageParameters();
+        Parameters parameters = new Parameters();
         getUsers(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("withAdmin", Collections.singletonList("false"));
+        parameters.putParameter("withAdmin", "false");
         getUsers(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("withAdmin", Collections.singletonList("true"));
+        parameters.putParameter("withAdmin", "true");
         getUsers(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("withAdmin", Collections.singletonList("Boolean"));
+        parameters.putParameter("ascending", "boolean");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("ascending", "false");
+        getUsers(parameters, adminToken, OK);
+        parameters.putParameter("ascending", "true");
+        getUsers(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "username");
+        getUsers(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "createdAt");
+        getUsers(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "matzipLevel");
+        getUsers(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "modifiedAt");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "id");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "password");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "role");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "profileString");
+        getUsers(parameters, adminToken, BAD_REQUEST);
+        parameters = new Parameters();
+        parameters.putParameter("withAdmin", "bool");
         getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
-
-        parameters.put("pageNumber", Collections.singletonList("-1"));
-        getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
-        parameters = pageParameters();
-        parameters.put("pageSize", Collections.singletonList("0"));
+        parameters = new Parameters();
+        parameters.putParameter("pageSize", "0");
         getUsers(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
     }
 
@@ -285,27 +299,49 @@ class AdminUserControllerTest {
         signUp("foo7", "fooPassword1!");
         signUp("foo8", "fooPassword1!");
 
-        MultiValueMap<String, String> parameters = pageParameters();
-        parameters.put("username", Collections.singletonList("foo"));
+        Parameters parameters = new Parameters();
+        parameters.putParameter("username", "foo");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("isNonLocked", Collections.singletonList("true"));
+        parameters.putParameter("username", "true");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("isNonLocked", Collections.singletonList("false"));
+        parameters.putParameter("username", "false");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.OK);
-        parameters.put("username", Collections.singletonList("bar"));
+        parameters.putParameter("username", "bar");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.OK);
-
-        parameters.put("pageNumber", Collections.singletonList("-1"));
+        parameters.putParameter("ascending", "boolean");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("ascending", "false");
+        searchUsersByUsername(parameters, adminToken, OK);
+        parameters.putParameter("ascending", "true");
+        searchUsersByUsername(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "username");
+        searchUsersByUsername(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "createdAt");
+        searchUsersByUsername(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "matzipLevel");
+        searchUsersByUsername(parameters, adminToken, OK);
+        parameters.putParameter("sortedBy", "modifiedAt");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "id");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "password");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "role");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters.putParameter("sortedBy", "profileString");
+        searchUsersByUsername(parameters, adminToken, BAD_REQUEST);
+        parameters = new Parameters();
+        parameters.putParameter("pageNumber", "-1");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
-        parameters = pageParameters();
-        parameters.put("username", Collections.singletonList("foo"));
-        parameters.put("pageSize", Collections.singletonList("0"));
+        parameters = new Parameters();
+        parameters.putParameter("username", "foo");
+        parameters.putParameter("pageSize", "0");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
-        parameters = pageParameters();
+        parameters = new Parameters();
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
-        parameters = pageParameters();
-        parameters.put("username", Collections.singletonList("foo"));
-        parameters.put("isNonLocked", Collections.singletonList("bool"));
+        parameters = new Parameters();
+        parameters.putParameter("username", "foo");
+        parameters.putParameter("isNonLocked", "bool");
         searchUsersByUsername(parameters, adminToken, ExpectedStatus.BAD_REQUEST);
     }
 

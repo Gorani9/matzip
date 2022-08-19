@@ -12,6 +12,7 @@ import com.matzip.server.global.auth.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,12 +54,12 @@ public class UserService {
     }
 
     public Page<UserDto.Response> searchUsers(UserDto.SearchRequest searchRequest) {
-        PageRequest pageRequest = PageRequest.of(
-                searchRequest.getPageNumber(),
-                searchRequest.getPageSize(),
-                Sort.by("createdAt").ascending());
+        Sort sort = searchRequest.getAscending() ?
+                    Sort.by(searchRequest.getSortedBy()).ascending() :
+                    Sort.by(searchRequest.getSortedBy());
+        Pageable pageable = PageRequest.of(searchRequest.getPageNumber(), searchRequest.getPageSize(), sort);
         Page<User> users = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(
-                pageRequest,
+                pageable,
                 searchRequest.getUsername(),
                 "NORMAL");
         return users.map(UserDto.Response::new);

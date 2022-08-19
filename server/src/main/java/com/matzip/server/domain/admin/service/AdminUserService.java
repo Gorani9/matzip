@@ -21,27 +21,31 @@ public class AdminUserService {
     private final UserRepository userRepository;
 
     public Page<AdminDto.UserResponse> listUsers(AdminDto.UserListRequest userListRequest) {
-        Pageable pageRequest = PageRequest.of(userListRequest.getPageNumber(), userListRequest.getPageSize(),
-                                              Sort.by("id").ascending());
+        Sort sort = userListRequest.getAscending() ?
+                    Sort.by(userListRequest.getSortedBy()).ascending() :
+                    Sort.by(userListRequest.getSortedBy());
+        Pageable pageable = PageRequest.of(userListRequest.getPageNumber(), userListRequest.getPageSize(), sort);
         Page<User> users;
-        if (userListRequest.getWithAdmin()) users = userRepository.findAll(pageRequest);
-        else users = userRepository.findAllByRoleEquals(pageRequest, "NORMAL");
+        if (userListRequest.getWithAdmin()) users = userRepository.findAll(pageable);
+        else users = userRepository.findAllByRoleEquals(pageable, "NORMAL");
         return users.map(AdminDto.UserResponse::new);
     }
 
     public Page<AdminDto.UserResponse> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
-        PageRequest pageRequest = PageRequest.of(userSearchRequest.getPageNumber(), userSearchRequest.getPageSize(),
-                                                 Sort.by("id").ascending());
+        Sort sort = userSearchRequest.getAscending() ?
+                    Sort.by(userSearchRequest.getSortedBy()).ascending() :
+                    Sort.by(userSearchRequest.getSortedBy());
+        Pageable pageable = PageRequest.of(userSearchRequest.getPageNumber(), userSearchRequest.getPageSize(), sort);
         Page<User> users;
         if (userSearchRequest.getIsNonLocked() == null)
-            users = userRepository.findAllByUsernameContainsIgnoreCase(pageRequest, userSearchRequest.getUsername());
+            users = userRepository.findAllByUsernameContainsIgnoreCase(pageable, userSearchRequest.getUsername());
         else if (userSearchRequest.getIsNonLocked())
             users = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(
-                    pageRequest,
+                    pageable,
                     userSearchRequest.getUsername(),
                     "NORMAL");
         else users = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedFalseAndRoleEquals(
-                    pageRequest,
+                    pageable,
                     userSearchRequest.getUsername(),
                     "NORMAL");
         return users.map(AdminDto.UserResponse::new);
