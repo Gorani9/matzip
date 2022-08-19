@@ -34,10 +34,10 @@ public class User extends BaseTimeEntity {
     private Integer matzipLevel = 0;
 
     @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Follow> followers;
+    private final List<Follow> followers = List.of();
 
     @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Follow> followings;
+    private final List<Follow> followings = List.of();
 
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();

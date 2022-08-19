@@ -27,7 +27,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional(readOnly=true)
 public class MeService {
-
     private final UserRepository userRepository;
 
     private final FollowRepository followRepository;

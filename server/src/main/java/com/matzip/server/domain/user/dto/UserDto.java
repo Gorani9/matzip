@@ -12,8 +12,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
-import java.util.List;
-import java.util.Optional;
 
 @Validated
 public class UserDto {
@@ -68,8 +66,8 @@ public class UserDto {
             this.profileImageUrl = user.getProfileImageUrl();
             this.profileString = user.getProfileString();
             this.matzipLevel = user.getMatzipLevel();
-            this.numberOfFollowers = Optional.ofNullable(user.getFollowers()).orElse(List.of()).size();
-            this.numberOfFollowings = Optional.ofNullable(user.getFollowings()).orElse(List.of()).size();
+            this.numberOfFollowers = user.getFollowers().size();
+            this.numberOfFollowings = user.getFollowings().size();
         }
     }
 }
