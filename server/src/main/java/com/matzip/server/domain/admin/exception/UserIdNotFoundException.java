@@ -4,6 +4,6 @@ import com.matzip.server.domain.user.exception.UserNotFoundException;
 
 public class UserIdNotFoundException extends UserNotFoundException {
     public UserIdNotFoundException(Long id) {
-        super("id " + id);
+        super("id '" + id + "'");
     }
 }

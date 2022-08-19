@@ -3,6 +3,10 @@ package com.matzip.server.global.auth.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.global.auth.dto.LoginDto;
 import com.matzip.server.global.auth.jwt.JwtProvider;
+import com.matzip.server.global.common.exception.ErrorResponse;
+import com.matzip.server.global.common.exception.ErrorType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
 
@@ -51,6 +57,13 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             HttpServletResponse response,
             AuthenticationException failed) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
+        logger.error("Unsuccessful Authentication: " + failed.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_ACCESS_DENIED.getErrorCode(),
+                                                        ErrorType.USER_ACCESS_DENIED.name(),
+                                                        failed.getMessage());
+        response.setContentType("application/json");
+        response.setCharacterEncoding("utf-8");
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 

@@ -1,19 +1,20 @@
 package com.matzip.server.domain.user.model;
 
+import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name="user")
-@RequiredArgsConstructor
+@NoArgsConstructor
 @Getter
 public class User extends BaseTimeEntity {
     @Column(unique=true)
@@ -28,12 +29,27 @@ public class User extends BaseTimeEntity {
     @URL
     private String profileImageUrl;
 
+    private String profileString;
+
+    private Integer matzipLevel = 0;
+
+    @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<Follow> followers = List.of();
+
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<Follow> followings = List.of();
+
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
     }
 
-    public User changePassword(UserDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
+    public User changeUsername(MeDto.UsernameChangeRequest usernameChangeRequest) {
+        this.username = usernameChangeRequest.getUsername();
+        return this;
+    }
+
+    public User changePassword(MeDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
         this.password = passwordEncoder.encode(passwordChangeRequest.getPassword());
         return this;
     }
@@ -53,9 +69,15 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
-    public User patch(UserDto.ModifyProfileRequest modifyProfileRequest) {
-        if (modifyProfileRequest.getProfileImageUrl() != null)
-            this.profileImageUrl = modifyProfileRequest.getProfileImageUrl();
-        return this;
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setProfileString(String profileString) {
+        this.profileString = profileString;
+    }
+
+    public void levelUp() {
+        this.matzipLevel++;
     }
 }

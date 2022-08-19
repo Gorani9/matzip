@@ -7,14 +7,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Constraint(validatedBy=PasswordValidator.class)
-@Target(FIELD)
+@Constraint(validatedBy=UsernameValidator.class)
+@Target({FIELD, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-public @interface Password {
-    String message() default "Invalid Password";
+public @interface Username {
+    String message() default "Invalid Username";
 
     Class<?>[] groups() default {};
 

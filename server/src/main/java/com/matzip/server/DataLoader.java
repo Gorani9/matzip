@@ -28,5 +28,9 @@ public class DataLoader implements ApplicationRunner {
             User user = new User(signUpRequest, passwordEncoder);
             userRepository.save(user.toAdmin());
         }
+        if (userRepository.findByUsername("qwer").isEmpty()) {
+            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("qwer", adminPassword);
+            userRepository.save(new User(signUpRequest, passwordEncoder));
+        }
     }
 }

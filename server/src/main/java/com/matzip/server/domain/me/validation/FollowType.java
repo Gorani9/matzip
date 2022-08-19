@@ -1,20 +1,23 @@
-package com.matzip.server.domain.user.validation;
+package com.matzip.server.domain.me.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
+import javax.validation.constraints.NotBlank;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Constraint(validatedBy=PasswordValidator.class)
-@Target(FIELD)
+@Constraint(validatedBy=FollowTypeValidator.class)
+@Target({PARAMETER, FIELD})
 @Retention(RUNTIME)
 @Documented
-public @interface Password {
-    String message() default "Invalid Password";
+@NotBlank
+public @interface FollowType {
+    String message() default "Invalid Follow Type";
 
     Class<?>[] groups() default {};
 
