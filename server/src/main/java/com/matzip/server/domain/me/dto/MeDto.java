@@ -5,9 +5,9 @@ import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
 import com.matzip.server.domain.user.validation.UserProperty;
+import com.matzip.server.domain.user.validation.Username;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,11 +21,18 @@ import java.time.LocalDateTime;
 public class MeDto {
     @RequiredArgsConstructor
     @Getter
-    @Setter
     public static class PasswordChangeRequest {
         @Password
         private final String password;
     }
+
+    @RequiredArgsConstructor
+    @Getter
+    public static class UsernameChangeRequest {
+        @Username
+        private final String username;
+    }
+
 
     @RequiredArgsConstructor
     @Getter

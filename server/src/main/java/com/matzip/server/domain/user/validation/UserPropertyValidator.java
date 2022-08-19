@@ -8,11 +8,11 @@ import javax.validation.ConstraintValidatorContext;
 
 @Component
 public class UserPropertyValidator implements ConstraintValidator<UserProperty, String> {
+    private static final String nullMessage = "No Property is given.";
     private static final String violationMessage = "This property is not allowed to be used in sort.";
 
     @Override
-    public void initialize(UserProperty constraintAnnotation) {
-    }
+    public void initialize(UserProperty constraintAnnotation) {}
 
     @Override
     public boolean isValid(String property, ConstraintValidatorContext context) {
@@ -29,6 +29,10 @@ public class UserPropertyValidator implements ConstraintValidator<UserProperty, 
                 context.buildConstraintViolationWithTemplate(violationMessage).addConstraintViolation();
                 return false;
             } else return true;
+        } catch (NullPointerException e) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(nullMessage).addConstraintViolation();
+            return false;
         }
     }
 }

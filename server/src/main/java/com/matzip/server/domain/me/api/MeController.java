@@ -49,11 +49,16 @@ public class MeController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/username")
+    public ResponseEntity<MeDto.Response> changeUsername(
+            @CurrentUser User user, @RequestBody @Valid MeDto.UsernameChangeRequest usernameChangeRequest) {
+        return ResponseEntity.ok().body(meService.changeUsername(user.getUsername(), usernameChangeRequest));
+    }
+
     @PutMapping("/password")
-    public ResponseEntity<Object> changePassword(
+    public ResponseEntity<MeDto.Response> changePassword(
             @CurrentUser User user, @RequestBody @Valid MeDto.PasswordChangeRequest passwordChangeRequest) {
-        meService.changePassword(user.getUsername(), passwordChangeRequest);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(meService.changePassword(user.getUsername(), passwordChangeRequest));
     }
 
     @GetMapping("/follows")
@@ -71,18 +76,16 @@ public class MeController {
     }
 
     @PostMapping("/follows")
-    public ResponseEntity<Object> followAnotherUser(
+    public ResponseEntity<MeDto.Response> followAnotherUser(
             @CurrentUser User user,
             @RequestBody @Valid MeDto.FollowRequest followRequest) {
-        return ResponseEntity.ok().body(meService.followUser(user.getUsername(), followRequest.getUsername())
-        );
+        return ResponseEntity.ok().body(meService.followUser(user.getUsername(), followRequest.getUsername()));
     }
 
     @DeleteMapping("/follows/{username}")
-    public ResponseEntity<Object> unfollowAnotherUser(
+    public ResponseEntity<MeDto.Response> unfollowAnotherUser(
             @CurrentUser User user,
             @PathVariable("username") String username) {
         return ResponseEntity.ok().body(meService.unfollowUser(user.getUsername(), username));
-
     }
 }

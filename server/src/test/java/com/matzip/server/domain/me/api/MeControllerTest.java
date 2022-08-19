@@ -115,6 +115,26 @@ class MeControllerTest {
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
+    private void changeUsername(
+            String username, String password, String newUsername, ExpectedStatus expectedStatus) throws Exception {
+        String token = signIn(username, password, OK);
+        long beforeUserCount = userRepository.count();
+        MeDto.UsernameChangeRequest usernameChangeRequest = new MeDto.UsernameChangeRequest(newUsername);
+        mockMvc.perform(put("/api/v1/me/username").header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(usernameChangeRequest)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == OK) {
+            signIn(username, password, ExpectedStatus.UNAUTHORIZED);
+            signIn(newUsername, password, OK);
+        } else if (!username.equals(newUsername)) {
+            signIn(username, password, OK);
+            signIn(newUsername, password, ExpectedStatus.UNAUTHORIZED);
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
     private void changePassword(
             String username, String oldPassword, String newPassword, ExpectedStatus expectedStatus) throws Exception {
         String token = signIn(username, oldPassword, OK);
@@ -248,6 +268,22 @@ class MeControllerTest {
 
         token = signUp("bar", "barPassword1!");
         getMe(token);
+    }
+
+    @Test
+    void changeUsernameTest() throws Exception {
+        signUp("foo", "fooPassword1!");
+        signUp("bar", "barPassword1!");
+
+        changeUsername("foo", "fooPassword1!", "", BAD_REQUEST);
+        changeUsername("foo", "fooPassword1!", "veryLongUsernameOf_31characters", BAD_REQUEST);
+        changeUsername("foo", "fooPassword1!", "foo", CONFLICT);
+        changeUsername("foo", "fooPassword1!", "special!!", BAD_REQUEST);
+        changeUsername("foo", "fooPassword1!", "-special!@#$", BAD_REQUEST);
+        changeUsername("foo", "fooPassword1!", "bar", CONFLICT);
+
+        changeUsername("foo", "fooPassword1!", ".__Upto30chars._______________", OK);
+        changeUsername("bar", "barPassword1!", "foo", OK);
     }
 
     @Test

@@ -55,15 +55,13 @@ public class AdminUserController {
     }
 
     @PostMapping("/{id}/lock")
-    public ResponseEntity<Object> lockUser(@PathVariable("id") @Valid @Positive Long id) {
-        adminUserService.lockUser(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AdminDto.UserResponse> lockUser(@PathVariable("id") @Valid @Positive Long id) {
+        return ResponseEntity.ok().body(adminUserService.lockUser(id));
     }
 
     @DeleteMapping("/{id}/lock")
-    public ResponseEntity<Object> unlockUser(@PathVariable("id") @Valid @Positive Long id) {
-        adminUserService.unlockUser(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AdminDto.UserResponse> unlockUser(@PathVariable("id") @Valid @Positive Long id) {
+        return ResponseEntity.ok().body(adminUserService.unlockUser(id));
     }
 
     @DeleteMapping("/{id}")

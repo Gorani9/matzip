@@ -3,6 +3,7 @@ package com.matzip.server.domain.user.dto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
 import com.matzip.server.domain.user.validation.UserProperty;
+import com.matzip.server.domain.user.validation.Username;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -18,25 +19,11 @@ import java.util.Optional;
 public class UserDto {
     @RequiredArgsConstructor
     @Getter
-    public static class DuplicateRequest {
-        @NotBlank
-        private final String username;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
     public static class SignUpRequest {
-        @NotBlank
+        @Username
         private final String username;
         @Password
         private final String password;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    public static class FindRequest {
-        @NotBlank
-        private final String username;
     }
 
     @RequiredArgsConstructor

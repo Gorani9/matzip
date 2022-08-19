@@ -28,8 +28,8 @@ public class UserService {
 
     private final JwtProvider jwtProvider;
 
-    public UserDto.DuplicateResponse isUsernameTakenBySomeone(UserDto.DuplicateRequest duplicateRequest) {
-        return new UserDto.DuplicateResponse(userRepository.existsByUsername(duplicateRequest.getUsername()));
+    public UserDto.DuplicateResponse isUsernameTakenBySomeone(String username) {
+        return new UserDto.DuplicateResponse(userRepository.existsByUsername(username));
     }
 
     @Transactional
@@ -45,9 +45,8 @@ public class UserService {
         return new UserDto.SignUpResponse(new UserDto.Response(user), token);
     }
 
-    public UserDto.Response findUser(UserDto.FindRequest findRequest, String userRole) {
-        User user = userRepository.findByUsername(findRequest.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException(findRequest.getUsername()));
+    public UserDto.Response findUser(String username, String userRole) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
         if (user.getRole().equals("ADMIN") && !userRole.equals("ADMIN"))
             throw new AdminUserAccessByNormalUserException();
         return new UserDto.Response(user);

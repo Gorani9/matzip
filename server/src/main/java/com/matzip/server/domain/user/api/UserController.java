@@ -4,6 +4,7 @@ import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.domain.user.validation.UserProperty;
+import com.matzip.server.domain.user.validation.Username;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,8 +35,8 @@ public class UserController {
 
     @GetMapping("/exists")
     public ResponseEntity<UserDto.DuplicateResponse> checkDuplicateUsername(
-            @RequestParam @Valid @NotBlank String username) {
-        return ResponseEntity.ok().body(userService.isUsernameTakenBySomeone(new UserDto.DuplicateRequest(username)));
+            @RequestParam @Valid @Username String username) {
+        return ResponseEntity.ok().body(userService.isUsernameTakenBySomeone(username));
     }
 
     @GetMapping("/username")
@@ -57,6 +58,6 @@ public class UserController {
     @GetMapping("/username/{username}")
     public ResponseEntity<UserDto.Response> getUserByUsername(
             @CurrentUser User user, @PathVariable("username") @Valid @NotBlank String username) {
-        return ResponseEntity.ok().body(userService.findUser(new UserDto.FindRequest(username), user.getRole()));
+        return ResponseEntity.ok().body(userService.findUser(username, user.getRole()));
     }
 }

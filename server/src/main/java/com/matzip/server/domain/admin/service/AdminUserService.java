@@ -57,16 +57,17 @@ public class AdminUserService {
     }
 
     @Transactional
-    public void lockUser(Long id) {
+    public AdminDto.UserResponse lockUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
         if (user.getRole().equals("ADMIN")) throw new LockAdminUserException();
-        userRepository.save(user.lock());
+        return new AdminDto.UserResponse(userRepository.save(user.lock()));
     }
 
     @Transactional
-    public void unlockUser(Long id) {
+    public AdminDto.UserResponse unlockUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
-        userRepository.save(user.unlock());
+        return new AdminDto.UserResponse(userRepository.save(user.unlock()));
+
     }
 
     @Transactional

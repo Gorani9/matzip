@@ -7,6 +7,7 @@ import com.matzip.server.domain.me.exception.FollowMeException;
 import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.me.repository.FollowRepository;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -36,9 +37,17 @@ public class MeService {
     private final ImageService imageService;
 
     @Transactional
-    public void changePassword(String username, MeDto.PasswordChangeRequest passwordChangeRequest) {
+    public MeDto.Response changePassword(String username, MeDto.PasswordChangeRequest passwordChangeRequest) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder));
+        return new MeDto.Response(userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder)));
+    }
+
+    @Transactional
+    public MeDto.Response changeUsername(String username, MeDto.UsernameChangeRequest usernameChangeRequest) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+        if (userRepository.existsByUsername(usernameChangeRequest.getUsername()))
+            throw new UsernameAlreadyExistsException(usernameChangeRequest.getUsername());
+        return new MeDto.Response(userRepository.save(user.changeUsername(usernameChangeRequest)));
     }
 
     public MeDto.Response getMe(String username) {

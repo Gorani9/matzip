@@ -44,6 +44,11 @@ public class User extends BaseTimeEntity {
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
     }
 
+    public User changeUsername(MeDto.UsernameChangeRequest usernameChangeRequest) {
+        this.username = usernameChangeRequest.getUsername();
+        return this;
+    }
+
     public User changePassword(MeDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
         this.password = passwordEncoder.encode(passwordChangeRequest.getPassword());
         return this;
