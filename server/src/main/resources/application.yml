@@ -39,7 +39,7 @@ spring:
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
       hibernate:
@@ -49,6 +49,11 @@ spring:
 logging:
   level:
     root: debug
+    org:
+      hibernate:
+        type:
+          descriptor:
+            sql: trace
 
 ---
 
@@ -75,6 +80,12 @@ spring:
 logging:
   level:
     domain: debug
+    org:
+      hibernate:
+        type:
+          descriptor:
+            sql: trace
+
 
 ---
 

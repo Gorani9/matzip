@@ -5,6 +5,6 @@ import com.matzip.server.global.common.exception.InvalidRequestException;
 
 public class DeleteAdminUserException extends InvalidRequestException {
     public DeleteAdminUserException() {
-        super(ErrorType.LOCK_ADMIN_USER, "Admin user cannot be deleted");
+        super(ErrorType.DELETE_ADMIN_USER, "Admin user cannot be deleted");
     }
 }

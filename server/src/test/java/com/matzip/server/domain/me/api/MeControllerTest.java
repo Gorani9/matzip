@@ -3,7 +3,9 @@ package com.matzip.server.domain.me.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.matzip.server.ExpectedStatus;
+import com.matzip.server.Parameters;
 import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.me.repository.FollowRepository;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -25,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.util.MultiValueMap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,7 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import static com.matzip.server.ExpectedStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,6 +55,8 @@ class MeControllerTest {
     private ObjectMapper objectMapper;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private FollowRepository followRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Value("${admin-password}")
@@ -67,6 +74,7 @@ class MeControllerTest {
     @AfterEach
     void tearDown() {
         userRepository.deleteAll();
+        followRepository.deleteAll();
     }
 
     private String signUp(String username, String password) throws Exception {
@@ -74,15 +82,15 @@ class MeControllerTest {
         UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
         ResultActions resultActions = mockMvc.perform(post("/api/v1/users").contentType(MediaType.APPLICATION_JSON)
                                                               .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().is(ExpectedStatus.OK.getStatusCode()));
+                .andExpect(status().is(OK.getStatusCode()));
         long afterUserCount = userRepository.count();
         resultActions.andExpect(header().exists("Authorization"));
         assertThat(afterUserCount).isEqualTo(beforeUserCount + 1);
-        signIn(username, password, ExpectedStatus.OK);
+        signIn(username, password, OK);
         return resultActions.andReturn().getResponse().getHeader("Authorization");
     }
 
-    private String signIn(String username, String password, ExpectedStatus expectedStatus) throws Exception {
+    public String signIn(String username, String password, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         LoginDto.LoginRequest signUpRequest = new LoginDto.LoginRequest(username, password);
         ResultActions resultActions = mockMvc.perform(post("/api/v1/users/login").contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +98,7 @@ class MeControllerTest {
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
-        if (expectedStatus == ExpectedStatus.OK) {
+        if (expectedStatus == OK) {
             resultActions.andExpect(header().exists("Authorization"));
             return resultActions.andReturn().getResponse().getHeader("Authorization");
         } else {
@@ -99,30 +107,28 @@ class MeControllerTest {
         }
     }
 
-    private void getMe(String token, String username) throws Exception {
+    private void getMe(String token) throws Exception {
         long beforeUserCount = userRepository.count();
-        MeDto.Response response = new MeDto.Response(userRepository.findByUsername(username).orElseThrow());
         mockMvc.perform(get("/api/v1/me").header("Authorization", token).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string(objectMapper.writeValueAsString(response)));
+                .andExpect(status().isOk());
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
 
     private void changePassword(
             String username, String oldPassword, String newPassword, ExpectedStatus expectedStatus) throws Exception {
-        String token = signIn(username, oldPassword, ExpectedStatus.OK);
+        String token = signIn(username, oldPassword, OK);
         long beforeUserCount = userRepository.count();
         MeDto.PasswordChangeRequest passwordChangeRequest = new MeDto.PasswordChangeRequest(newPassword);
         mockMvc.perform(put("/api/v1/me/password").header("Authorization", token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(passwordChangeRequest)))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (expectedStatus == ExpectedStatus.OK) {
+        if (expectedStatus == OK) {
             signIn(username, oldPassword, ExpectedStatus.UNAUTHORIZED);
-            signIn(username, newPassword, ExpectedStatus.OK);
+            signIn(username, newPassword, OK);
         } else {
-            signIn(username, oldPassword, ExpectedStatus.OK);
+            signIn(username, oldPassword, OK);
             signIn(username, newPassword, ExpectedStatus.UNAUTHORIZED);
         }
         long afterUserCount = userRepository.count();
@@ -135,7 +141,7 @@ class MeControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         long afterUserCount = userRepository.count();
-        if (expectedStatus == ExpectedStatus.OK) {
+        if (expectedStatus == OK) {
             assertTrue(userRepository.findByUsername(username).isEmpty());
             assertThat(afterUserCount).isEqualTo(beforeUserCount - 1);
         } else {
@@ -150,7 +156,7 @@ class MeControllerTest {
         Optional<String> profileString = Optional.ofNullable(rawProfileString);
         long beforeUserCount = userRepository.count();
         MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.PATCH, "/api/v1/me");
-        MeDto.Response responseBeforePatch = new MeDto.Response(userRepository.findByUsername("foo").orElseThrow());
+        User user = userRepository.findByUsername("foo").orElseThrow();
         if (file.isPresent()) {
             try (InputStream inputStream = new FileInputStream(file.get())) {
                 File imageFile = new File(file.get());
@@ -167,17 +173,69 @@ class MeControllerTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        if (expectedStatus == ExpectedStatus.OK) {
+        if (expectedStatus == OK) {
             String profileImageUrlFromResponse = JsonPath.read(content, "$.profile_image_url");
             String profileStringFromResponse = JsonPath.read(content, "$.profile_string");
             file.ifPresentOrElse(
                     f -> assertThat(f).isNotEqualTo(profileImageUrlFromResponse),
-                    () -> assertThat(responseBeforePatch.getProfileImageUrl()).isEqualTo(
-                            profileImageUrlFromResponse));
+                    () -> assertThat(user.getProfileImageUrl()).isEqualTo(profileImageUrlFromResponse));
             profileString.ifPresentOrElse(
                     s -> assertThat(s).isEqualTo(profileStringFromResponse),
-                    () -> assertThat(responseBeforePatch.getProfileString()).isEqualTo(
-                            profileStringFromResponse));
+                    () -> assertThat(user.getProfileString()).isEqualTo(profileStringFromResponse));
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private void getMyFollows(
+            MultiValueMap<String, String> parameters,
+            String token,
+            ExpectedStatus expectedStatus,
+            Integer expectedCount) throws Exception {
+        long beforeUserCount = userRepository.count();
+        long beforeFollowCount = followRepository.count();
+        ResultActions resultActions = mockMvc.perform(get("/api/v1/me/follows").header("Authorization", token)
+                                                              .params(parameters))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == OK) {
+            resultActions.andExpect(jsonPath("$.number_of_elements").value(expectedCount));
+        }
+        long afterUserCount = userRepository.count();
+        long afterFollowCount = followRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+        assertThat(afterFollowCount).isEqualTo(beforeFollowCount);
+    }
+
+    private void followAnotherUser(
+            String token, String username, String followeeUsername,
+            ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        MeDto.FollowRequest followRequest = new MeDto.FollowRequest(followeeUsername);
+        mockMvc.perform(post("/api/v1/me/follows")
+                                .header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(followRequest)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == OK) {
+            User follower = userRepository.findByUsername(username).orElseThrow();
+            User followee = userRepository.findByUsername(followeeUsername).orElseThrow();
+            assertTrue(followRepository.existsByFollowerIdAndFolloweeId(follower.getId(), followee.getId()));
+        }
+        long afterUserCount = userRepository.count();
+        assertThat(afterUserCount).isEqualTo(beforeUserCount);
+    }
+
+    private void unfollowAnotherUser(
+            String token, String username, String followeeUsername,
+            ExpectedStatus expectedStatus) throws Exception {
+        long beforeUserCount = userRepository.count();
+        mockMvc.perform(delete("/api/v1/me/follows/" + followeeUsername)
+                                .header("Authorization", token))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+        if (expectedStatus == OK) {
+            User follower = userRepository.findByUsername(username).orElseThrow();
+            User followee = userRepository.findByUsername(followeeUsername).orElseThrow();
+            assertFalse(followRepository.existsByFollowerIdAndFolloweeId(follower.getId(), followee.getId()));
         }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
@@ -186,10 +244,10 @@ class MeControllerTest {
     @Test
     void getMeTest() throws Exception {
         String token = signUp("foo", "fooPassword1!");
-        getMe(token, "foo");
+        getMe(token);
 
         token = signUp("bar", "barPassword1!");
-        getMe(token, "bar");
+        getMe(token);
     }
 
     @Test
@@ -197,30 +255,30 @@ class MeControllerTest {
         signUp("foo", "fooPassword1!");
         signUp("bar", "barPassword1!");
 
-        changePassword("foo", "fooPassword1!", "short", ExpectedStatus.BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "short", BAD_REQUEST);
         changePassword(
                 "foo",
                 "fooPassword1!",
                 "veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!",
-                ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "noNumeric!", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "noSpecial1", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "no_upper_case1!", ExpectedStatus.BAD_REQUEST);
-        changePassword("foo", "fooPassword1!", "NO_LOWER_CASE1!", ExpectedStatus.BAD_REQUEST);
+                BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "noNumeric!", BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "noSpecial1", BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "no_upper_case1!", BAD_REQUEST);
+        changePassword("foo", "fooPassword1!", "NO_LOWER_CASE1!", BAD_REQUEST);
 
-        changePassword("foo", "fooPassword1!", "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", ExpectedStatus.OK);
-        changePassword("bar", "barPassword1!", "newPassword1!", ExpectedStatus.OK);
+        changePassword("foo", "fooPassword1!", "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", OK);
+        changePassword("bar", "barPassword1!", "newPassword1!", OK);
     }
 
     @Test
     void deleteMeTest() throws Exception {
         String token = signUp("foo", "fooPassword1!");
-        String adminToken = signIn("admin", adminPassword, ExpectedStatus.OK);
+        String adminToken = signIn("admin", adminPassword, OK);
 
-        deleteMe(token, "foo", ExpectedStatus.OK);
+        deleteMe(token, "foo", OK);
         signIn("foo", "fooPassword1!", ExpectedStatus.UNAUTHORIZED);
-        deleteMe(adminToken, "admin", ExpectedStatus.BAD_REQUEST);
-        signIn("admin", adminPassword, ExpectedStatus.OK);
+        deleteMe(adminToken, "admin", BAD_REQUEST);
+        signIn("admin", adminPassword, OK);
     }
 
     @Test
@@ -233,10 +291,125 @@ class MeControllerTest {
         String longProfileString = "profile String that is exactly 50 characters!!!!!!";
         String veryLongProfileString = "profile String that is over 50 characters!!!!!!!!!!";
 
-        patchMe(token, testImage, profileString, ExpectedStatus.OK);
-        patchMe(token, null, longProfileString, ExpectedStatus.OK);
-        patchMe(token, testImage, null, ExpectedStatus.OK);
-        patchMe(token, null, null, ExpectedStatus.OK);
-        patchMe(token, null, veryLongProfileString, ExpectedStatus.BAD_REQUEST);
+        patchMe(token, testImage, profileString, OK);
+        patchMe(token, null, longProfileString, OK);
+        patchMe(token, testImage, null, OK);
+        patchMe(token, null, null, OK);
+        patchMe(token, null, veryLongProfileString, BAD_REQUEST);
+    }
+
+    @Test
+    void getMyFollowsTest() throws Exception {
+        String foo = signUp("foo", "fooPassword1!");
+        Parameters parameters = new Parameters();
+
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("type", "follow");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("type", "follower");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("type", "following");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("ascending", "boolean");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("ascending", "false");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("ascending", "true");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("sortedBy", "username");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("sortedBy", "createdAt");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("sortedBy", "matzipLevel");
+        getMyFollows(parameters, foo, OK, 0);
+        parameters.putParameter("sortedBy", "modifiedAt");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("sortedBy", "id");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("sortedBy", "password");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("sortedBy", "role");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+        parameters.putParameter("sortedBy", "profileString");
+        getMyFollows(parameters, foo, BAD_REQUEST, 0);
+    }
+
+    @Test
+    void followTest() throws Exception {
+        String foo = signUp("foo", "fooPassword1!");
+        String bar = signUp("bar", "barPassword1!");
+        Parameters follower = new Parameters().putParameter("type", "follower");
+        Parameters following = new Parameters().putParameter("type", "following");
+
+        followAnotherUser(foo, "foo", "foo", BAD_REQUEST);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 0);
+        followAnotherUser(foo, "foo", "nobody", NOT_FOUND);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 0);
+        followAnotherUser(foo, "foo", "bar", OK);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 1);
+        followAnotherUser(foo, "foo", "bar", OK);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 1);
+        followAnotherUser(bar, "bar", "bar", BAD_REQUEST);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 1);
+        followAnotherUser(bar, "bar", "foo", OK);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 1);
+        followAnotherUser(bar, "bar", "foo", OK);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 1);
+        unfollowAnotherUser(foo, "foo", "foo", OK);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 1);
+        unfollowAnotherUser(foo, "foo", "nobody", NOT_FOUND);
+        getMyFollows(following, foo, OK, 1);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 1);
+        unfollowAnotherUser(foo, "foo", "bar", OK);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 0);
+        unfollowAnotherUser(foo, "foo", "bar", OK);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 0);
+        unfollowAnotherUser(bar, "bar", "bar", OK);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 1);
+        getMyFollows(following, bar, OK, 1);
+        getMyFollows(follower, bar, OK, 0);
+        unfollowAnotherUser(bar, "bar", "foo", OK);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 0);
+        unfollowAnotherUser(bar, "bar", "foo", OK);
+        getMyFollows(following, foo, OK, 0);
+        getMyFollows(follower, foo, OK, 0);
+        getMyFollows(following, bar, OK, 0);
+        getMyFollows(follower, bar, OK, 0);
     }
 }

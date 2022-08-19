@@ -8,7 +8,6 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.matzip.server.domain.image.exception.FileDeleteException;
 import com.matzip.server.domain.image.exception.FileUploadException;
-import com.matzip.server.domain.image.exception.ImageDeleteByUnauthorizedUserException;
 import com.matzip.server.domain.image.exception.UnsupportedFileExtensionException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -73,27 +72,20 @@ public class ImageService {
         return amazonS3Client.getUrl(bucketName, fileName).toString();
     }
 
-    private String getUsernameFromKey(String key) {
-        int delimIndex = key.lastIndexOf('-');
-        return key.substring(0, delimIndex);
-    }
-
     private String getKeyFromUrl(String url) {
         int slashIndex = url.lastIndexOf('/');
         return url.substring(slashIndex + 1);
     }
 
-    public void deleteImages(String username, List<String> urls) {
+    public void deleteImages(List<String> urls) {
         for (String url : urls) {
-            deleteImage(username, url);
+            deleteImage(url);
         }
     }
 
-    public void deleteImage(String username, String url) {
+    public void deleteImage(String url) {
         if (url == null || url.isBlank()) return;
         String key = getKeyFromUrl(url);
-        String usernameFromKey = getUsernameFromKey(key);
-        if (!usernameFromKey.equals(username)) throw new ImageDeleteByUnauthorizedUserException();
         try {
             amazonS3Client.deleteObject(new DeleteObjectRequest(bucketName, key));
         } catch (SdkClientException e) {

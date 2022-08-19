@@ -1,20 +1,20 @@
 package com.matzip.server.domain.user.model;
 
 import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name="user")
-@RequiredArgsConstructor
+@NoArgsConstructor
 @Getter
 public class User extends BaseTimeEntity {
     @Column(unique=true)
@@ -30,6 +30,14 @@ public class User extends BaseTimeEntity {
     private String profileImageUrl;
 
     private String profileString;
+
+    private Integer matzipLevel = 0;
+
+    @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followers;
+
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followings;
 
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
@@ -62,5 +70,9 @@ public class User extends BaseTimeEntity {
 
     public void setProfileString(String profileString) {
         this.profileString = profileString;
+    }
+
+    public void levelUp() {
+        this.matzipLevel++;
     }
 }

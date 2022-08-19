@@ -117,7 +117,6 @@ class UserControllerTest {
             MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username").header("Authorization", token)
-                                                              .contentType(MediaType.APPLICATION_JSON)
                                                               .params(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == ExpectedStatus.OK) {
@@ -136,15 +135,9 @@ class UserControllerTest {
 
     private void getUserByUsername(String token, String username, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username/" + username).header(
-                                "Authorization",
-                                token)
-                                                              .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/v1/users/username/" + username).header("Authorization", token)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (expectedStatus == ExpectedStatus.OK) {
-            UserDto.Response response = new UserDto.Response(userRepository.findByUsername(username).orElseThrow());
-            resultActions.andExpect(content().string(objectMapper.writeValueAsString(response)));
-        }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }

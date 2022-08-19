@@ -9,6 +9,8 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.util.List;
+import java.util.Optional;
 
 @Validated
 public class UserDto {
@@ -64,11 +66,17 @@ public class UserDto {
         protected final String username;
         protected final String profileImageUrl;
         protected final String profileString;
+        protected final Integer matzipLevel;
+        private final Integer numberOfFollowers;
+        private final Integer numberOfFollowings;
 
         public Response(User user) {
             this.username = user.getUsername();
             this.profileImageUrl = user.getProfileImageUrl();
             this.profileString = user.getProfileString();
+            this.matzipLevel = user.getMatzipLevel();
+            this.numberOfFollowers = Optional.ofNullable(user.getFollowers()).orElse(List.of()).size();
+            this.numberOfFollowings = Optional.ofNullable(user.getFollowings()).orElse(List.of()).size();
         }
     }
 }
