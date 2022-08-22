@@ -1,5 +1,6 @@
 package com.matzip.server.domain.user.model;
 
+import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.me.model.Scrap;
@@ -13,7 +14,10 @@ import org.hibernate.validator.constraints.URL;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Entity
 @Table(name="user")
@@ -85,7 +89,15 @@ public class User extends BaseTimeEntity {
         this.profileString = profileString;
     }
 
-    public void levelUp() {
-        this.matzipLevel++;
+    public User patchFromAdmin(AdminDto.UserPatchRequest userPatchRequest) {
+        if (Boolean.TRUE.equals(userPatchRequest.getUsername()))
+            this.username = "random-user-" + LocalDateTime.now() + "-" + UUID.randomUUID();
+        if (Boolean.TRUE.equals(userPatchRequest.getProfileImageUrl()))
+            this.profileImageUrl = null;
+        if (Boolean.TRUE.equals(userPatchRequest.getProfileString()))
+            this.profileString = null;
+        if (Optional.ofNullable(userPatchRequest.getMatzipLevel()).isPresent())
+            this.matzipLevel = userPatchRequest.getMatzipLevel();
+        return this;
     }
 }

@@ -1,5 +1,6 @@
 package com.matzip.server.domain.admin.dto;
 
+import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.Getter;
@@ -10,7 +11,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
-import java.time.LocalDateTime;
 
 @Validated
 public class AdminDto {
@@ -45,24 +45,22 @@ public class AdminDto {
         private final Boolean isNonLocked;
     }
 
+    @RequiredArgsConstructor
     @Getter
-    public static class UserResponse {
+    public static class UserPatchRequest {
+        private final Boolean username;
+        private final Boolean profileImageUrl;
+        private final Boolean profileString;
+        private final Integer matzipLevel;
+    }
+
+    @Getter
+    public static class UserResponse extends MeDto.Response {
         private final Long id;
-        private final LocalDateTime createdAt;
-        private final LocalDateTime modifiedAt;
-        private final String username;
-        private final String role;
-        private final Boolean isNonLocked;
-        private final String profileImageUrl;
 
         public UserResponse(User user) {
+            super(user);
             this.id = user.getId();
-            this.createdAt = user.getCreatedAt();
-            this.modifiedAt = user.getModifiedAt();
-            this.username = user.getUsername();
-            this.role = user.getRole();
-            this.isNonLocked = user.getIsNonLocked();
-            this.profileImageUrl = user.getProfileImageUrl();
         }
     }
 }
