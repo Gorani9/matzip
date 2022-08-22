@@ -44,7 +44,7 @@ public class UserController {
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="true") Boolean ascending,
+            @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam @Valid @NotBlank String username) {
         return ResponseEntity.ok()
                 .body(userService.searchUsers(new UserDto.SearchRequest(

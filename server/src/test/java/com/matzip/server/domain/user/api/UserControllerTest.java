@@ -114,7 +114,7 @@ class UserControllerTest {
             MultiValueMap<String, String> parameters, String token, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
         ResultActions resultActions = mockMvc.perform(get("/api/v1/users/username").header("Authorization", token)
-                                                              .params(parameters))
+                                                              .queryParams(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == OK) {
             int pageNumber = 0;

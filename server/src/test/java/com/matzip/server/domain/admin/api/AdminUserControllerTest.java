@@ -109,7 +109,7 @@ class AdminUserControllerTest {
         long beforeUserCount = userRepository.count();
         ResultActions resultActions = mockMvc.perform(
                 get("/api/v1/admin/users").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
-                        .params(parameters)).andExpect(status().is(expectedStatus.getStatusCode()));
+                        .queryParams(parameters)).andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == ExpectedStatus.OK) {
             if (parameters.getOrDefault("withAdmin", List.of()).contains("true")) {
                 resultActions.andExpect(jsonPath("$.total_elements").value(beforeUserCount));
@@ -128,7 +128,7 @@ class AdminUserControllerTest {
         long beforeUserCount = userRepository.count();
         ResultActions resultActions = mockMvc.perform(get("/api/v1/admin/users/username").header("Authorization", token)
                                                               .contentType(MediaType.APPLICATION_JSON)
-                                                              .params(parameters))
+                                                              .queryParams(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
         if (expectedStatus == ExpectedStatus.OK) {

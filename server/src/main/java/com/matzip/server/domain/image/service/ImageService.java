@@ -55,7 +55,8 @@ public class ImageService {
 
     public String uploadImage(String username, MultipartFile image) {
         Optional<String> imageContentType = Optional.ofNullable(image.getContentType());
-        if (imageContentType.isEmpty() || !imageContentType.get().contains("image"))
+        logger.error(imageContentType.orElse("EMPTY!"));
+        if (imageContentType.isEmpty())
             throw new UnsupportedFileExtensionException();
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentType(imageContentType.get());
