@@ -1,9 +1,11 @@
 package com.matzip.server.domain.admin.service;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
+import com.matzip.server.domain.admin.exception.AdminUserStatusChangeException;
 import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
-import com.matzip.server.domain.admin.exception.LockAdminUserException;
 import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
+import com.matzip.server.domain.image.service.ImageService;
+import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,14 +13,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly=true)
 public class AdminUserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ImageService imageService;
 
     public Page<AdminDto.UserResponse> listUsers(AdminDto.UserListRequest userListRequest) {
         Sort sort = userListRequest.getAscending() ?
@@ -57,9 +64,18 @@ public class AdminUserService {
     }
 
     @Transactional
+    public AdminDto.UserResponse patchUserById(Long id, AdminDto.UserPatchRequest userPatchRequest) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
+        if (user.getRole().equals("ADMIN")) throw new AdminUserStatusChangeException();
+        if (Optional.ofNullable(userPatchRequest.getProfileImageUrl()).isPresent())
+            imageService.deleteImage(user.getProfileImageUrl());
+        return new AdminDto.UserResponse(userRepository.save(user.patchFromAdmin(userPatchRequest)));
+    }
+
+    @Transactional
     public AdminDto.UserResponse lockUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
-        if (user.getRole().equals("ADMIN")) throw new LockAdminUserException();
+        if (user.getRole().equals("ADMIN")) throw new AdminUserStatusChangeException();
         return new AdminDto.UserResponse(userRepository.save(user.lock()));
     }
 
@@ -75,6 +91,15 @@ public class AdminUserService {
         User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
         if (user.getRole().equals("ADMIN")) throw new DeleteAdminUserException();
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public AdminDto.UserResponse changeUserPassword(Long id, MeDto.PasswordChangeRequest passwordChangeRequest) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
+        if (user.getRole().equals("ADMIN")) throw new AdminUserStatusChangeException();
+        return new AdminDto.UserResponse(userRepository.save(user.changePassword(
+                passwordChangeRequest,
+                passwordEncoder)));
     }
 }
 

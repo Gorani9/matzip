@@ -2,6 +2,7 @@ package com.matzip.server.domain.admin.api;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.admin.service.AdminUserService;
+import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -54,6 +55,13 @@ public class AdminUserController {
         return ResponseEntity.ok().body(adminUserService.findUserById(id));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<AdminDto.UserResponse> patchUserById(
+            @PathVariable("id") @Valid @Positive Long id,
+            @RequestBody AdminDto.UserPatchRequest userPatchRequest) {
+        return ResponseEntity.ok().body(adminUserService.patchUserById(id, userPatchRequest));
+    }
+
     @PostMapping("/{id}/lock")
     public ResponseEntity<AdminDto.UserResponse> lockUser(@PathVariable("id") @Valid @Positive Long id) {
         return ResponseEntity.ok().body(adminUserService.lockUser(id));
@@ -62,6 +70,13 @@ public class AdminUserController {
     @DeleteMapping("/{id}/lock")
     public ResponseEntity<AdminDto.UserResponse> unlockUser(@PathVariable("id") @Valid @Positive Long id) {
         return ResponseEntity.ok().body(adminUserService.unlockUser(id));
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<AdminDto.UserResponse> changeUserPassword(
+            @PathVariable("id") @Valid @Positive Long id,
+            @RequestBody @Valid MeDto.PasswordChangeRequest passwordChangeRequest) {
+        return ResponseEntity.ok().body(adminUserService.changeUserPassword(id, passwordChangeRequest));
     }
 
     @DeleteMapping("/{id}")
