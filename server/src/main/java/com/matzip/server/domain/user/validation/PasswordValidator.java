@@ -9,7 +9,8 @@ import javax.validation.ConstraintValidatorContext;
 public class PasswordValidator implements ConstraintValidator<Password, String> {
     private static final int MIN_SIZE = 8;
     private static final int MAX_SIZE = 50;
-    private static final String regex = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|_)).{" + MIN_SIZE + "," + MAX_SIZE + "}$";
+    private static final String regex =
+            "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?([^\\w\\s]|_)).{" + MIN_SIZE + "," + MAX_SIZE + "}$";
     private static final String nullMessage = "No Password is given.";
 
     private static final String violationMessage = String.format(

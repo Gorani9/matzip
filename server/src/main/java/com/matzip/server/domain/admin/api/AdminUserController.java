@@ -26,7 +26,7 @@ public class AdminUserController {
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="true") Boolean ascending,
+            @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam(defaultValue="false") Boolean withAdmin) {
         return ResponseEntity.ok()
                 .body(adminUserService.listUsers(new AdminDto.UserListRequest(
@@ -42,7 +42,7 @@ public class AdminUserController {
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="true") Boolean ascending,
+            @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam @Valid @NotBlank String username,
             @RequestParam(required=false) Boolean isNonLocked) {
         return ResponseEntity.ok().body(adminUserService.searchUsers(

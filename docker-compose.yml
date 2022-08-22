@@ -34,6 +34,9 @@ services:
       DB_USERNAME: "${DB_USERNAME}"
       DB_PASSWORD: "${DB_PASSWORD}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+      AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_BUCKET_NAME: "${AWS_BUCKET_NAME}"
 
   matzip-spring2:
     build: .

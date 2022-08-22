@@ -215,7 +215,7 @@ class MeControllerTest {
         long beforeUserCount = userRepository.count();
         long beforeFollowCount = followRepository.count();
         ResultActions resultActions = mockMvc.perform(get("/api/v1/me/follows").header("Authorization", token)
-                                                              .params(parameters))
+                                                              .queryParams(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == OK) {
             resultActions.andExpect(jsonPath("$.number_of_elements").value(expectedCount));
@@ -230,11 +230,8 @@ class MeControllerTest {
             String token, String username, String followeeUsername,
             ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        MeDto.FollowRequest followRequest = new MeDto.FollowRequest(followeeUsername);
-        mockMvc.perform(post("/api/v1/me/follows")
-                                .header("Authorization", token)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(followRequest)))
+        mockMvc.perform(put("/api/v1/me/follows/" + followeeUsername)
+                                .header("Authorization", token))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
         if (expectedStatus == OK) {
             User follower = userRepository.findByUsername(username).orElseThrow();

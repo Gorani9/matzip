@@ -55,7 +55,7 @@ public class UserService {
     public Page<UserDto.Response> searchUsers(UserDto.SearchRequest searchRequest) {
         Sort sort = searchRequest.getAscending() ?
                     Sort.by(searchRequest.getSortedBy()).ascending() :
-                    Sort.by(searchRequest.getSortedBy());
+                    Sort.by(searchRequest.getSortedBy()).descending();
         Pageable pageable = PageRequest.of(searchRequest.getPageNumber(), searchRequest.getPageSize(), sort);
         Page<User> users = userRepository.findAllByUsernameContainsIgnoreCaseAndIsNonLockedTrueAndRoleEquals(
                 pageable,

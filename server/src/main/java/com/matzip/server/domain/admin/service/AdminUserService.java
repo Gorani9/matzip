@@ -23,7 +23,7 @@ public class AdminUserService {
     public Page<AdminDto.UserResponse> listUsers(AdminDto.UserListRequest userListRequest) {
         Sort sort = userListRequest.getAscending() ?
                     Sort.by(userListRequest.getSortedBy()).ascending() :
-                    Sort.by(userListRequest.getSortedBy());
+                    Sort.by(userListRequest.getSortedBy()).descending();
         Pageable pageable = PageRequest.of(userListRequest.getPageNumber(), userListRequest.getPageSize(), sort);
         Page<User> users;
         if (userListRequest.getWithAdmin()) users = userRepository.findAll(pageable);
@@ -34,7 +34,7 @@ public class AdminUserService {
     public Page<AdminDto.UserResponse> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
         Sort sort = userSearchRequest.getAscending() ?
                     Sort.by(userSearchRequest.getSortedBy()).ascending() :
-                    Sort.by(userSearchRequest.getSortedBy());
+                    Sort.by(userSearchRequest.getSortedBy()).descending();
         Pageable pageable = PageRequest.of(userSearchRequest.getPageNumber(), userSearchRequest.getPageSize(), sort);
         Page<User> users;
         if (userSearchRequest.getIsNonLocked() == null)

@@ -12,11 +12,11 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Getter
 public class Follow extends BaseTimeEntity {
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn
     private User follower;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn
     private User followee;
 

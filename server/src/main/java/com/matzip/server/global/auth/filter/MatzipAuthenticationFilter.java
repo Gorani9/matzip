@@ -58,9 +58,10 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             AuthenticationException failed) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
         logger.error("Unsuccessful Authentication: " + failed.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_ACCESS_DENIED.getErrorCode(),
-                                                        ErrorType.USER_ACCESS_DENIED.name(),
-                                                        failed.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                ErrorType.USER_ACCESS_DENIED.getErrorCode(),
+                ErrorType.USER_ACCESS_DENIED.name(),
+                failed.getMessage());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

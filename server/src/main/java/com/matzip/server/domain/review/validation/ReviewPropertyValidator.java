@@ -1,24 +1,22 @@
-package com.matzip.server.domain.user.validation;
+package com.matzip.server.domain.review.validation;
 
-import com.matzip.server.domain.user.model.User;
-import org.springframework.stereotype.Component;
+import com.matzip.server.domain.review.model.Review;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-@Component
-public class UserPropertyValidator implements ConstraintValidator<UserProperty, String> {
+public class ReviewPropertyValidator implements ConstraintValidator<ReviewProperty, String> {
     private static final String nullMessage = "No Property is given.";
     private static final String violationMessage = "This property is not allowed to be used in sort.";
 
     @Override
-    public void initialize(UserProperty constraintAnnotation) {}
+    public void initialize(ReviewProperty constraintAnnotation) {}
 
     @Override
     public boolean isValid(String property, ConstraintValidatorContext context) {
         try {
-            User.class.getDeclaredField(property);
-            if (!property.equals("username") && !property.equals("matzipLevel")) {
+            Review.class.getDeclaredField(property);
+            if (!property.equals("rating")) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate(violationMessage).addConstraintViolation();
                 return false;

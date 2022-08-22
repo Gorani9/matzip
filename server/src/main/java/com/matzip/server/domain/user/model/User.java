@@ -2,6 +2,9 @@ package com.matzip.server.domain.user.model;
 
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.model.Follow;
+import com.matzip.server.domain.me.model.Scrap;
+import com.matzip.server.domain.review.model.Comment;
+import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
@@ -17,31 +20,36 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 public class User extends BaseTimeEntity {
+    @OneToMany(mappedBy="followee", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Follow> followers = List.of();
+    @OneToMany(mappedBy="follower", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Follow> followings = List.of();
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Review> reviews = List.of();
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Comment> comments = List.of();
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Scrap> hearts = List.of();
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
+    private final List<Scrap> scraps = List.of();
     @Column(unique=true)
     private String username;
-
     private String password;
-
     private Boolean isNonLocked = true;
-
     private String role = "NORMAL";
-
     @URL
     private String profileImageUrl;
-
     private String profileString;
-
     private Integer matzipLevel = 0;
-
-    @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Follow> followers = List.of();
-
-    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Follow> followings = List.of();
 
     public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
         this.username = signUpRequest.getUsername();
         this.password = passwordEncoder.encode(signUpRequest.getPassword());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof User && this.getId().equals(((User) obj).getId());
     }
 
     public User changeUsername(MeDto.UsernameChangeRequest usernameChangeRequest) {
