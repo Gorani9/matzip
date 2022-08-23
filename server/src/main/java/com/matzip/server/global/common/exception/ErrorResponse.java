@@ -10,15 +10,9 @@ public class ErrorResponse {
     @JsonProperty("detail")
     String detail;
 
-    public ErrorResponse(int errorCode, String errorMessage, String detail) {
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.detail = detail;
-    }
-
-    public ErrorResponse(int errorCode, String errorMessage) {
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
-        this.detail = "";
+    public ErrorResponse(ErrorType errorType, String errorMessage) {
+        this.errorCode = errorType.getErrorCode();
+        this.errorMessage = errorType.name();
+        this.detail = errorMessage;
     }
 }

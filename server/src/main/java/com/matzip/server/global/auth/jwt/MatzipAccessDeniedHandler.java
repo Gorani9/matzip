@@ -1,6 +1,8 @@
-package com.matzip.server.global.common.exception;
+package com.matzip.server.global.auth.jwt;
 
 import com.google.gson.Gson;
+import com.matzip.server.global.common.exception.ErrorResponse;
+import com.matzip.server.global.common.exception.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
@@ -21,10 +23,7 @@ public class MatzipAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException {
         logger.error("Handle servlet response when access denied: " + accessDeniedException.getMessage());
         Gson gson = new Gson();
-        ErrorResponse errorResponse = new ErrorResponse(
-                ErrorType.USER_ACCESS_DENIED.getErrorCode(),
-                ErrorType.USER_ACCESS_DENIED.name(),
-                accessDeniedException.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_ACCESS_DENIED, accessDeniedException.getMessage());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
         response.getWriter().write(gson.toJson(errorResponse));
