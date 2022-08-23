@@ -28,8 +28,6 @@ public class Review extends BaseTimeEntity {
     @JoinColumn
     private User user;
     @NotBlank
-    private String title;
-    @NotBlank
     private String content;
     @ElementCollection
     private List<String> imageUrls;
@@ -40,7 +38,6 @@ public class Review extends BaseTimeEntity {
 
     public Review(User user, ReviewDto.PostRequest postRequest, List<String> imageUrls) {
         this.user = user;
-        this.title = postRequest.getTitle();
         this.content = postRequest.getContent();
         this.imageUrls = imageUrls;
         this.rating = postRequest.getRating();
@@ -50,10 +47,6 @@ public class Review extends BaseTimeEntity {
     @Override
     public boolean equals(Object obj) {
         return obj instanceof Review && this.getId().equals(((Review) obj).getId());
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public void setContent(String content) {

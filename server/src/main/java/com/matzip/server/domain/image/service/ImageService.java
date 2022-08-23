@@ -41,6 +41,8 @@ public class ImageService {
         if (originalFileName == null) return fileName;
         else {
             int extensionIndex = originalFileName.lastIndexOf('.');
+            if (extensionIndex == -1)
+                throw new UnsupportedFileExtensionException();
             return fileName + originalFileName.substring(extensionIndex);
         }
     }

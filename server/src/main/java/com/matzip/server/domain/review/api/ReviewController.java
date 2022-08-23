@@ -31,7 +31,7 @@ public class ReviewController {
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue="createdAt") @Valid @ReviewProperty String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
-            @RequestParam(defaultValue="titleOrContent") @ReviewSearchType String searchType,
+            @RequestParam(defaultValue="content") @ReviewSearchType String searchType,
             @RequestParam @Valid @NotBlank String keyword) {
         return ResponseEntity.ok()
                 .body(reviewService.searchReviews(

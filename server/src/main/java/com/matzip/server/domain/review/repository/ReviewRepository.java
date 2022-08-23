@@ -16,16 +16,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Page<Review> findAllByUser_Username(Pageable pageable, String username);
 
-    Page<Review> findAllByTitleContains(Pageable pageable, String keyword);
-
     Page<Review> findAllByContentContains(Pageable pageable, String keyword);
 
-    Page<Review> findAllByTitleContainsOrContentContains(Pageable pageable, String titleKeyword, String contentKeyword);
-
-    Page<Review> findAllByTitleContainsAndContentContains(
-            Pageable pageable,
-            String titleKeyword,
-            String contentKeyword);
+    Page<Review> findAllByLocationContains(Pageable pageable, String location);
 
     List<Review> findAllByCreatedAtAfter(Pageable pageable, LocalDateTime localDateTime);
 }

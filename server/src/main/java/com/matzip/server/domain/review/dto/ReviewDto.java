@@ -42,9 +42,6 @@ public class ReviewDto {
     @Getter
     public static class PostRequest {
         @NotBlank
-        @Length(max=100)
-        private final String title;
-        @NotBlank
         @Length(max=3000)
         private final String content;
         private final List<MultipartFile> images;
@@ -57,8 +54,6 @@ public class ReviewDto {
     @RequiredArgsConstructor
     @Getter
     public static class PatchRequest {
-        @Length(max=100)
-        private final String title;
         @Length(max=3000)
         private final String content;
         private final List<MultipartFile> newImages;
@@ -71,7 +66,6 @@ public class ReviewDto {
     public static class Response {
         private final Long id;
         private final UserDto.Response user;
-        private final String title;
         private final String content;
         private final List<String> imageUrls;
         private final Integer rating;
@@ -86,7 +80,6 @@ public class ReviewDto {
         public Response(User user, Review review) {
             this.id = review.getId();
             this.user = new UserDto.Response(review.getUser());
-            this.title = review.getTitle();
             this.content = review.getContent();
             this.imageUrls = review.getImageUrls();
             this.rating = review.getRating();

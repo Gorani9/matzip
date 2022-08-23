@@ -57,18 +57,14 @@ public class ReviewService {
         String searchType = searchRequest.getSearchType();
         String keyword = searchRequest.getKeyword();
         switch (searchType) {
-            case "title":
-                return reviewRepository.findAllByTitleContains(pageable, keyword)
+            case "location":
+                return reviewRepository.findAllByLocationContains(pageable, keyword)
                         .map(r -> new ReviewDto.Response(user, r));
             case "content":
                 return reviewRepository.findAllByContentContains(pageable, keyword)
                         .map(r -> new ReviewDto.Response(user, r));
-            case "titleAndContent":
-                return reviewRepository.findAllByTitleContainsAndContentContains(pageable, keyword, keyword)
-                        .map(r -> new ReviewDto.Response(user, r));
             default:
-                return reviewRepository.findAllByTitleContainsOrContentContains(pageable, keyword, keyword)
-                        .map(r -> new ReviewDto.Response(user, r));
+                return reviewRepository.findAll(pageable).map(r -> new ReviewDto.Response(user, r));
         }
     }
 
@@ -78,8 +74,6 @@ public class ReviewService {
         Review review = reviewRepository.findAllById(id).orElseThrow(() -> new ReviewNotFoundException(id));
         if (!Objects.equals(review.getUser().getId(), user.getId()) && !user.getRole().equals("ADMIN"))
             throw new ReviewChangeByAnonymousException();
-        if (Optional.ofNullable(patchRequest.getTitle()).isPresent())
-            review.setTitle(patchRequest.getTitle());
         if (Optional.ofNullable(patchRequest.getContent()).isPresent())
             review.setContent(patchRequest.getContent());
         if (Optional.ofNullable(patchRequest.getNewImages()).isPresent())

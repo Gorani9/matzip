@@ -32,6 +32,7 @@ AWS_ACCESS_KEY=$(aws ssm get-parameters --region ap-northeast-2 --names ACCESS_K
 AWS_SECRET_ACCESS_KEY=$(aws ssm get-parameters --region ap-northeast-2 --names SECRET_ACCESS_KEY --query Parameters[0].Value | sed 's/"//g')
 AWS_BUCKET_NAME=$(aws ssm get-parameters --region ap-northeast-2 --names BUCKET_NAME --query Parameters[0].Value | sed 's/"//g')
 
+docker-compose up -d matzip-nginx certbot
 sudo docker build -t spring ./
 sudo docker run -it --name "$IDLE_PROFILE" -d \
 -e active="$IDLE_PROFILE" \

@@ -13,8 +13,7 @@ public class ReviewSearchTypeValidator implements ConstraintValidator<ReviewSear
     @Override
     public boolean isValid(String property, ConstraintValidatorContext context) {
         try {
-            if (!property.equals("title") && !property.equals("content") && !property.equals("titleAndContent") &&
-                !property.equals("titleOrContent")) {
+            if (!property.equals("content") && !property.equals("location")) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate(violationMessage).addConstraintViolation();
                 return false;
