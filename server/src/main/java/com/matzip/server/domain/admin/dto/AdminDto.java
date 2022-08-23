@@ -57,10 +57,14 @@ public class AdminDto {
     @Getter
     public static class UserResponse extends MeDto.Response {
         private final Long id;
+        private final Boolean isNonLocked;
+        private final String role;
 
         public UserResponse(User user) {
             super(user);
             this.id = user.getId();
+            this.isNonLocked = user.getIsNonLocked();
+            this.role = user.getRole();
         }
     }
 }

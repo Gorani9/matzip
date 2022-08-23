@@ -3,7 +3,6 @@ package com.matzip.server.domain.admin.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
-import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -159,13 +158,9 @@ class AdminUserControllerTest {
 
     private void getUserById(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
         long beforeUserCount = userRepository.count();
-        ResultActions resultActions = mockMvc.perform(
+        mockMvc.perform(
                         get("/api/v1/admin/users/" + id).header("Authorization", token).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (expectedStatus == ExpectedStatus.OK) {
-            AdminDto.UserResponse userResponse = new AdminDto.UserResponse(userRepository.findById(id).orElseThrow());
-            resultActions.andExpect(content().string(objectMapper.writeValueAsString(userResponse)));
-        }
         long afterUserCount = userRepository.count();
         assertThat(afterUserCount).isEqualTo(beforeUserCount);
     }
