@@ -18,75 +18,48 @@ public class MatzipControllerAdvice {
     @ExceptionHandler(value=InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> badRequest(MatzipException e) {
         logger.info(e.detail);
-        return new ResponseEntity<>(
-                new ErrorResponse(e.errorType.getErrorCode(), e.errorType.name(), e.detail),
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value=ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.INVALID_REQUEST.getErrorCode(), ErrorType.INVALID_REQUEST.name(),
-                                  e.getMessage()),
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.FILE_TOO_LARGE.getErrorCode(), ErrorType.FILE_TOO_LARGE.name(),
-                                  e.getMessage()),
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponse> multipartException(MultipartException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL.getErrorCode(), ErrorType.FILE_UPLOAD_FAIL.name(),
-                                  e.getMessage()),
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value=NotAllowedException.class)
     public ResponseEntity<ErrorResponse> notAllowed(MatzipException e) {
         logger.info(e.detail);
-        return new ResponseEntity<>(
-                new ErrorResponse(e.errorType.getErrorCode(), e.errorType.name(), e.detail),
-                HttpStatus.FORBIDDEN
-        );
+        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(value=DataNotFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(MatzipException e) {
         logger.info(e.detail);
-        return new ResponseEntity<>(
-                new ErrorResponse(e.errorType.getErrorCode(), e.errorType.name(), e.detail),
-                HttpStatus.NOT_FOUND
-        );
+        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(value=ConflictException.class)
     public ResponseEntity<ErrorResponse> conflict(MatzipException e) {
         logger.info(e.detail);
-        return new ResponseEntity<>(
-                new ErrorResponse(e.errorType.getErrorCode(), e.errorType.name(), e.detail),
-                HttpStatus.CONFLICT
-        );
+        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(value=ServerErrorException.class)
     public ResponseEntity<ErrorResponse> serverError(MatzipException e) {
         logger.info(e.detail);
-        return new ResponseEntity<>(
-                new ErrorResponse(e.errorType.getErrorCode(), e.errorType.name(), e.detail),
-                HttpStatus.INTERNAL_SERVER_ERROR
-        );
+        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

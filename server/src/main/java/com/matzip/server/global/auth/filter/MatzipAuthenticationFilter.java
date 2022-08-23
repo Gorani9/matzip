@@ -1,8 +1,10 @@
 package com.matzip.server.global.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.dto.LoginDto;
 import com.matzip.server.global.auth.jwt.JwtProvider;
+import com.matzip.server.global.auth.model.UserPrincipal;
 import com.matzip.server.global.common.exception.ErrorResponse;
 import com.matzip.server.global.common.exception.ErrorType;
 import org.slf4j.Logger;
@@ -42,13 +44,22 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             HttpServletResponse response,
             FilterChain chain,
             Authentication authResult) throws IOException {
-        String token = jwtProvider.generateAccessToken(authResult);
-        LoginDto.LoginResponse loginResponse = new LoginDto.LoginResponse(authResult.getAuthorities().toString());
-        response.addHeader(jwtProvider.getHeader(), token);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-        response.getWriter().write(objectMapper.writeValueAsString(loginResponse));
-        response.setStatus(HttpServletResponse.SC_OK);
+        User user = ((UserPrincipal) authResult.getPrincipal()).getUser();
+        if (!user.getIsNonLocked()) {
+            ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_LOCKED, "Current user is locked.");
+            response.setContentType("application/json");
+            response.setCharacterEncoding("utf-8");
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        } else {
+            String token = jwtProvider.generateAccessToken(authResult);
+            LoginDto.LoginResponse loginResponse = new LoginDto.LoginResponse(authResult.getAuthorities().toString());
+            response.addHeader(jwtProvider.getHeader(), token);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("utf-8");
+            response.getWriter().write(objectMapper.writeValueAsString(loginResponse));
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
     }
 
     @Override
@@ -58,10 +69,7 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             AuthenticationException failed) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
         logger.error("Unsuccessful Authentication: " + failed.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                ErrorType.USER_ACCESS_DENIED.getErrorCode(),
-                ErrorType.USER_ACCESS_DENIED.name(),
-                failed.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_ACCESS_DENIED, failed.getMessage());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

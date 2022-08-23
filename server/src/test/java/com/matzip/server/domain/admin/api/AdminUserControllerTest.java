@@ -360,21 +360,21 @@ class AdminUserControllerTest {
         Long fooId = userRepository.findByUsername("foo").orElseThrow().getId();
 
         lockUser(adminToken, fooId, ExpectedStatus.OK);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
         unlockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.OK);
         unlockUser(adminToken, fooId, ExpectedStatus.OK);
         signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.OK);
         lockUser(adminToken, fooId, ExpectedStatus.OK);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
         lockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
         unlockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
         unlockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
         lockUser(adminToken, fooId + 100, ExpectedStatus.NOT_FOUND);
-        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.UNAUTHORIZED);
+        signIn("foo", "fooPassword1!", "NORMAL", ExpectedStatus.FORBIDDEN);
 
         Long adminId = userRepository.findByUsername("admin").orElseThrow().getId();
         lockUser(adminToken, adminId, ExpectedStatus.BAD_REQUEST);

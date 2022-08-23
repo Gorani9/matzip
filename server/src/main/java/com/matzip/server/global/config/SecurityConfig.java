@@ -3,10 +3,10 @@ package com.matzip.server.global.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.global.auth.filter.JwtAuthenticationFilter;
 import com.matzip.server.global.auth.filter.MatzipAuthenticationFilter;
-import com.matzip.server.global.auth.jwt.JwtAuthenticationEntryPoint;
+import com.matzip.server.global.auth.jwt.MatzipAuthenticationEntryPoint;
 import com.matzip.server.global.auth.jwt.JwtProvider;
 import com.matzip.server.global.auth.service.UserPrincipalDetailsService;
-import com.matzip.server.global.common.exception.MatzipAccessDeniedHandler;
+import com.matzip.server.global.auth.jwt.MatzipAccessDeniedHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +31,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtProvider jwtProvider;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final MatzipAuthenticationEntryPoint matzipAuthenticationEntryPoint;
     private final MatzipAccessDeniedHandler matzipAccessDeniedHandler;
     private final UserPrincipalDetailsService userPrincipalDetailsService;
     private final ObjectMapper objectMapper;
@@ -54,7 +54,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .authenticationEntryPoint(matzipAuthenticationEntryPoint)
                 .accessDeniedHandler(matzipAccessDeniedHandler)
                 .and()
                 .addFilter(new MatzipAuthenticationFilter(authenticationManager(), jwtProvider, objectMapper))

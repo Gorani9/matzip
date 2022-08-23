@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class MatzipAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -24,10 +24,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             AuthenticationException authException) throws IOException {
         logger.error("commence: " + authException.getMessage());
         Gson gson = new Gson();
-        ErrorResponse errorResponse = new ErrorResponse(
-                ErrorType.USER_ACCESS_DENIED.getErrorCode(),
-                ErrorType.USER_ACCESS_DENIED.name(),
-                authException.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_AUTH_FAILED, authException.getMessage());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
         response.getWriter().write(gson.toJson(errorResponse));

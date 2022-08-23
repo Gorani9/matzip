@@ -1,6 +1,5 @@
 package com.matzip.server.global.auth.service;
 
-import com.matzip.server.domain.user.exception.LockedUserException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.auth.model.UserPrincipal;
@@ -21,7 +20,6 @@ public class UserPrincipalDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username)));
-        if (!user.getIsNonLocked()) throw new LockedUserException(user.getUsername());
         return new UserPrincipal(user);
     }
 }
