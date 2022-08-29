@@ -4,6 +4,7 @@ import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
 import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.dto.ScrapDto;
+import com.matzip.server.domain.me.exception.DuplicateHeartException;
 import com.matzip.server.domain.me.exception.FollowMeException;
 import com.matzip.server.domain.me.exception.HeartMyReviewException;
 import com.matzip.server.domain.me.exception.ScrapMyReviewException;
@@ -162,6 +163,8 @@ public class MeService {
         Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.getUser().getUsername().equals(user.getUsername()))
             throw new HeartMyReviewException();
+        if (heartRepository.existsByUser_UsernameAndReview_Id(user.getUsername(), reviewId))
+            throw new DuplicateHeartException();
         heartRepository.save(new Heart(user, review));
     }
 
