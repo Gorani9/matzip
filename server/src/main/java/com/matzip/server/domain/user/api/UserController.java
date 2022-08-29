@@ -41,23 +41,25 @@ public class UserController {
 
     @GetMapping("/username")
     public ResponseEntity<Page<UserDto.Response>> searchUsersByUsername(
+            @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
             @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam @Valid @NotBlank String username) {
         return ResponseEntity.ok()
-                .body(userService.searchUsers(new UserDto.SearchRequest(
-                        pageNumber,
-                        pageSize,
-                        sortedBy,
-                        ascending,
-                        username)));
+                .body(userService.searchUsers(
+                        user.getId(),
+                        new UserDto.SearchRequest(pageNumber,
+                                                  pageSize,
+                                                  sortedBy,
+                                                  ascending,
+                                                  username)));
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<UserDto.Response> getUserByUsername(
             @CurrentUser User user, @PathVariable("username") @Valid @NotBlank String username) {
-        return ResponseEntity.ok().body(userService.findUser(username, user.getRole()));
+        return ResponseEntity.ok().body(userService.findUser(username, user.getUsername()));
     }
 }

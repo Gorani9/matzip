@@ -12,6 +12,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.util.Objects;
 
 @Validated
 public class UserDto {
@@ -60,14 +61,20 @@ public class UserDto {
         protected final Integer matzipLevel;
         private final Integer numberOfFollowers;
         private final Integer numberOfFollowings;
+        private final Boolean isMyFollowing;
+        private final Boolean isMyFollower;
+        private final Boolean isMe;
 
-        public Response(User user) {
+        public Response(User user, User me) {
             this.username = user.getUsername();
             this.profileImageUrl = user.getProfileImageUrl();
             this.profileString = user.getProfileString();
             this.matzipLevel = user.getMatzipLevel();
             this.numberOfFollowers = user.getFollowers().size();
             this.numberOfFollowings = user.getFollowings().size();
+            this.isMyFollowing = me.getFollowings().contains(user);
+            this.isMyFollower = me.getFollowers().contains(user);
+            this.isMe = Objects.equals(user.getId(), me.getId());
         }
     }
 }

@@ -79,7 +79,7 @@ public class ReviewDto {
 
         public Response(User user, Review review) {
             this.id = review.getId();
-            this.user = new UserDto.Response(review.getUser());
+            this.user = new UserDto.Response(review.getUser(), user);
             this.content = review.getContent();
             this.imageUrls = review.getImageUrls();
             this.rating = review.getRating();

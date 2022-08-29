@@ -60,7 +60,7 @@ public class CommentDto {
         public Response(User user, Comment comment) {
             this.id = comment.getId();
             this.reviewId = comment.getReview().getId();
-            this.user = new UserDto.Response(comment.getUser());
+            this.user = new UserDto.Response(comment.getUser(), user);
             this.content = comment.getContent();
             this.deletable = user.getId().equals(comment.getUser().getId()) || user.getRole().equals("ADMIN");
         }
