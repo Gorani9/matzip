@@ -1,5 +1,6 @@
 package com.matzip.server.domain.me.api;
 
+import com.matzip.server.domain.me.dto.HeartDto;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.dto.ScrapDto;
 import com.matzip.server.domain.me.service.MeService;
@@ -121,17 +122,15 @@ public class MeController {
     }
 
     @PutMapping("/hearts/{review-id}")
-    public ResponseEntity<Object> putHeartOnReview(@CurrentUser User user, @PathVariable("review-id") Long reviewId) {
-        meService.heartReview(user, reviewId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<HeartDto.Response> putHeartOnReview(@CurrentUser User user, @PathVariable("review-id") Long reviewId) {
+        return ResponseEntity.ok().body(meService.heartReview(user, reviewId));
     }
 
     @DeleteMapping("/hearts/{review-id}")
-    public ResponseEntity<Object> deleteHeartFromReview(
+    public ResponseEntity<HeartDto.Response> deleteHeartFromReview(
             @CurrentUser User user,
             @PathVariable("review-id") Long reviewId) {
-        meService.deleteHeartFromReview(user, reviewId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(meService.deleteHeartFromReview(user, reviewId));
     }
 
     @GetMapping("/scraps")

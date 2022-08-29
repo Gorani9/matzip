@@ -2,8 +2,10 @@ package com.matzip.server.domain.me.service;
 
 import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
 import com.matzip.server.domain.image.service.ImageService;
+import com.matzip.server.domain.me.dto.HeartDto;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.dto.ScrapDto;
+import com.matzip.server.domain.me.exception.DuplicateHeartException;
 import com.matzip.server.domain.me.exception.FollowMeException;
 import com.matzip.server.domain.me.exception.HeartMyReviewException;
 import com.matzip.server.domain.me.exception.ScrapMyReviewException;
@@ -158,16 +160,22 @@ public class MeService {
     }
 
     @Transactional
-    public void heartReview(User user, Long reviewId) {
+    public HeartDto.Response heartReview(User user, Long reviewId) {
         Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.getUser().getUsername().equals(user.getUsername()))
             throw new HeartMyReviewException();
+        if (heartRepository.existsByUser_UsernameAndReview_Id(user.getUsername(), reviewId))
+            throw new DuplicateHeartException();
         heartRepository.save(new Heart(user, review));
+        return new HeartDto.Response(review.getHearts().size());
     }
 
     @Transactional
-    public void deleteHeartFromReview(User user, Long reviewId) {
+    public HeartDto.Response deleteHeartFromReview(User user, Long reviewId) {
         heartRepository.deleteByUser_UsernameAndReview_Id(user.getUsername(), reviewId);
+        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        heartRepository.flush();
+        return new HeartDto.Response(review.getHearts().size());
     }
 
     @Transactional
@@ -185,5 +193,6 @@ public class MeService {
     @Transactional
     public void deleteMyScrap(User user, Long reviewId) {
         scrapRepository.deleteByUser_UsernameAndReview_id(user.getUsername(), reviewId);
+        scrapRepository.flush();
     }
 }
