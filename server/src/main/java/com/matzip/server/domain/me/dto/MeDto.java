@@ -97,7 +97,7 @@ public class MeDto {
         private final LocalDateTime modifiedAt;
 
         public Response(User user) {
-            super(user);
+            super(user, user);
             this.createdAt = user.getCreatedAt();
             this.modifiedAt = user.getModifiedAt();
         }

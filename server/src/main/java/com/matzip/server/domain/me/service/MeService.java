@@ -1,6 +1,7 @@
 package com.matzip.server.domain.me.service;
 
 import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
+import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.me.dto.HeartDto;
 import com.matzip.server.domain.me.dto.MeDto;
@@ -99,17 +100,18 @@ public class MeService {
         return new MeDto.Response(user);
     }
 
-    public Page<UserDto.Response> getMyFollows(User user, MeDto.FindFollowRequest findFollowRequest) {
+    public Page<UserDto.Response> getMyFollows(Long myId, MeDto.FindFollowRequest findFollowRequest) {
+        User me = userRepository.findById(myId).orElseThrow(() -> new UserIdNotFoundException(myId));
         boolean isFollowing = findFollowRequest.getType().equals("following");
         String property = (isFollowing ? "followee_" : "follower_") + findFollowRequest.getSortedBy();
         Sort sort = findFollowRequest.getAscending() ? Sort.by(property).ascending() : Sort.by(property).descending();
         Pageable pageable = PageRequest.of(findFollowRequest.getPageNumber(), findFollowRequest.getPageSize(), sort);
 
         return isFollowing ?
-               followRepository.findAllByFollowerId(pageable, user.getId())
-                       .map(f -> new UserDto.Response(f.getFollowee())) :
-               followRepository.findAllByFolloweeId(pageable, user.getId())
-                       .map(f -> new UserDto.Response(f.getFollower()));
+               followRepository.findAllByFollowerId(pageable, myId)
+                       .map(f -> new UserDto.Response(f.getFollowee(), me)) :
+               followRepository.findAllByFolloweeId(pageable, myId)
+                       .map(f -> new UserDto.Response(f.getFollower(), me));
     }
 
     @Transactional

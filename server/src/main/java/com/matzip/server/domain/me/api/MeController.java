@@ -77,7 +77,7 @@ public class MeController {
             @RequestParam(defaultValue="following") @Valid @FollowType String type) {
         return ResponseEntity.ok()
                 .body(meService.getMyFollows(
-                        user,
+                        user.getId(),
                         new MeDto.FindFollowRequest(pageNumber, pageSize, sortedBy, ascending, type)));
     }
 

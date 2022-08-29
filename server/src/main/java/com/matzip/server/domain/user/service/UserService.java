@@ -1,5 +1,6 @@
 package com.matzip.server.domain.user.service;
 
+import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.exception.AdminUserAccessByNormalUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
@@ -42,17 +43,19 @@ public class UserService {
                 userPrincipal,
                 null,
                 userPrincipal.getAuthorities()));
-        return new UserDto.SignUpResponse(new UserDto.Response(user), token);
+        return new UserDto.SignUpResponse(new UserDto.Response(user, user), token);
     }
 
-    public UserDto.Response findUser(String username, String userRole) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (user.getRole().equals("ADMIN") && !userRole.equals("ADMIN"))
+    public UserDto.Response findUser(String findUsername, String username) {
+        User user = userRepository.findByUsername(findUsername).orElseThrow(() -> new UsernameNotFoundException(username));
+        User findUser = userRepository.findByUsername(findUsername).orElseThrow(() -> new UsernameNotFoundException(findUsername));
+        if (findUser.getRole().equals("ADMIN") && !user.getRole().equals("ADMIN"))
             throw new AdminUserAccessByNormalUserException();
-        return new UserDto.Response(user);
+        return new UserDto.Response(findUser, user);
     }
 
-    public Page<UserDto.Response> searchUsers(UserDto.SearchRequest searchRequest) {
+    public Page<UserDto.Response> searchUsers(Long userId, UserDto.SearchRequest searchRequest) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserIdNotFoundException(userId));
         Sort sort = searchRequest.getAscending() ?
                     Sort.by(searchRequest.getSortedBy()).ascending() :
                     Sort.by(searchRequest.getSortedBy()).descending();
@@ -61,6 +64,6 @@ public class UserService {
                 pageable,
                 searchRequest.getUsername(),
                 "NORMAL");
-        return users.map(UserDto.Response::new);
+        return users.map(u -> new UserDto.Response(u, user));
     }
 }
