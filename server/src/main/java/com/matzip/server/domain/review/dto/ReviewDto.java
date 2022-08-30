@@ -11,15 +11,15 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Validated
 public class ReviewDto {
     @RequiredArgsConstructor
     @Getter
@@ -44,6 +44,7 @@ public class ReviewDto {
         @NotBlank
         @Length(max=3000)
         private final String content;
+        @NotEmpty
         private final List<MultipartFile> images;
         @Range(min=0, max=10)
         private final Integer rating;
@@ -65,6 +66,8 @@ public class ReviewDto {
     @Getter
     public static class Response {
         private final Long id;
+        private final LocalDateTime createdAt;
+        private final LocalDateTime modifiedAt;
         private final UserDto.Response user;
         private final String content;
         private final List<String> imageUrls;
@@ -79,6 +82,8 @@ public class ReviewDto {
 
         public Response(User user, Review review) {
             this.id = review.getId();
+            this.createdAt = review.getCreatedAt();
+            this.modifiedAt = review.getModifiedAt();
             this.user = new UserDto.Response(review.getUser(), user);
             this.content = review.getContent();
             this.imageUrls = review.getImageUrls();
