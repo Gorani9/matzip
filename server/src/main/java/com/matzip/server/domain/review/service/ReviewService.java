@@ -37,7 +37,7 @@ public class ReviewService {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
         List<String> images = imageService.uploadImages(
                 user.getUsername(),
-                Optional.ofNullable(postRequest.getImages()).orElse(List.of()));
+                postRequest.getImages());
         return new ReviewDto.Response(user, reviewRepository.save(new Review(user, postRequest, images)));
     }
 

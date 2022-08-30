@@ -48,7 +48,7 @@ public class ReviewController {
     @PostMapping(consumes={"multipart/form-data"})
     public ResponseEntity<ReviewDto.Response> postReview(
             @CurrentUser User user,
-            @ModelAttribute ReviewDto.PostRequest postRequest) {
+            @ModelAttribute @Valid ReviewDto.PostRequest postRequest) {
         return ResponseEntity.ok().body(reviewService.postReview(user.getUsername(), postRequest));
     }
 
@@ -61,7 +61,7 @@ public class ReviewController {
     public ResponseEntity<ReviewDto.Response> patchReview(
             @CurrentUser User user,
             @PathVariable("id") Long id,
-            @ModelAttribute ReviewDto.PatchRequest patchRequest) {
+            @ModelAttribute @Valid ReviewDto.PatchRequest patchRequest) {
         return ResponseEntity.ok().body(reviewService.patchReview(user.getUsername(), id, patchRequest));
     }
 
