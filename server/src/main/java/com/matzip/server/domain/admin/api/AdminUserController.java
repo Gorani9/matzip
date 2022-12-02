@@ -3,7 +3,6 @@ package com.matzip.server.domain.admin.api;
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.admin.service.AdminUserService;
 import com.matzip.server.domain.me.dto.MeDto;
-import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +25,7 @@ public class AdminUserController {
     public ResponseEntity<Page<AdminDto.UserResponse>> getUsers(
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam(defaultValue="false") Boolean withAdmin) {
         return ResponseEntity.ok()
@@ -42,7 +41,7 @@ public class AdminUserController {
     public ResponseEntity<Page<AdminDto.UserResponse>> searchUsersByUsername(
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam @Valid @NotBlank String username,
             @RequestParam(required=false) Boolean isNonLocked) {

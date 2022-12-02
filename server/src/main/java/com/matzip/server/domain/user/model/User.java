@@ -15,9 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name="user")
@@ -25,17 +23,17 @@ import java.util.UUID;
 @Getter
 public class User extends BaseTimeEntity {
     @OneToMany(mappedBy="followee", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Follow> followers = List.of();
+    private final List<Follow> followers = new ArrayList<>();
     @OneToMany(mappedBy="follower", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Follow> followings = List.of();
+    private final List<Follow> followings = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Review> reviews = List.of();
+    private final List<Review> reviews = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Comment> comments = List.of();
+    private final List<Comment> comments = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Scrap> hearts = List.of();
+    private final List<Scrap> hearts = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Scrap> scraps = List.of();
+    private final List<Scrap> scraps = new ArrayList<>();
     @Column(unique=true)
     private String username;
     private String password;
@@ -81,6 +79,11 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
+    public User levelUp() {
+        this.matzipLevel++;
+        return this;
+    }
+
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
@@ -99,5 +102,33 @@ public class User extends BaseTimeEntity {
         if (Optional.ofNullable(userPatchRequest.getMatzipLevel()).isPresent())
             this.matzipLevel = userPatchRequest.getMatzipLevel();
         return this;
+    }
+
+    public Follow addFollower(User follower) {
+        Follow follow = new Follow(follower, this);
+        this.followers.add(follow);
+        follower.addFollowing(follow);
+        return follow;
+    }
+
+    private void addFollowing(Follow follow) {
+        this.followings.add(follow);
+    }
+
+    public void deleteFollower(User user) {
+        this.followers.removeIf(f -> Objects.equals(f.getFollower().getId(), user.getId()));
+        user.deleteFollowing(this);
+    }
+
+    private void deleteFollowing(User user) {
+        this.followers.removeIf(f -> Objects.equals(f.getFollowee().getId(), user.getId()));
+    }
+
+    public boolean hasFollowing(User user) {
+        return this.followings.stream().anyMatch(f -> Objects.equals(f.getFollowee().getId(), user.getId()));
+    }
+
+    public boolean hasFollower(User user) {
+        return this.followers.stream().anyMatch(f -> Objects.equals(f.getFollower().getId(), user.getId()));
     }
 }

@@ -24,19 +24,25 @@ public class MatzipControllerAdvice {
     @ExceptionHandler(value=ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponse> multipartException(MultipartException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value=NotAllowedException.class)

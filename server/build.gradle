@@ -1,6 +1,7 @@
 plugins {
 	id 'org.springframework.boot' version '2.7.2'
 	id 'io.spring.dependency-management' version '1.0.12.RELEASE'
+	id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 	id 'java'
 }
 
@@ -13,21 +14,39 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.2'
-	implementation 'org.springframework.boot:spring-boot-starter-web:2.7.2'
-	implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.2'
-	implementation 'org.springframework.boot:spring-boot-starter-test:2.7.2'
-	implementation 'org.springframework.boot:spring-boot-starter-security:2.7.2'
-	implementation 'org.springframework.boot:spring-boot-starter-validation:2.7.2'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-web:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-test:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-security:2.7.5'
+	implementation 'org.springframework.boot:spring-boot-starter-validation:2.7.5'
 	implementation 'mysql:mysql-connector-java:8.0.30'
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'
-	implementation 'com.google.code.gson:gson:2.9.0'
+	implementation 'com.google.code.gson:gson:2.10'
     implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.4.2'
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.1'
+    implementation 'com.querydsl:querydsl-jpa:5.0.0'
+	implementation 'com.querydsl:querydsl-apt:5.0.0'
     compileOnly 'org.projectlombok:lombok:1.18.24'
 	annotationProcessor 'org.projectlombok:lombok:1.18.24'
-	testImplementation 'org.springframework.security:spring-security-test:5.7.2'
+	testImplementation 'org.springframework.security:spring-security-test:5.7.3'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+def querydslDir = "$buildDir/generated/querydsl"
+querydsl {
+	jpa = true
+	querydslSourcesDir = querydslDir
+}
+sourceSets {
+	main.java.srcDir querydslDir
+}
+configurations {
+	querydsl.extendsFrom compileClasspath
+}
+compileQuerydsl {
+	options.annotationProcessorPath = configurations.querydsl
 }

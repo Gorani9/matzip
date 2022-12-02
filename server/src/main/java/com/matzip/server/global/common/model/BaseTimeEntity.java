@@ -15,10 +15,10 @@ public class BaseTimeEntity {
     private Long id;
 
     @CreatedDate
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
-    private LocalDateTime modifiedAt = LocalDateTime.now();
+    private LocalDateTime modifiedAt;
 
     public Long getId() {
         return id;

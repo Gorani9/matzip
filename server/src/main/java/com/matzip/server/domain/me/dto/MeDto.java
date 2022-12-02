@@ -6,7 +6,6 @@ import com.matzip.server.domain.review.validation.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
-import com.matzip.server.domain.user.validation.UserProperty;
 import com.matzip.server.domain.user.validation.Username;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +56,6 @@ public class MeDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @UserProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;

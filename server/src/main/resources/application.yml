@@ -5,8 +5,13 @@ spring:
     property-naming-strategy: SNAKE_CASE
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 100MB
+      max-file-size: 2MB
+      max-request-size: 20MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 500
 
 jwt-secret-key: matzip-server
 
@@ -37,23 +42,14 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
-    generate-ddl: true
+    generate-ddl: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
 
 logging:
   level:
-    root: debug
-    org:
-      hibernate:
-        type:
-          descriptor:
-            sql: trace
+    org.hibernate.sql: debug
 
 ---
 
@@ -63,7 +59,7 @@ spring:
       on-profile: test
 
   datasource:
-    url: ${DB_URL}
+    url: ${DB_TEST_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
@@ -72,19 +68,10 @@ spring:
     hibernate:
       ddl-auto: create
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
 
 logging:
   level:
-    domain: debug
-    org:
-      hibernate:
-        type:
-          descriptor:
-            sql: trace
+    org.hibernate.sql: debug
 
 
 ---
@@ -100,18 +87,14 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
-    generate-ddl: true
+    generate-ddl: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        show_sql: false
-        format_sql: false
 
 logging:
   level:
-    domain: debug
+    domain: warn
 
 server:
   port: 8081
@@ -129,18 +112,14 @@ spring:
     password: ${DB_PASSWORD}
 
   jpa:
-    generate-ddl: true
+    generate-ddl: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    properties:
-      hibernate:
-        show_sql: false
-        format_sql: false
 
 logging:
   level:
-    domain: debug
+    domain: warn
 
 server:
   port: 8082

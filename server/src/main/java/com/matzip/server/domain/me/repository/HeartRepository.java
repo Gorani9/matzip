@@ -5,5 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HeartRepository extends JpaRepository<Heart, Long> {
     void deleteByUser_UsernameAndReview_Id(String username, Long reviewId);
+
     boolean existsByUser_UsernameAndReview_Id(String username, Long reviewId);
 }

@@ -1,19 +1,19 @@
 package com.matzip.server.domain.user.api;
 
 import com.matzip.server.domain.user.dto.UserDto;
-import com.matzip.server.domain.user.model.User;
+import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.domain.user.service.UserService;
-import com.matzip.server.domain.user.validation.UserProperty;
 import com.matzip.server.domain.user.validation.Username;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -39,27 +39,21 @@ public class UserController {
         return ResponseEntity.ok().body(userService.isUsernameTakenBySomeone(username));
     }
 
-    @GetMapping("/username")
-    public ResponseEntity<Page<UserDto.Response>> searchUsersByUsername(
-            @CurrentUser User user,
-            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="false") Boolean ascending,
-            @RequestParam @Valid @NotBlank String username) {
-        return ResponseEntity.ok()
-                .body(userService.searchUsers(
-                        user.getId(),
-                        new UserDto.SearchRequest(pageNumber,
-                                                  pageSize,
-                                                  sortedBy,
-                                                  ascending,
-                                                  username)));
+    @GetMapping
+    public ResponseEntity<Slice<UserDto.Response>> searchUsersByUsername(
+            @CurrentUser Long myId,
+            @RequestParam("username") @NotBlank String username,
+            @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
+            @RequestParam(value = "sort", required = false) String userProperty,
+            @RequestParam(value = "asc", required = false, defaultValue = "false") Boolean asc) {
+        return ResponseEntity.ok().body(userService.searchUsers(myId, new UserDto.SearchRequest(
+                username, page, size, UserProperty.from(userProperty), asc)));
     }
 
-    @GetMapping("/username/{username}")
+    @GetMapping("/{username}")
     public ResponseEntity<UserDto.Response> getUserByUsername(
-            @CurrentUser User user, @PathVariable("username") @Valid @NotBlank String username) {
-        return ResponseEntity.ok().body(userService.findUser(username, user.getUsername()));
+            @CurrentUser Long myId, @PathVariable("username") @Valid @NotBlank String username) {
+        return ResponseEntity.ok().body(userService.getUser(myId, username));
     }
 }

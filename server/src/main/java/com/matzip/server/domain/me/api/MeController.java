@@ -11,7 +11,6 @@ import com.matzip.server.domain.review.validation.CommentProperty;
 import com.matzip.server.domain.review.validation.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.validation.UserProperty;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
@@ -72,7 +71,7 @@ public class MeController {
             @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam(defaultValue="following") @Valid @FollowType String type) {
         return ResponseEntity.ok()
@@ -122,7 +121,9 @@ public class MeController {
     }
 
     @PutMapping("/hearts/{review-id}")
-    public ResponseEntity<HeartDto.Response> putHeartOnReview(@CurrentUser User user, @PathVariable("review-id") Long reviewId) {
+    public ResponseEntity<HeartDto.Response> putHeartOnReview(
+            @CurrentUser User user,
+            @PathVariable("review-id") Long reviewId) {
         return ResponseEntity.ok().body(meService.heartReview(user, reviewId));
     }
 

@@ -2,7 +2,6 @@ package com.matzip.server.domain.admin.dto;
 
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.validation.UserProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -21,7 +20,6 @@ public class AdminDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @UserProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;
@@ -36,7 +34,6 @@ public class AdminDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @UserProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;
