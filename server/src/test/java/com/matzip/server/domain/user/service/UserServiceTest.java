@@ -222,10 +222,10 @@ class UserServiceTest {
         Long fooUserId = userRepository.findByUsername("foo").orElseThrow().getId();
 
         // when
-        UserDto.Response barResponse = userService.getUser(fooUserId, "bar");
+        UserDto.Response barResponse = userService.fetchUser(fooUserId, "bar");
 
         // then
         assertThat(barResponse.getUsername()).isEqualTo("bar");
-        assertThrowsExactly(UsernameNotFoundException.class, () -> userService.getUser(fooUserId, "not_existing_user"));
+        assertThrowsExactly(UsernameNotFoundException.class, () -> userService.fetchUser(fooUserId, "not_existing_user"));
     }
 }

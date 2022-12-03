@@ -45,7 +45,7 @@ public class UserService {
         }
     }
 
-    public UserDto.Response getUser(Long myId, String username) {
+    public UserDto.Response fetchUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
         if (user.getRole().equals("ADMIN") && !user.getRole().equals("ADMIN"))
