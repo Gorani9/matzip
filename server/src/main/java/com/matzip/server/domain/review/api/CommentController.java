@@ -2,7 +2,6 @@ package com.matzip.server.domain.review.api;
 
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.service.CommentService;
-import com.matzip.server.domain.review.validation.CommentProperty;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class CommentController {
             @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @CommentProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending,
             @RequestParam @Valid @NotBlank String keyword) {
         return ResponseEntity.ok()

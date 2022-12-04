@@ -7,7 +7,8 @@ import java.util.Arrays;
 public enum UserProperty {
     USERNAME("username"),
     MATZIP_LEVEL("level"),
-    NUMBER_OF_FOLLOWERS("followers");
+    NUMBER_OF_FOLLOWERS("followers")
+    ;
 
     private final String webNaming;
 

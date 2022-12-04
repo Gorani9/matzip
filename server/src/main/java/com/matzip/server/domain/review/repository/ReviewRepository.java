@@ -11,14 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ReviewRepository extends JpaRepository<Review, Long> {
+public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRepositoryCustom {
     Optional<Review> findAllById(Long id);
 
     Page<Review> findAllByUser_Username(Pageable pageable, String username);
-
-    Page<Review> findAllByContentContains(Pageable pageable, String keyword);
-
-    Page<Review> findAllByLocationContains(Pageable pageable, String location);
-
-    List<Review> findAllByCreatedAtAfter(Pageable pageable, LocalDateTime localDateTime);
 }

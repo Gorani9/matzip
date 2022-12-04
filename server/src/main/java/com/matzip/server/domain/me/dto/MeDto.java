@@ -1,8 +1,6 @@
 package com.matzip.server.domain.me.dto;
 
 import com.matzip.server.domain.me.validation.FollowType;
-import com.matzip.server.domain.review.validation.CommentProperty;
-import com.matzip.server.domain.review.validation.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.validation.Password;
@@ -70,7 +68,6 @@ public class MeDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @ReviewProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;
@@ -83,7 +80,6 @@ public class MeDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @CommentProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;

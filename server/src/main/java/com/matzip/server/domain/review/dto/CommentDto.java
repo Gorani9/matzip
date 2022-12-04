@@ -1,7 +1,6 @@
 package com.matzip.server.domain.review.dto;
 
 import com.matzip.server.domain.review.model.Comment;
-import com.matzip.server.domain.review.validation.CommentProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import lombok.Getter;
@@ -21,7 +20,6 @@ public class CommentDto {
         private final Integer pageNumber;
         @Positive
         private final Integer pageSize;
-        @CommentProperty
         private final String sortedBy;
         @NotNull
         private final Boolean ascending;

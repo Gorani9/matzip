@@ -1,186 +1,213 @@
 package com.matzip.server.domain.review.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
-import com.matzip.server.domain.review.repository.ReviewRepository;
+import com.matzip.server.domain.review.service.ReviewService;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.repository.UserRepository;
-import com.matzip.server.global.auth.dto.LoginDto;
-import org.junit.jupiter.api.AfterEach;
+import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
+import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.util.MultiValueMap;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
 
+import static com.matzip.server.ExpectedStatus.BAD_REQUEST;
 import static com.matzip.server.ExpectedStatus.OK;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.MOCK)
+@WebMvcTest(ReviewController.class)
+@MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
 class ReviewControllerTest {
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ReviewRepository reviewRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Value("${admin-password}")
-    private String adminPassword;
+    @MockBean
+    private ReviewService reviewService;
+
+    private Authentication authentication;
 
     @BeforeEach
     void setUp() {
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
-        }
-    }
-
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-        reviewRepository.deleteAll();
-    }
-
-    private String signUp(String username, String password) throws Exception {
-        long beforeUserCount = userRepository.count();
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users").contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().is(OK.getStatusCode()));
-        long afterUserCount = userRepository.count();
-        resultActions.andExpect(header().exists("Authorization"));
-        assertThat(afterUserCount).isEqualTo(beforeUserCount + 1);
-        signIn(username, password, OK);
-        return resultActions.andReturn().getResponse().getHeader("Authorization");
-    }
-
-    public String signIn(String username, String password, ExpectedStatus expectedStatus) throws Exception {
-        long beforeUserCount = userRepository.count();
-        LoginDto.LoginRequest signUpRequest = new LoginDto.LoginRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/login").contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterUserCount = userRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-        if (expectedStatus == OK) {
-            resultActions.andExpect(header().exists("Authorization"));
-            return resultActions.andReturn().getResponse().getHeader("Authorization");
-        } else {
-            resultActions.andExpect(header().doesNotExist("Authorization"));
-            return null;
-        }
-    }
-
-    private void putImageToBuilder(MockMultipartHttpServletRequestBuilder builder, String file) {
-        if (Optional.ofNullable(file).isEmpty()) return;
-        try (InputStream inputStream = new FileInputStream(file)) {
-            File imageFile = new File(file);
-            String contentType = Files.probeContentType(Path.of(file));
-            builder.file(new MockMultipartFile("images", imageFile.getName(), contentType, inputStream));
-        } catch (IOException e) {
-            System.err.println("Error while putting into multipart " + e.getMessage());
-        }
+        User user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
     private void searchReviews(
-            MultiValueMap<String, String> parameters,
-            String token,
-            ExpectedStatus expectedStatus,
-            Integer expectedCount) throws Exception {
-        long beforeUserCount = userRepository.count();
-        long beforeReviewCount = reviewRepository.count();
-        ResultActions resultActions = mockMvc.perform(get("/api/v1/me/follows").header("Authorization", token)
-                                                              .params(parameters))
+            MultiValueMap<String, String> parameters, ExpectedStatus expectedStatus) throws Exception {
+        mockMvc.perform(get("/api/v1/reviews")
+                                .with(authentication(authentication))
+                                .queryParams(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        if (expectedStatus == OK) {
-            resultActions.andExpect(jsonPath("$.number_of_elements").value(expectedCount));
-        }
-        long afterUserCount = userRepository.count();
-        long afterReviewCount = reviewRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-        assertThat(afterReviewCount).isEqualTo(beforeReviewCount);
     }
 
-    private void postReviews(
-            String token, String filename, MultiValueMap<String, String> parameters,
-            ExpectedStatus expectedStatus) throws Exception {
-        long beforeReviewCount = reviewRepository.count();
-        MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.POST, "/api/v1/reviews");
-        putImageToBuilder(builder, filename);
-        mockMvc.perform(builder.header("Authorization", token)
+    private void postReview(
+            MultiValueMap<String, String> parameters, ExpectedStatus expectedStatus) throws Exception {
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/reviews")
+                                .file(new MockMultipartFile("images", "image_name", "png", InputStream.nullInputStream()))
+                                .with(authentication(authentication)).with(csrf())
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .params(parameters)).andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterReviewCount = reviewRepository.count();
-        if (expectedStatus == OK)
-            assertThat(afterReviewCount).isEqualTo(beforeReviewCount + 1);
-        else
-            assertThat(afterReviewCount).isEqualTo(beforeReviewCount);
-    }
-
-    private void getReview(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
-        long beforeReviewCount = reviewRepository.count();
-        mockMvc.perform(get("api/v1/reviews/" + id).header("Authorization", token))
+                                .params(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterReviewCount = reviewRepository.count();
-        assertThat(afterReviewCount).isEqualTo(beforeReviewCount);
-    }
-
-    private void patchReviews(
-            String token, String filename, MultiValueMap<String, String> parameters, Long id,
-            ExpectedStatus expectedStatus) throws Exception {
-        long beforeReviewCount = reviewRepository.count();
-        MockMultipartHttpServletRequestBuilder builder = multipart(HttpMethod.PATCH, "/api/v1/reviews/" + id);
-        putImageToBuilder(builder, filename);
-        mockMvc.perform(builder.header("Authorization", token)
-                                .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .params(parameters)).andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterReviewCount = reviewRepository.count();
-        assertThat(afterReviewCount).isEqualTo(beforeReviewCount);
-    }
-
-    private void deleteReview(String token, Long id, ExpectedStatus expectedStatus) throws Exception {
-        long beforeReviewCount = reviewRepository.count();
-        mockMvc.perform(delete("api/v1/reviews/" + id).header("Authorization", token))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterReviewCount = reviewRepository.count();
-        assertThat(afterReviewCount).isEqualTo(beforeReviewCount - 1);
     }
 
     @Test
-    void searchReviewsTest() throws Exception {
-        String foo = signUp("foo", "fooPassword1!");
-        Parameters parameters = new Parameters();
+    void postReviewTest() throws Exception {
+        Parameters parameters;
+
+        parameters = new Parameters();
+        parameters.putParameter("content", "content should not be blank");
+        parameters.putParameter("rating", "5");
+        parameters.putParameter("location", "location string should not be blank");
+        postReview(parameters, OK);
+
+        parameters = new Parameters();
+        parameters.putParameter("rating", "5");
+        parameters.putParameter("location", "location string should not be blank");
+        postReview(parameters, BAD_REQUEST);
+
+        parameters = new Parameters();
+        parameters.putParameter("content", "content should not be blank");
+        parameters.putParameter("location", "location string should not be blank");
+        postReview(parameters, BAD_REQUEST);
+
+        parameters = new Parameters();
+        parameters.putParameter("content", "content should not be blank");
+        parameters.putParameter("rating", "5");
+        postReview(parameters, BAD_REQUEST);
+
+        parameters = new Parameters();
+        parameters.putParameter("content", "content should not be blank");
+        parameters.putParameter("location", "location string should not be blank");
+        parameters.putParameter("rating", "-1");
+        postReview(parameters, BAD_REQUEST);
+        parameters.putParameter("rating", "0");
+        postReview(parameters, OK);
+        parameters.putParameter("rating", "10");
+        postReview(parameters, OK);
+        parameters.putParameter("rating", "11");
+        postReview(parameters, BAD_REQUEST);
+
+        parameters = new Parameters();
+        String content = "content maximum length is 3000" + "!".repeat(2971);
+        assertThat(content.length()).isEqualTo(3001);
+        parameters.putParameter("content", content);
+        parameters.putParameter("rating", "5");
+        parameters.putParameter("location", "location string should not be blank");
+        postReview(parameters, BAD_REQUEST);
+        content = content.substring(0, 3000);
+        parameters.putParameter("content", content);
+        assertThat(content.length()).isEqualTo(3000);
+        postReview(parameters, OK);
+    }
+
+    @Test
+    void searchReviewsByContent() throws Exception {
+        Parameters parameters;
+
+        /* keyword must be included */
+        parameters = new Parameters(0, 15);
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("keyword", "content to search");
+        searchReviews(parameters, OK);
+
+        /* keyword must not be blank */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("keyword", "      ");
+        searchReviews(parameters, BAD_REQUEST);
+
+        /* page must be positive or zero */
+        parameters = new Parameters(-1, 15);
+        parameters.putParameter("keyword", "content to search");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("page", "0");
+        searchReviews(parameters, OK);
+        parameters.putParameter("page", "1");
+        searchReviews(parameters, OK);
+
+        /* size must be positive, smaller or equal to 100 */
+        parameters = new Parameters(0, 0);
+        parameters.putParameter("keyword", "content to search");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "-1");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "101");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "100");
+        searchReviews(parameters, OK);
+
+        /* asc must be either true or false or null */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "content to search");
+        parameters.putParameter("asc", "boolean");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("asc", "null");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("asc", "false");
+        searchReviews(parameters, OK);
+        parameters.putParameter("asc", "true");
+        searchReviews(parameters, OK);
+        parameters.putParameter("asc", null);
+        searchReviews(parameters, OK);
+
+        /* sort must be one of these followings: username, level, followers, hearts, scraps, comments, rating */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "content to search");
+        parameters.putParameter("sort", "username");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "level");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "followers");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "hearts");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "scraps");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "comments");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "rating");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "    ");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "");
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", null);
+        searchReviews(parameters, OK);
+        parameters.putParameter("sort", "createdAt");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "matzipLevel");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "modifiedAt");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "id");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "password");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "role");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "profileString");
+        searchReviews(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "image");
+        searchReviews(parameters, BAD_REQUEST);
     }
 }

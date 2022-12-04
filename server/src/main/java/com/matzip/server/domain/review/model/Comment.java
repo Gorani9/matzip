@@ -7,10 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
 @Entity
@@ -19,11 +16,11 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @Setter
 public class Comment extends BaseTimeEntity {
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Review review;
 
@@ -32,7 +29,9 @@ public class Comment extends BaseTimeEntity {
 
     public Comment(User user, Review review, CommentDto.PostRequest postRequest) {
         this.user = user;
+        user.addComment(this);
         this.review = review;
+        review.addComment(this);
         this.content = postRequest.getContent();
     }
 

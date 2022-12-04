@@ -60,7 +60,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                     .from(follow)
                     .rightJoin(follow.followee, user).on(follow.followee.id.eq(user.id))
                     .groupBy(user)
-                    .having(user.username.contains(searchRequest.getUsername()))
+                    .where(user.username.contains(searchRequest.getUsername()))
                     .orderBy(new OrderSpecifier<>(order, followers), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)

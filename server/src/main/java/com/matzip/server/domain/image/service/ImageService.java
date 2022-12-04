@@ -79,10 +79,11 @@ public class ImageService {
         return url.substring(slashIndex + 1);
     }
 
-    public void deleteImages(List<String> urls) {
+    public List<String> deleteImages(List<String> urls) {
         for (String url : urls) {
             deleteImage(url);
         }
+        return urls;
     }
 
     public void deleteImage(String url) {

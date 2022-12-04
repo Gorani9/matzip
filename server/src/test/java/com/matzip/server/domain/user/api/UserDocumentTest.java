@@ -46,7 +46,7 @@ public class UserDocumentTest {
     @MockBean
     private UserService userService;
 
-    private FieldDescriptor[] getUserResponseFields() {
+    public static FieldDescriptor[] getUserResponseFields() {
         return new FieldDescriptor[]{
                 fieldWithPath("username").type(STRING).description("유저네임"),
                 fieldWithPath("profile_image_url").type(STRING).description("유저 프로필 이미지 링크").optional(),
@@ -108,7 +108,7 @@ public class UserDocumentTest {
 
         mockMvc.perform(get("/api/v1/users/{username}", "foo"))
                 .andExpect(status().isOk())
-                .andDo(document("username-duplicate-check",
+                .andDo(document("user-fetch",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(

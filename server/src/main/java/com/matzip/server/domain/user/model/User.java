@@ -3,6 +3,7 @@ package com.matzip.server.domain.user.model;
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.model.Follow;
+import com.matzip.server.domain.me.model.Heart;
 import com.matzip.server.domain.me.model.Scrap;
 import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
@@ -31,7 +32,7 @@ public class User extends BaseTimeEntity {
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
     private final List<Comment> comments = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
-    private final List<Scrap> hearts = new ArrayList<>();
+    private final List<Heart> hearts = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
     private final List<Scrap> scraps = new ArrayList<>();
     @Column(unique=true)
@@ -130,5 +131,37 @@ public class User extends BaseTimeEntity {
 
     public boolean hasFollower(User user) {
         return this.followers.stream().anyMatch(f -> Objects.equals(f.getFollower().getId(), user.getId()));
+    }
+
+    public void addReview(Review review) {
+        this.reviews.add(review);
+    }
+
+    public void deleteReview(Long reviewId) {
+        this.reviews.removeIf(r -> r.getId().equals(reviewId));
+    }
+
+    public void addComment(Comment comment) {
+        this.comments.add(comment);
+    }
+
+    public void deleteComment(Long commentId) {
+        this.comments.removeIf(c -> c.getId().equals(commentId));
+    }
+
+    public void addScrap(Scrap scrap) {
+        this.scraps.add(scrap);
+    }
+
+    public void deleteScrap(Long scrapId) {
+        this.scraps.removeIf(s -> s.getId().equals(scrapId));
+    }
+
+    public void addHeart(Heart heart) {
+        this.hearts.add(heart);
+    }
+
+    public void deleteHeart(Long heartId) {
+        this.hearts.removeIf(h -> h.getId().equals(heartId));
     }
 }

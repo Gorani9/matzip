@@ -7,8 +7,6 @@ import com.matzip.server.domain.me.service.MeService;
 import com.matzip.server.domain.me.validation.FollowType;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
-import com.matzip.server.domain.review.validation.CommentProperty;
-import com.matzip.server.domain.review.validation.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.CurrentUser;
@@ -99,7 +97,7 @@ public class MeController {
             @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @ReviewProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending) {
         return ResponseEntity.ok()
                 .body(meService.getMyReviews(
@@ -112,7 +110,7 @@ public class MeController {
             @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @CommentProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending) {
         return ResponseEntity.ok()
                 .body(meService.getMyComments(
@@ -139,7 +137,7 @@ public class MeController {
             @CurrentUser User user,
             @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
             @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @ReviewProperty String sortedBy,
+            @RequestParam(defaultValue="createdAt") @Valid String sortedBy,
             @RequestParam(defaultValue="false") Boolean ascending) {
         return ResponseEntity.ok()
                 .body(meService.getMyScraps(
