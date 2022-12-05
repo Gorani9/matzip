@@ -1,27 +1,30 @@
 package com.matzip.server.domain.image.model;
 
-import com.matzip.server.domain.review.model.Review;
+import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.URL;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "image")
+@Table(name = "user_image")
 @NoArgsConstructor
 @Getter
-public class Image extends BaseTimeEntity {
-    @ManyToOne(fetch = FetchType.LAZY)
+public class UserImage extends BaseTimeEntity {
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn
-    private Review review;
+    private User user;
 
     @NotBlank
+    @URL
     private String imageUrl;
 
-    public Image(Review review, String imageUrl) {
-        this.review = review;
+    public UserImage(User user, String imageUrl) {
+        this.user = user;
+        user.setUserImage(this);
         this.imageUrl = imageUrl;
     }
 }

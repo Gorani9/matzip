@@ -19,6 +19,7 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,12 +33,11 @@ import java.util.*;
 
 import static com.matzip.server.domain.review.model.ReviewProperty.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Tag("ServiceTest")
 class ReviewServiceTest {
     @Autowired
     private ReviewRepository reviewRepository;
@@ -68,7 +68,6 @@ class ReviewServiceTest {
     @Test
     void postReviewTest() {
         // given
-        given(imageService.uploadImages(any(), any())).willReturn(List.of());
         long beforeReviewCount = reviewRepository.count();
         int numberOfReviews = 100;
         String[] contents = new String[numberOfReviews];
@@ -94,7 +93,6 @@ class ReviewServiceTest {
     @Test
     void getReviewTest() throws JsonProcessingException {
         // given
-        given(imageService.uploadImages(any(), any())).willReturn(List.of());
         Long fooUserId = userRepository.findByUsername("foo").orElseThrow().getId();
         ReviewDto.Response response = reviewService.postReview(
                 fooUserId,
@@ -111,7 +109,6 @@ class ReviewServiceTest {
     @Test
     void patchReviewContentTest() {
         // given
-        given(imageService.uploadImages(any(), any())).willReturn(List.of());
         Long fooUserId = userRepository.findByUsername("foo").orElseThrow().getId();
         ReviewDto.Response response = reviewService.postReview(
                 fooUserId,
@@ -132,7 +129,6 @@ class ReviewServiceTest {
     @Test
     void patchReviewRatingTest() {
         // given
-        given(imageService.uploadImages(any(), any())).willReturn(List.of());
         Long fooUserId = userRepository.findByUsername("foo").orElseThrow().getId();
         ReviewDto.Response response = reviewService.postReview(
                 fooUserId,
@@ -153,7 +149,6 @@ class ReviewServiceTest {
     @Test
     void deleteReviewTest() {
         // given
-        given(imageService.uploadImages(any(), any())).willReturn(List.of());
         long beforeReviewCount = reviewRepository.count();
         int numberOfReviews = 100;
         String[] contents = new String[numberOfReviews];

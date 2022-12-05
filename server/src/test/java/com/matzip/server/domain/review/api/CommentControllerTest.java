@@ -2,91 +2,175 @@ package com.matzip.server.domain.review.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
-import com.matzip.server.domain.review.repository.ReviewRepository;
+import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.dto.CommentDto;
+import com.matzip.server.domain.review.service.CommentService;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.repository.UserRepository;
-import com.matzip.server.global.auth.dto.LoginDto;
-import org.junit.jupiter.api.AfterEach;
+import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
+import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.util.MultiValueMap;
 
+import static com.matzip.server.ExpectedStatus.BAD_REQUEST;
 import static com.matzip.server.ExpectedStatus.OK;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.MOCK)
+@WebMvcTest(CommentController.class)
+@MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
+@Tag("ControllerTest")
 class CommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ReviewRepository reviewRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Value("${admin-password}")
-    private String adminPassword;
+    @MockBean
+    private CommentService commentService;
+
+    private Authentication authentication;
 
     @BeforeEach
     void setUp() {
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
-        }
+        User user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-        reviewRepository.deleteAll();
-    }
-
-    private String signUp(String username, String password) throws Exception {
-        long beforeUserCount = userRepository.count();
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users").contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().is(OK.getStatusCode()));
-        long afterUserCount = userRepository.count();
-        resultActions.andExpect(header().exists("Authorization"));
-        assertThat(afterUserCount).isEqualTo(beforeUserCount + 1);
-        signIn(username, password, OK);
-        return resultActions.andReturn().getResponse().getHeader("Authorization");
-    }
-
-    public String signIn(String username, String password, ExpectedStatus expectedStatus) throws Exception {
-        long beforeUserCount = userRepository.count();
-        LoginDto.LoginRequest signUpRequest = new LoginDto.LoginRequest(username, password);
-        ResultActions resultActions = mockMvc.perform(post("/api/v1/users/login").contentType(MediaType.APPLICATION_JSON)
-                                                              .content(objectMapper.writeValueAsString(signUpRequest)))
+    private void searchComments(
+            MultiValueMap<String, String> parameters, ExpectedStatus expectedStatus) throws Exception {
+        mockMvc.perform(get("/api/v1/comments")
+                                .with(authentication(authentication))
+                                .queryParams(parameters))
                 .andExpect(status().is(expectedStatus.getStatusCode()));
-        long afterUserCount = userRepository.count();
-        assertThat(afterUserCount).isEqualTo(beforeUserCount);
-        if (expectedStatus == OK) {
-            resultActions.andExpect(header().exists("Authorization"));
-            return resultActions.andReturn().getResponse().getHeader("Authorization");
-        } else {
-            resultActions.andExpect(header().doesNotExist("Authorization"));
-            return null;
-        }
+    }
+
+    private void postComment(String content, ExpectedStatus expectedStatus) throws Exception {
+        CommentDto.PostRequest request = new CommentDto.PostRequest(1L, content);
+        mockMvc.perform(post("/api/v1/comments")
+                                .with(authentication(authentication)).with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+    }
+
+    @Test
+    void postCommentTest() throws Exception {
+        postComment("content", OK);
+
+        String content = "content maximum length is 100" + "!".repeat(72);
+        assertThat(content.length()).isEqualTo(101);
+        postComment(content, BAD_REQUEST);
+        content = content.substring(0, 100);
+        assertThat(content.length()).isEqualTo(100);
+        postComment(content, OK);
+    }
+
+    @Test
+    void searchCommentsTest() throws Exception {
+        Parameters parameters;
+
+        /* keyword must be included */
+        parameters = new Parameters(0, 15);
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("keyword", "content to search");
+        searchComments(parameters, OK);
+
+        /* keyword must not be blank */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("keyword", "      ");
+        searchComments(parameters, BAD_REQUEST);
+
+        /* page must be positive or zero */
+        parameters = new Parameters(-1, 15);
+        parameters.putParameter("keyword", "content to search");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("page", "0");
+        searchComments(parameters, OK);
+        parameters.putParameter("page", "1");
+        searchComments(parameters, OK);
+
+        /* size must be positive, smaller or equal to 100 */
+        parameters = new Parameters(0, 0);
+        parameters.putParameter("keyword", "content to search");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "-1");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "101");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("size", "100");
+        searchComments(parameters, OK);
+
+        /* asc must be either true or false or null */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "content to search");
+        parameters.putParameter("asc", "boolean");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("asc", "null");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("asc", "false");
+        searchComments(parameters, OK);
+        parameters.putParameter("asc", "true");
+        searchComments(parameters, OK);
+        parameters.putParameter("asc", null);
+        searchComments(parameters, OK);
+
+        /* sort must be one of these followings: follower */
+        parameters = new Parameters(0, 15);
+        parameters.putParameter("keyword", "content to search");
+        parameters.putParameter("sort", "followers");
+        searchComments(parameters, OK);
+        parameters.putParameter("sort", "    ");
+        searchComments(parameters, OK);
+        parameters.putParameter("sort", "");
+        searchComments(parameters, OK);
+        parameters.putParameter("sort", null);
+        searchComments(parameters, OK);
+        parameters.putParameter("sort", "username");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "level");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "hearts");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "scraps");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "comments");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "rating");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "createdAt");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "matzipLevel");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "modifiedAt");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "id");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "password");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "role");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "profileString");
+        searchComments(parameters, BAD_REQUEST);
+        parameters.putParameter("sort", "image");
+        searchComments(parameters, BAD_REQUEST);
     }
 }

@@ -1,6 +1,7 @@
 package com.matzip.server.domain.user.model;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
+import com.matzip.server.domain.image.model.UserImage;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.me.model.Heart;
@@ -11,7 +12,6 @@ import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
@@ -35,13 +35,14 @@ public class User extends BaseTimeEntity {
     private final List<Heart> hearts = new ArrayList<>();
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL, orphanRemoval=true)
     private final List<Scrap> scraps = new ArrayList<>();
+    @OneToOne(cascade=CascadeType.ALL, orphanRemoval=true)
+    @JoinColumn
+    private UserImage userImage;
     @Column(unique=true)
     private String username;
     private String password;
     private Boolean isNonLocked = true;
     private String role = "NORMAL";
-    @URL
-    private String profileImageUrl;
     private String profileString;
     private Integer matzipLevel = 0;
 
@@ -85,8 +86,8 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
-    public void setProfileImageUrl(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
+    public void setUserImage(UserImage userImage) {
+        this.userImage = userImage;
     }
 
     public void setProfileString(String profileString) {
@@ -96,8 +97,6 @@ public class User extends BaseTimeEntity {
     public User patchFromAdmin(AdminDto.UserPatchRequest userPatchRequest) {
         if (Boolean.TRUE.equals(userPatchRequest.getUsername()))
             this.username = "random-user-" + LocalDateTime.now() + "-" + UUID.randomUUID();
-        if (Boolean.TRUE.equals(userPatchRequest.getProfileImageUrl()))
-            this.profileImageUrl = null;
         if (Boolean.TRUE.equals(userPatchRequest.getProfileString()))
             this.profileString = null;
         if (Optional.ofNullable(userPatchRequest.getMatzipLevel()).isPresent())
@@ -137,31 +136,31 @@ public class User extends BaseTimeEntity {
         this.reviews.add(review);
     }
 
-    public void deleteReview(Long reviewId) {
-        this.reviews.removeIf(r -> r.getId().equals(reviewId));
+    public void deleteReview(Review review) {
+        this.reviews.remove(review);
     }
 
     public void addComment(Comment comment) {
         this.comments.add(comment);
     }
 
-    public void deleteComment(Long commentId) {
-        this.comments.removeIf(c -> c.getId().equals(commentId));
+    public void deleteComment(Comment comment) {
+        this.comments.remove(comment);
     }
 
     public void addScrap(Scrap scrap) {
         this.scraps.add(scrap);
     }
 
-    public void deleteScrap(Long scrapId) {
-        this.scraps.removeIf(s -> s.getId().equals(scrapId));
+    public void deleteScrap(Scrap scrap) {
+        this.scraps.remove(scrap);
     }
 
     public void addHeart(Heart heart) {
         this.hearts.add(heart);
     }
 
-    public void deleteHeart(Long heartId) {
-        this.hearts.removeIf(h -> h.getId().equals(heartId));
+    public void deleteHeart(Heart heart) {
+        this.hearts.remove(heart);
     }
 }

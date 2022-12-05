@@ -1,6 +1,6 @@
 package com.matzip.server.domain.review.dto;
 
-import com.matzip.server.domain.image.model.Image;
+import com.matzip.server.domain.image.model.ReviewImage;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
@@ -17,7 +17,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Validated
@@ -80,7 +79,7 @@ public class ReviewDto {
             this.modifiedAt = review.getModifiedAt();
             this.user = new UserDto.Response(review.getUser(), user);
             this.content = review.getContent();
-            this.imageUrls = review.getImages().stream().map(Image::getImageUrl).collect(Collectors.toList());
+            this.imageUrls = review.getReviewImages().stream().map(ReviewImage::getImageUrl).collect(Collectors.toList());
             this.rating = review.getRating();
             this.location = review.getLocation();
             this.comments = review.getComments()
@@ -89,9 +88,9 @@ public class ReviewDto {
                     .collect(Collectors.toList());
             this.numberOfScraps = review.getScraps().size();
             this.numberOfHearts = review.getHearts().size();
-            this.isDeletable = Objects.equals(user.getId(), review.getUser().getId()) || user.getRole().equals("ADMIN");
-            this.isHearted = review.getHearts().stream().anyMatch(h -> h.getUser().getId().equals(user.getId()));
-            this.isScraped = review.getScraps().stream().anyMatch(s -> s.getUser().getId().equals(user.getId()));
+            this.isDeletable = user == review.getUser() || user.getRole().equals("ADMIN");
+            this.isHearted = review.getHearts().stream().anyMatch(h -> h.getUser() == user);
+            this.isScraped = review.getScraps().stream().anyMatch(s -> s.getUser() == user);
         }
     }
 

@@ -8,18 +8,12 @@ import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.CommentRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
-import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -29,46 +23,43 @@ public class CommentService {
     private final ReviewRepository reviewRepository;
     private final CommentRepository commentRepository;
 
-    public Page<CommentDto.Response> searchComment(String username, CommentDto.SearchRequest searchRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        Sort sort = searchRequest.getAscending() ? Sort.by(searchRequest.getSortedBy()).ascending()
-                                                 : Sort.by(searchRequest.getSortedBy()).descending();
-        Pageable pageable = PageRequest.of(searchRequest.getPageNumber(), searchRequest.getPageSize(), sort);
-        return commentRepository.findAllByContentContaining(pageable, searchRequest.getKeyword())
-                .map(c -> new CommentDto.Response(user, c));
+    public Slice<CommentDto.Response> searchComment(Long myId, CommentDto.SearchRequest searchRequest) {
+        User me = userRepository.findMeById(myId);
+        return commentRepository.searchCommentByKeyword(searchRequest).map(c -> new CommentDto.Response(me, c));
     }
 
     @Transactional
-    public CommentDto.Response postComment(String username, CommentDto.PostRequest postRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+    public CommentDto.Response postComment(Long myId, CommentDto.PostRequest postRequest) {
+        User me = userRepository.findMeById(myId);
         Long reviewId = postRequest.getReviewId();
         Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        return new CommentDto.Response(user, commentRepository.save(new Comment(user, review, postRequest)));
+        return new CommentDto.Response(me, commentRepository.save(new Comment(me, review, postRequest)));
     }
 
-    public CommentDto.Response getComment(String username, Long id) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+    public CommentDto.Response getComment(Long myId, Long id) {
+        User me = userRepository.findMeById(myId);
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new CommentNotFoundException(id));
-        return new CommentDto.Response(user, comment);
+        return new CommentDto.Response(me, comment);
     }
 
     @Transactional
-    public CommentDto.Response putComment(String username, Long id, CommentDto.PutRequest putRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new CommentNotFoundException(id));
-        if (!Objects.equals(comment.getUser().getId(), user.getId()) && !user.getRole().equals("ADMIN"))
+    public CommentDto.Response putComment(Long myId, Long commentId, CommentDto.PutRequest putRequest) {
+        User me = userRepository.findMeById(myId);
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CommentNotFoundException(commentId));
+        if (comment.getUser() != me)
             throw new CommentChangeByAnonymousException();
         comment.setContent(putRequest.getContent());
-        return new CommentDto.Response(user, commentRepository.save(comment));
+        return new CommentDto.Response(me, commentRepository.save(comment));
     }
 
     @Transactional
-    public void deleteComment(User user, Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new CommentNotFoundException(id));
-        if (!Objects.equals(comment.getUser().getId(), user.getId()) && !user.getRole().equals("ADMIN"))
+    public void deleteComment(Long myId, Long commentId) {
+        User me = userRepository.findMeById(myId);
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CommentNotFoundException(commentId));
+        if (comment.getUser() != me)
             throw new CommentChangeByAnonymousException();
         commentRepository.delete(comment);
-        commentRepository.flush();
+        me.deleteComment(comment);
+        comment.getReview().deleteComment(comment);
     }
 }

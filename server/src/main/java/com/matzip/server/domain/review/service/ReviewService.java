@@ -1,6 +1,5 @@
 package com.matzip.server.domain.review.service;
 
-import com.matzip.server.domain.image.model.Image;
 import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.exception.ReviewChangeByAnonymousException;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,10 +29,9 @@ public class ReviewService {
     @Transactional
     public ReviewDto.Response postReview(Long myId, ReviewDto.PostRequest postRequest) {
         User me = userRepository.findMeById(myId);
-        List<String> images = imageService.uploadImages(
-                me.getUsername(),
-                postRequest.getImages());
-        return new ReviewDto.Response(me, reviewRepository.save(new Review(me, postRequest, images)));
+        Review review = new Review(me, postRequest);
+        imageService.uploadReviewImages(me, review, postRequest.getImages());
+        return new ReviewDto.Response(me, reviewRepository.save(review));
     }
 
     public ReviewDto.Response getReview(Long myId, Long reviewId) {
@@ -53,15 +50,14 @@ public class ReviewService {
     public ReviewDto.Response patchReview(Long myId, Long reviewId, ReviewDto.PatchRequest patchRequest) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (!Objects.equals(review.getUser().getId(), me.getId()))
+        if (review.getUser() != me)
             throw new ReviewChangeByAnonymousException();
         if (Optional.ofNullable(patchRequest.getContent()).isPresent())
             review.setContent(patchRequest.getContent());
         if (Optional.ofNullable(patchRequest.getNewImages()).isPresent())
-            review.addImages(imageService.uploadImages(me.getUsername(), patchRequest.getNewImages())
-                                     .stream().map(url -> new Image(review, url)).collect(Collectors.toList()));
+            imageService.uploadReviewImages(me, review, patchRequest.getNewImages());
         if (Optional.ofNullable(patchRequest.getOldUrls()).isPresent())
-            review.deleteImages(imageService.deleteImages(patchRequest.getOldUrls()));
+            imageService.deleteReviewImages(review, patchRequest.getOldUrls());
         if (Optional.ofNullable(patchRequest.getRating()).isPresent())
             review.setRating(patchRequest.getRating());
         return new ReviewDto.Response(me, reviewRepository.save(review));
@@ -74,7 +70,7 @@ public class ReviewService {
         if (review.getUser() != me)
             throw new ReviewChangeByAnonymousException();
         reviewRepository.delete(review);
-        me.deleteReview(reviewId);
+        me.deleteReview(review);
     }
 
     public ReviewDto.HotResponse getHotReviews(Long myId) {

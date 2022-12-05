@@ -58,7 +58,7 @@ public class UserDto {
 
         public Response(User user, User me) {
             this.username = user.getUsername();
-            this.profileImageUrl = user.getProfileImageUrl();
+            this.profileImageUrl = user.getUserImage() == null ? null : user.getUserImage().getImageUrl();
             this.profileString = user.getProfileString();
             this.matzipLevel = user.getMatzipLevel();
             this.numberOfFollowers = user.getFollowers().size();

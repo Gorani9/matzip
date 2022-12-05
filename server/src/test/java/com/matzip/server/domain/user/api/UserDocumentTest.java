@@ -5,6 +5,7 @@ import com.matzip.server.Parameters;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -38,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
 @AutoConfigureRestDocs
+@Tag("DocumentTest")
 public class UserDocumentTest {
     @Autowired
     private MockMvc mockMvc;

@@ -90,11 +90,7 @@ public class MeService {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
         Optional<MultipartFile> profileImage = Optional.ofNullable(patchProfileRequest.getProfileImage());
         Optional<String> profileString = Optional.ofNullable(patchProfileRequest.getProfileString());
-        profileImage.ifPresent(i -> {
-            String profileImageUrl = imageService.uploadImage(user.getUsername(), i);
-            imageService.deleteImage(user.getProfileImageUrl());
-            user.setProfileImageUrl(profileImageUrl);
-        });
+        profileImage.ifPresent(i -> imageService.uploadUserImage(user, i));
         profileString.ifPresent(user::setProfileString);
         userRepository.save(user);
         return new MeDto.Response(user);

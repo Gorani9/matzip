@@ -7,6 +7,7 @@ import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@Tag("ServiceTest")
 class UserServiceTest {
     @Autowired
     private UserRepository userRepository;

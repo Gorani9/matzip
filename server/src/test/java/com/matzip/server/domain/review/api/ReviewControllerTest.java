@@ -8,6 +8,7 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ReviewController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
+@Tag("ControllerTest")
 class ReviewControllerTest {
     @Autowired
     private MockMvc mockMvc;

@@ -1,12 +1,15 @@
 package com.matzip.server.domain.review.api;
 
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
+import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.service.ReviewService;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -28,6 +31,7 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
+import static com.matzip.server.domain.review.api.CommentDocumentTest.getCommentResponseFields;
 import static com.matzip.server.domain.user.api.UserDocumentTest.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -42,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
 @AutoConfigureRestDocs
+@Tag("DocumentTest")
 public class ReviewDocumentTest {
     @Autowired
     private MockMvc mockMvc;
@@ -54,9 +59,8 @@ public class ReviewDocumentTest {
     @BeforeEach
     void setUp() {
         user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
-        review =  new Review(user,
-                             new ReviewDto.PostRequest("sample_content", null, 10, "location"),
-                             List.of("sample image url"));
+        review =  new Review(user, new ReviewDto.PostRequest("sample_review", null, 10, "location"));
+        Comment comment = new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
     }
 
     public static FieldDescriptor[] getPageResponseFields() {
@@ -111,6 +115,8 @@ public class ReviewDocumentTest {
                                 responseFields(getPageResponseFields())
                                         .andWithPrefix("content[].", getReviewResponseFields())
                                         .andWithPrefix("content[].user.", getUserResponseFields())
+                                        .andWithPrefix("content[].comments[].", getCommentResponseFields())
+                                        .andWithPrefix("content[].comments[].user.", getUserResponseFields())
                 ));
     }
 
@@ -118,7 +124,7 @@ public class ReviewDocumentTest {
     public void getReview() throws Exception {
         given(reviewService.getReview(any(), any())).willReturn(new ReviewDto.Response(user, review));
 
-        mockMvc.perform(get("/api/v1/reviews/{review-id}", "0"))
+        mockMvc.perform(get("/api/v1/reviews/{review-id}", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("review-fetch",
                                 getDocumentRequest(),
@@ -127,6 +133,8 @@ public class ReviewDocumentTest {
                                         parameterWithName("review-id").description("선택할 리뷰 아이디")),
                                 responseFields(getReviewResponseFields())
                                         .andWithPrefix("user.", getUserResponseFields())
+                                        .andWithPrefix("comments[].", getCommentResponseFields())
+                                        .andWithPrefix("comments[].user.", getUserResponseFields())
                 ));
     }
 
@@ -137,7 +145,7 @@ public class ReviewDocumentTest {
         mockMvc.perform(multipart("/api/v1/reviews")
                                 .file(new MockMultipartFile("images", "image_name", "", InputStream.nullInputStream()))
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                                .param("content", "sample_content")
+                                .param("content", "sample_review")
                                 .param("rating", "10")
                                 .param("location", "location"))
                 .andExpect(status().isOk())
@@ -151,6 +159,8 @@ public class ReviewDocumentTest {
                                         parameterWithName("location").description("위치")),
                                 responseFields(getReviewResponseFields())
                                         .andWithPrefix("user.", getUserResponseFields())
+                                        .andWithPrefix("comments[].", getCommentResponseFields())
+                                        .andWithPrefix("comments[].user.", getUserResponseFields())
                 ));
     }
 
@@ -158,7 +168,7 @@ public class ReviewDocumentTest {
     public void patchReview() throws Exception {
         given(reviewService.patchReview(any(), any(), any())).willReturn(new ReviewDto.Response(user, review));
 
-        mockMvc.perform(multipart("/api/v1/reviews/{review-id}", "0")
+        mockMvc.perform(multipart("/api/v1/reviews/{review-id}", "1")
                                 .file(new MockMultipartFile("new_images", "image_name", "", InputStream.nullInputStream()))
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .param("content", "sample_content")
@@ -181,12 +191,14 @@ public class ReviewDocumentTest {
                                         parameterWithName("old_urls").description("삭제할 리뷰 이미지 URL")),
                                 responseFields(getReviewResponseFields())
                                         .andWithPrefix("user.", getUserResponseFields())
+                                        .andWithPrefix("comments[].", getCommentResponseFields())
+                                        .andWithPrefix("comments[].user.", getUserResponseFields())
                 ));
     }
 
     @Test
     public void deleteReview() throws Exception {
-        mockMvc.perform(delete("/api/v1/reviews/{review-id}", "0"))
+        mockMvc.perform(delete("/api/v1/reviews/{review-id}", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("review-delete",
                                 getDocumentRequest(),

@@ -68,7 +68,7 @@ public class AdminUserService {
         User user = userRepository.findById(id).orElseThrow(() -> new UserIdNotFoundException(id));
         if (user.getRole().equals("ADMIN")) throw new AdminUserStatusChangeException();
         if (Optional.ofNullable(userPatchRequest.getProfileImageUrl()).isPresent())
-            imageService.deleteImage(user.getProfileImageUrl());
+            imageService.deleteUserImage(user);
         return new AdminDto.UserResponse(userRepository.save(user.patchFromAdmin(userPatchRequest)));
     }
 
