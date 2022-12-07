@@ -5,5 +5,6 @@ import com.matzip.server.domain.review.model.Comment;
 import org.springframework.data.domain.Slice;
 
 public interface CommentRepositoryCustom {
-    Slice<Comment> searchCommentByKeyword(CommentDto.SearchRequest searchRequest);
+    Slice<Comment> searchCommentsByKeyword(CommentDto.SearchRequest searchRequest);
+    Slice<Comment> searchMyCommentsByKeyword(CommentDto.SearchRequest searchRequest, Long myId);
 }

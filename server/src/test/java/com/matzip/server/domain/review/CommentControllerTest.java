@@ -1,8 +1,9 @@
-package com.matzip.server.domain.review.api;
+package com.matzip.server.domain.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.api.CommentController;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.service.CommentService;
 import com.matzip.server.domain.user.dto.UserDto;
@@ -48,7 +49,7 @@ class CommentControllerTest {
 
     @BeforeEach
     void setUp() {
-        User user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        User user = new User("foo", "password");
         UserPrincipal userPrincipal = new UserPrincipal(user);
         authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
@@ -86,22 +87,8 @@ class CommentControllerTest {
     void searchCommentsTest() throws Exception {
         Parameters parameters;
 
-        /* keyword must be included */
-        parameters = new Parameters(0, 15);
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("keyword", "content to search");
-        searchComments(parameters, OK);
-
-        /* keyword must not be blank */
-        parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("keyword", "      ");
-        searchComments(parameters, BAD_REQUEST);
-
         /* page must be positive or zero */
         parameters = new Parameters(-1, 15);
-        parameters.putParameter("keyword", "content to search");
         searchComments(parameters, BAD_REQUEST);
         parameters.putParameter("page", "0");
         searchComments(parameters, OK);
@@ -110,7 +97,6 @@ class CommentControllerTest {
 
         /* size must be positive, smaller or equal to 100 */
         parameters = new Parameters(0, 0);
-        parameters.putParameter("keyword", "content to search");
         searchComments(parameters, BAD_REQUEST);
         parameters.putParameter("size", "-1");
         searchComments(parameters, BAD_REQUEST);
@@ -121,7 +107,6 @@ class CommentControllerTest {
 
         /* asc must be either true or false or null */
         parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "content to search");
         parameters.putParameter("asc", "boolean");
         searchComments(parameters, BAD_REQUEST);
         parameters.putParameter("asc", "null");
@@ -135,7 +120,6 @@ class CommentControllerTest {
 
         /* sort must be one of these followings: follower */
         parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "content to search");
         parameters.putParameter("sort", "followers");
         searchComments(parameters, OK);
         parameters.putParameter("sort", "    ");

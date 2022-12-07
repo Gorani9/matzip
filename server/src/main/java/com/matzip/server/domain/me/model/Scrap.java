@@ -30,11 +30,6 @@ public class Scrap extends BaseTimeEntity {
         review.addScrap(this);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Scrap && this.user.equals(((Scrap) obj).user) && this.review.equals(((Scrap) obj).review);
-    }
-
     public void setDescription(String description) {
         this.description = description;
     }

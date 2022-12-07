@@ -1,0 +1,123 @@
+== Me API
+.공통 Response
+include::{snippets}/me-fetch/response-fields.adoc[]
+
+=== My Information
+
+==== Change Password
+.Request
+include::{snippets}/me-change-password/http-request.adoc[]
+include::{snippets}/me-change-password/request-fields.adoc[]
+.Response
+include::{snippets}/me-change-password/http-response.adoc[]
+
+==== Change Username
+.Request
+include::{snippets}/me-change-username/http-request.adoc[]
+include::{snippets}/me-change-username/request-fields.adoc[]
+.Response
+include::{snippets}/me-change-username/http-response.adoc[]
+
+==== Get My Information
+.Request
+include::{snippets}/me-fetch/http-request.adoc[]
+.Response
+include::{snippets}/me-fetch/http-response.adoc[]
+
+==== Patch My Information
+.Request
+include::{snippets}/me-patch/http-request.adoc[]
+include::{snippets}/me-patch/request-parts.adoc[]
+include::{snippets}/me-patch/request-parameters.adoc[]
+.Response
+include::{snippets}/me-patch/http-response.adoc[]
+
+==== Delete My Information
+.Request
+include::{snippets}/me-delete/http-request.adoc[]
+.Response
+include::{snippets}/me-delete/http-response.adoc[]
+
+=== Follow
+
+==== Search My Followers
+.Request
+include::{snippets}/me-search-followers/http-request.adoc[]
+include::{snippets}/me-search-followers/request-parameters.adoc[]
+.Response
+include::{snippets}/me-search-followers/http-response.adoc[]
+
+==== Search My Followings
+.Request
+include::{snippets}/me-search-followings/http-request.adoc[]
+include::{snippets}/me-search-followings/request-parameters.adoc[]
+.Response
+include::{snippets}/me-search-followings/http-response.adoc[]
+
+==== Follow User
+.Request
+include::{snippets}/me-follow-user/http-request.adoc[]
+include::{snippets}/me-follow-user/path-parameters.adoc[]
+.Response
+include::{snippets}/me-follow-user/http-response.adoc[]
+
+==== Unfollow User
+.Request
+include::{snippets}/me-unfollow-user/http-request.adoc[]
+include::{snippets}/me-unfollow-user/path-parameters.adoc[]
+.Response
+include::{snippets}/me-unfollow-user/http-response.adoc[]
+
+=== Review
+
+==== Search My Reviews
+.Request
+include::{snippets}/me-search-my-reviews/http-request.adoc[]
+include::{snippets}/me-search-my-reviews/request-parameters.adoc[]
+.Response
+include::{snippets}/me-search-my-reviews/http-response.adoc[]
+
+==== Put Heart on Review
+.Request
+include::{snippets}/me-heart-review/http-request.adoc[]
+include::{snippets}/me-heart-review/path-parameters.adoc[]
+.Response
+include::{snippets}/me-heart-review/http-response.adoc[]
+
+==== Delete Heart from Review
+include::{snippets}/me-delete-heart-review/http-request.adoc[]
+include::{snippets}/me-delete-heart-review/path-parameters.adoc[]
+.Response
+include::{snippets}/me-delete-heart-review/http-response.adoc[]
+
+=== Comment
+
+==== Search My Comments
+.Request
+include::{snippets}/me-search-my-comments/http-request.adoc[]
+include::{snippets}/me-search-my-comments/request-parameters.adoc[]
+.Response
+include::{snippets}/me-search-my-comments/http-response.adoc[]
+
+=== Scrap
+
+==== Search My Scraps
+.Request
+include::{snippets}/me-search-my-scraps/http-request.adoc[]
+include::{snippets}/me-search-my-scraps/request-parameters.adoc[]
+.Response
+include::{snippets}/me-search-my-scraps/http-response.adoc[]
+
+==== Scrap Review
+.Request
+include::{snippets}/me-scrap-review/http-request.adoc[]
+include::{snippets}/me-scrap-review/path-parameters.adoc[]
+include::{snippets}/me-scrap-review/request-fields.adoc[]
+.Response
+include::{snippets}/me-scrap-review/http-response.adoc[]
+
+==== Delete Scrap
+include::{snippets}/me-delete-scrap/http-request.adoc[]
+include::{snippets}/me-delete-scrap/path-parameters.adoc[]
+.Response
+include::{snippets}/me-delete-scrap/http-response.adoc[]

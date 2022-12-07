@@ -1,7 +1,8 @@
-package com.matzip.server.domain.review.api;
+package com.matzip.server.domain.review;
 
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.api.ReviewController;
 import com.matzip.server.domain.review.service.ReviewService;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
@@ -48,7 +49,7 @@ class ReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        User user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        User user = new User("foo", "password");
         UserPrincipal userPrincipal = new UserPrincipal(user);
         authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
@@ -125,22 +126,8 @@ class ReviewControllerTest {
     void searchReviewsByContent() throws Exception {
         Parameters parameters;
 
-        /* keyword must be included */
-        parameters = new Parameters(0, 15);
-        searchReviews(parameters, BAD_REQUEST);
-        parameters.putParameter("keyword", "content to search");
-        searchReviews(parameters, OK);
-
-        /* keyword must not be blank */
-        parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "");
-        searchReviews(parameters, BAD_REQUEST);
-        parameters.putParameter("keyword", "      ");
-        searchReviews(parameters, BAD_REQUEST);
-
         /* page must be positive or zero */
         parameters = new Parameters(-1, 15);
-        parameters.putParameter("keyword", "content to search");
         searchReviews(parameters, BAD_REQUEST);
         parameters.putParameter("page", "0");
         searchReviews(parameters, OK);
@@ -149,7 +136,6 @@ class ReviewControllerTest {
 
         /* size must be positive, smaller or equal to 100 */
         parameters = new Parameters(0, 0);
-        parameters.putParameter("keyword", "content to search");
         searchReviews(parameters, BAD_REQUEST);
         parameters.putParameter("size", "-1");
         searchReviews(parameters, BAD_REQUEST);
@@ -160,7 +146,6 @@ class ReviewControllerTest {
 
         /* asc must be either true or false or null */
         parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "content to search");
         parameters.putParameter("asc", "boolean");
         searchReviews(parameters, BAD_REQUEST);
         parameters.putParameter("asc", "null");
@@ -174,7 +159,6 @@ class ReviewControllerTest {
 
         /* sort must be one of these followings: username, level, followers, hearts, scraps, comments, rating */
         parameters = new Parameters(0, 15);
-        parameters.putParameter("keyword", "content to search");
         parameters.putParameter("sort", "username");
         searchReviews(parameters, OK);
         parameters.putParameter("sort", "level");

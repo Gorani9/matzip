@@ -45,8 +45,8 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             FilterChain chain,
             Authentication authResult) throws IOException {
         User user = ((UserPrincipal) authResult.getPrincipal()).getUser();
-        if (!user.getIsNonLocked()) {
-            ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_LOCKED, "Current user is locked.");
+        if (user.isBlocked()) {
+            ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_BLOCKED, "Current user is blocked.");
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
             response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

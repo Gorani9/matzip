@@ -27,9 +27,4 @@ public class Heart extends BaseTimeEntity {
         this.review = review;
         review.addHeart(this);
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Heart && this.user.equals(((Heart) obj).user) && this.review.equals(((Heart) obj).review);
-    }
 }

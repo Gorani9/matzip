@@ -31,25 +31,25 @@ public class ReviewService {
         User me = userRepository.findMeById(myId);
         Review review = new Review(me, postRequest);
         imageService.uploadReviewImages(me, review, postRequest.getImages());
-        return new ReviewDto.Response(me, reviewRepository.save(review));
+        return ReviewDto.Response.of(reviewRepository.save(review), me);
     }
 
     public ReviewDto.Response getReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
-        return new ReviewDto.Response(
-                me, reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId)));
+        return ReviewDto.Response.of(
+                reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId)), me);
     }
 
     public Slice<ReviewDto.Response> searchReviews(Long myId, ReviewDto.SearchRequest searchRequest) {
         User me = userRepository.findMeById(myId);
-        Slice<Review> reviews = reviewRepository.searchReviewByKeyword(searchRequest);
-        return reviews.map(r -> new ReviewDto.Response(me, r));
+        Slice<Review> reviews = reviewRepository.searchReviewsByKeyword(searchRequest);
+        return reviews.map(r -> ReviewDto.Response.of(r, me));
     }
 
     @Transactional
     public ReviewDto.Response patchReview(Long myId, Long reviewId, ReviewDto.PatchRequest patchRequest) {
         User me = userRepository.findMeById(myId);
-        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.getUser() != me)
             throw new ReviewChangeByAnonymousException();
         if (Optional.ofNullable(patchRequest.getContent()).isPresent())
@@ -60,13 +60,13 @@ public class ReviewService {
             imageService.deleteReviewImages(review, patchRequest.getOldUrls());
         if (Optional.ofNullable(patchRequest.getRating()).isPresent())
             review.setRating(patchRequest.getRating());
-        return new ReviewDto.Response(me, reviewRepository.save(review));
+        return ReviewDto.Response.of(reviewRepository.save(review), me);
     }
 
     @Transactional
     public void deleteReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
-        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.getUser() != me)
             throw new ReviewChangeByAnonymousException();
         reviewRepository.delete(review);
@@ -77,13 +77,13 @@ public class ReviewService {
         User me = userRepository.findMeById(myId);
         List<ReviewDto.Response> dailyHotReviews = reviewRepository
                 .fetchHotReviews(LocalDateTime.now().minusDays(1), 10)
-                .stream().map(r -> new ReviewDto.Response(me, r)).collect(Collectors.toList());
+                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
         List<ReviewDto.Response> weeklyHotReviews = reviewRepository
                 .fetchHotReviews(LocalDateTime.now().minusWeeks(1), 10)
-                .stream().map(r -> new ReviewDto.Response(me, r)).collect(Collectors.toList());
+                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
         List<ReviewDto.Response> monthlyHotReviews = reviewRepository
                 .fetchHotReviews(LocalDateTime.now().minusMonths(1), 10)
-                .stream().map(r -> new ReviewDto.Response(me, r)).collect(Collectors.toList());
+                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
         return new ReviewDto.HotResponse(dailyHotReviews, weeklyHotReviews, monthlyHotReviews);
     }
 
@@ -91,6 +91,6 @@ public class ReviewService {
         User me = userRepository.findMeById(myId);
         return new ReviewDto.HallOfFameResponse(
                 reviewRepository.fetchHotReviews(null, 10)
-                        .stream().map(r -> new ReviewDto.Response(me, r)).collect(Collectors.toList()));
+                        .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList()));
     }
 }

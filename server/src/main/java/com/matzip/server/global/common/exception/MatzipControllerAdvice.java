@@ -4,12 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
 import javax.validation.ConstraintViolationException;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class MatzipControllerAdvice {
@@ -26,6 +28,13 @@ public class MatzipControllerAdvice {
         logger.info(e.getMessage());
         return new ResponseEntity<>(
                 new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(value=MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> constraintViolation(MethodArgumentNotValidException e) {
+        logger.info(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getFieldError().getDefaultMessage()),
                 HttpStatus.BAD_REQUEST);
     }
 

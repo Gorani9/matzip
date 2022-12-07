@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReviewRepositoryCustom {
-    Slice<Review> searchReviewByKeyword(ReviewDto.SearchRequest searchRequest);
-
+    Slice<Review> searchReviewsByKeyword(ReviewDto.SearchRequest searchRequest);
+    Slice<Review> searchMyReviewsByKeyword(ReviewDto.SearchRequest searchRequest, Long myId);
     List<Review> fetchHotReviews(LocalDateTime from, int size);
 }

@@ -4,6 +4,8 @@ import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.CommentProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.global.common.dto.BaseResponse;
+import com.matzip.server.global.common.dto.BlockedResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
@@ -43,19 +45,29 @@ public class CommentDto {
     }
 
     @Getter
-    public static class Response {
+    public static class Response extends BaseResponse {
         private final Long id;
         private final Long reviewId;
-        private final UserDto.Response user;
+        private final BaseResponse user;
         private final String content;
         private final Boolean deletable;
 
-        public Response(User user, Comment comment) {
+        private Response(Comment comment, User user) {
+            super(true);
             this.id = comment.getId();
             this.reviewId = comment.getReview().getId();
-            this.user = new UserDto.Response(comment.getUser(), user);
+            this.user = UserDto.Response.ofBlockable(comment.getUser(), user);
             this.content = comment.getContent();
-            this.deletable = user == comment.getUser() || user.getRole().equals("ADMIN");
+            this.deletable = user == comment.getUser();
+        }
+
+        public static BaseResponse ofBlockable(Comment comment, User user) {
+            if (comment.isBlocked()) return BlockedResponse.ofBlockedComment();
+            else return new Response(comment, user);
+        }
+
+        public static Response of(Comment comment, User user) {
+            return new Response(comment, user);
         }
     }
 }

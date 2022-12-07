@@ -1,5 +1,6 @@
 package com.matzip.server.domain.user.api;
 
+import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.domain.user.service.UserService;
@@ -26,7 +27,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserDto.Response> signUp(@RequestBody @Valid UserDto.SignUpRequest signUpRequest) {
+    public ResponseEntity<MeDto.Response> signUp(@RequestBody @Valid UserDto.SignUpRequest signUpRequest) {
         UserDto.SignUpResponse signUpResponse = userService.createUser(signUpRequest);
         return ResponseEntity.ok()
                 .header("Authorization", signUpResponse.getToken())
@@ -35,7 +36,7 @@ public class UserController {
 
     @GetMapping("/exists")
     public ResponseEntity<UserDto.DuplicateResponse> checkDuplicateUsername(
-            @RequestParam @Valid @Username String username) {
+            @RequestParam @Username String username) {
         return ResponseEntity.ok().body(userService.isUsernameTakenBySomeone(username));
     }
 
@@ -52,8 +53,8 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserDto.Response> fetchUserByUsername(
-            @CurrentUser Long myId, @PathVariable("username") @Valid @NotBlank String username) {
+    public ResponseEntity<UserDto.DetailedResponse> fetchUserByUsername(
+            @CurrentUser Long myId, @PathVariable("username") @Username String username) {
         return ResponseEntity.ok().body(userService.fetchUser(myId, username));
     }
 }

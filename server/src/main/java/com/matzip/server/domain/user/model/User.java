@@ -2,27 +2,27 @@ package com.matzip.server.domain.user.model;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.image.model.UserImage;
-import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.me.model.Follow;
 import com.matzip.server.domain.me.model.Heart;
 import com.matzip.server.domain.me.model.Scrap;
 import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
-import com.matzip.server.domain.user.dto.UserDto;
-import com.matzip.server.global.common.model.BaseTimeEntity;
+import com.matzip.server.global.common.model.BaseLazyDeletedTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Entity
 @Table(name="user")
 @NoArgsConstructor
 @Getter
-public class User extends BaseTimeEntity {
+public class User extends BaseLazyDeletedTimeEntity {
     @OneToMany(mappedBy="followee", cascade=CascadeType.ALL, orphanRemoval=true)
     private final List<Follow> followers = new ArrayList<>();
     @OneToMany(mappedBy="follower", cascade=CascadeType.ALL, orphanRemoval=true)
@@ -41,44 +41,20 @@ public class User extends BaseTimeEntity {
     @Column(unique=true)
     private String username;
     private String password;
-    private Boolean isNonLocked = true;
-    private String role = "NORMAL";
     private String profileString;
     private Integer matzipLevel = 0;
 
-    public User(UserDto.SignUpRequest signUpRequest, PasswordEncoder passwordEncoder) {
-        this.username = signUpRequest.getUsername();
-        this.password = passwordEncoder.encode(signUpRequest.getPassword());
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof User && this.getId().equals(((User) obj).getId());
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public User changeUsername(MeDto.UsernameChangeRequest usernameChangeRequest) {
-        this.username = usernameChangeRequest.getUsername();
-        return this;
-    }
-
-    public User changePassword(MeDto.PasswordChangeRequest passwordChangeRequest, PasswordEncoder passwordEncoder) {
-        this.password = passwordEncoder.encode(passwordChangeRequest.getPassword());
-        return this;
-    }
-
-    public User toAdmin() {
-        this.role = "ADMIN";
-        return this;
-    }
-
-    public User lock() {
-        this.isNonLocked = false;
-        return this;
-    }
-
-    public User unlock() {
-        this.isNonLocked = true;
-        return this;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public User levelUp() {
@@ -104,32 +80,28 @@ public class User extends BaseTimeEntity {
         return this;
     }
 
-    public Follow addFollower(User follower) {
-        Follow follow = new Follow(follower, this);
-        this.followers.add(follow);
-        follower.addFollowing(follow);
-        return follow;
+    public void addFollower(Follow follower) {
+        this.followers.add(follower);
     }
 
-    private void addFollowing(Follow follow) {
-        this.followings.add(follow);
+    public void deleteFollower(Follow follower) {
+        this.followers.remove(follower);
     }
 
-    public void deleteFollower(User user) {
-        this.followers.removeIf(f -> Objects.equals(f.getFollower().getId(), user.getId()));
-        user.deleteFollowing(this);
+    public void addFollowing(Follow following) {
+        this.followings.add(following);
     }
 
-    private void deleteFollowing(User user) {
-        this.followers.removeIf(f -> Objects.equals(f.getFollowee().getId(), user.getId()));
+    public void deleteFollowing(Follow following) {
+        this.followers.remove(following);
     }
 
-    public boolean hasFollowing(User user) {
-        return this.followings.stream().anyMatch(f -> Objects.equals(f.getFollowee().getId(), user.getId()));
+    public boolean isFollowing(User user) {
+        return this.followings.stream().anyMatch(f -> f.getFollowee() == user);
     }
 
-    public boolean hasFollower(User user) {
-        return this.followers.stream().anyMatch(f -> Objects.equals(f.getFollower().getId(), user.getId()));
+    public boolean isFollowedBy(User user) {
+        return this.followers.stream().anyMatch(f -> f.getFollower() == user);
     }
 
     public void addReview(Review review) {

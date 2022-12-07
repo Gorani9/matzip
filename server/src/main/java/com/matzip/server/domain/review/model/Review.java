@@ -5,7 +5,7 @@ import com.matzip.server.domain.me.model.Heart;
 import com.matzip.server.domain.me.model.Scrap;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.global.common.model.BaseTimeEntity;
+import com.matzip.server.global.common.model.BaseLazyDeletedTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Range;
@@ -19,7 +19,7 @@ import java.util.List;
 @Table(name="review")
 @NoArgsConstructor
 @Getter
-public class Review extends BaseTimeEntity {
+public class Review extends BaseLazyDeletedTimeEntity {
     @OneToMany(mappedBy="review", orphanRemoval=true, cascade=CascadeType.ALL)
     private final List<Comment> comments = new ArrayList<>();
     @OneToMany(mappedBy="review", orphanRemoval=true, cascade=CascadeType.ALL)
@@ -44,11 +44,6 @@ public class Review extends BaseTimeEntity {
         this.content = postRequest.getContent();
         this.rating = postRequest.getRating();
         this.location = postRequest.getLocation();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Review && this.getId().equals(((Review) obj).getId());
     }
 
     public void setContent(String content) {

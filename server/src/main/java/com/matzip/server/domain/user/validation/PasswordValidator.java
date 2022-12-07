@@ -1,11 +1,8 @@
 package com.matzip.server.domain.user.validation;
 
-import org.springframework.stereotype.Component;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-@Component
 public class PasswordValidator implements ConstraintValidator<Password, String> {
     private static final int MIN_SIZE = 8;
     private static final int MAX_SIZE = 50;

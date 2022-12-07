@@ -1,4 +1,4 @@
-package com.matzip.server.domain.me.api;
+package com.matzip.server.domain.me;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
@@ -10,7 +10,6 @@ import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.auth.dto.LoginDto;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,15 +59,6 @@ class MeControllerTest {
     private PasswordEncoder passwordEncoder;
     @Value("${admin-password}")
     private String adminPassword;
-
-    @BeforeEach
-    void setUp() {
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
-        }
-    }
 
     @AfterEach
     void tearDown() {

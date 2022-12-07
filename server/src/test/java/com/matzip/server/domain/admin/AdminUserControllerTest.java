@@ -1,4 +1,4 @@
-package com.matzip.server.domain.admin.api;
+package com.matzip.server.domain.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
@@ -59,9 +59,7 @@ class AdminUserControllerTest {
     @BeforeEach
     void setUp() {
         if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
+            User user = new User("admin", passwordEncoder.encode(adminPassword));
         }
     }
 
@@ -69,7 +67,7 @@ class AdminUserControllerTest {
     void tearDown() {
         userRepository.deleteAll();
     }
-
+/*
     private String signUp(String username, String password) throws Exception {
         long beforeUserCount = userRepository.count();
         UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
@@ -396,6 +394,6 @@ class AdminUserControllerTest {
         deleteUser(adminToken, adminId, ExpectedStatus.BAD_REQUEST);
         signIn("admin", adminPassword, "ADMIN", ExpectedStatus.OK);
     }
-
+*/
 
 }

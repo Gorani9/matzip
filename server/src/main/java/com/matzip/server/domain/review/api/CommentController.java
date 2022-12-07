@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -26,7 +25,7 @@ public class CommentController {
     @GetMapping
     public ResponseEntity<Slice<CommentDto.Response>> searchComments(
             @CurrentUser Long myId,
-            @RequestParam("keyword") @Valid @NotBlank String keyword,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", required = false, defaultValue = "0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String commentProperty,
@@ -44,21 +43,22 @@ public class CommentController {
         return ResponseEntity.ok().body(commentService.postComment(myId, postRequest));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CommentDto.Response> getComment(@CurrentUser Long myId, @PathVariable("id") Long commentId) {
+    @GetMapping("/{comment-id}")
+    public ResponseEntity<CommentDto.Response> getComment(
+            @CurrentUser Long myId, @PathVariable("comment-id") Long commentId) {
         return ResponseEntity.ok().body(commentService.getComment(myId, commentId));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{comment-id}")
     public ResponseEntity<CommentDto.Response> patchComment(
             @CurrentUser Long myId,
-            @PathVariable("id") Long commentId,
+            @PathVariable("comment-id") Long commentId,
             @RequestBody @Valid CommentDto.PutRequest putRequest) {
         return ResponseEntity.ok().body(commentService.putComment(myId, commentId, putRequest));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteComment(@CurrentUser Long myId, @PathVariable("id") Long commentId) {
+    @DeleteMapping("/{comment-id}")
+    public ResponseEntity<Object> deleteComment(@CurrentUser Long myId, @PathVariable("comment-id") Long commentId) {
         commentService.deleteComment(myId, commentId);
         return ResponseEntity.ok().build();
     }

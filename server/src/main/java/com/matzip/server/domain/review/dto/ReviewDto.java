@@ -5,6 +5,8 @@ import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.global.common.dto.BaseResponse;
+import com.matzip.server.global.common.dto.BlockedResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
@@ -34,8 +36,7 @@ public class ReviewDto {
     @RequiredArgsConstructor
     @Getter
     public static class PostRequest {
-        @NotBlank
-        @Length(max=3000)
+        @NotBlank @Length(max=3000)
         private final String content;
         @NotEmpty
         private final List<MultipartFile> images;
@@ -57,40 +58,50 @@ public class ReviewDto {
     }
 
     @Getter
-    public static class Response {
+    public static class Response extends BaseResponse {
         private final Long id;
         private final LocalDateTime createdAt;
         private final LocalDateTime modifiedAt;
-        private final UserDto.Response user;
+        private final BaseResponse user;
         private final String content;
         private final List<String> imageUrls;
         private final Integer rating;
         private final String location;
-        private final List<CommentDto.Response> comments;
+        private final List<BaseResponse> comments;
         private final Integer numberOfScraps;
         private final Integer numberOfHearts;
         private final Boolean isDeletable;
         private final Boolean isHearted;
         private final Boolean isScraped;
 
-        public Response(User user, Review review) {
+        private Response(Review review, User user) {
+            super(true);
             this.id = review.getId();
             this.createdAt = review.getCreatedAt();
             this.modifiedAt = review.getModifiedAt();
-            this.user = new UserDto.Response(review.getUser(), user);
+            this.user = UserDto.Response.ofBlockable(review.getUser(), user);
             this.content = review.getContent();
             this.imageUrls = review.getReviewImages().stream().map(ReviewImage::getImageUrl).collect(Collectors.toList());
             this.rating = review.getRating();
             this.location = review.getLocation();
             this.comments = review.getComments()
                     .stream()
-                    .map(c -> new CommentDto.Response(user, c))
+                    .map(c -> CommentDto.Response.ofBlockable(c, user))
                     .collect(Collectors.toList());
             this.numberOfScraps = review.getScraps().size();
             this.numberOfHearts = review.getHearts().size();
-            this.isDeletable = user == review.getUser() || user.getRole().equals("ADMIN");
+            this.isDeletable = user == review.getUser();
             this.isHearted = review.getHearts().stream().anyMatch(h -> h.getUser() == user);
             this.isScraped = review.getScraps().stream().anyMatch(s -> s.getUser() == user);
+        }
+
+        public static BaseResponse ofBlockable(Review review, User user) {
+            if (review.isBlocked()) return BlockedResponse.ofBlockedReview();
+            else return new Response(review, user);
+        }
+
+        public static Response of(Review review, User user) {
+            return new Response(review, user);
         }
     }
 

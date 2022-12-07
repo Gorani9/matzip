@@ -1,12 +1,12 @@
-package com.matzip.server.domain.review.api;
+package com.matzip.server.domain.review;
 
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.api.ReviewController;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.service.ReviewService;
-import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -22,7 +22,7 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.payload.FieldDescriptor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.restdocs.request.ParameterDescriptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,8 +31,8 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
-import static com.matzip.server.domain.review.api.CommentDocumentTest.getCommentResponseFields;
-import static com.matzip.server.domain.user.api.UserDocumentTest.getUserResponseFields;
+import static com.matzip.server.domain.review.CommentDocumentTest.getCommentResponseFields;
+import static com.matzip.server.domain.user.UserDocumentTest.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -58,9 +58,9 @@ public class ReviewDocumentTest {
 
     @BeforeEach
     void setUp() {
-        user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        user = new User("foo", "password");
         review =  new Review(user, new ReviewDto.PostRequest("sample_review", null, 10, "location"));
-        Comment comment = new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
+        new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
     }
 
     public static FieldDescriptor[] getPageResponseFields() {
@@ -73,6 +73,15 @@ public class ReviewDocumentTest {
                 fieldWithPath("first").type(BOOLEAN).description("첫번째 페이지 여부"),
                 fieldWithPath("last").type(BOOLEAN).description("마지막 페이지 여부"),
                 fieldWithPath("empty").type(BOOLEAN).description("비어있는지 여부"),
+        };
+    }
+
+    public static ParameterDescriptor[] getPageRequestParameters() {
+        return new ParameterDescriptor[]{
+                parameterWithName("page").description("페이지 번호").optional(),
+                parameterWithName("size").description("페이지 크기").optional(),
+                parameterWithName("sort").description("정렬 기준").optional(),
+                parameterWithName("asc").description("오름차순 여부").optional()
         };
     }
 
@@ -97,7 +106,7 @@ public class ReviewDocumentTest {
     @Test
     public void searchReviews() throws Exception {
         given(reviewService.searchReviews(any(), any())).willReturn(new SliceImpl<>(
-                List.of(new ReviewDto.Response(user, review)), PageRequest.of(0, 20), true));
+                List.of(ReviewDto.Response.of(review, user)), PageRequest.of(0, 20), true));
 
         Parameters parameters = new Parameters(0, 20);
         parameters.putParameter("keyword", "sample");
@@ -106,12 +115,8 @@ public class ReviewDocumentTest {
                 .andDo(document("review-search",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
-                                requestParameters(
-                                        parameterWithName("keyword").description("검색할 리뷰 내용"),
-                                        parameterWithName("page").description("페이지 번호").optional(),
-                                        parameterWithName("size").description("페이지 크기").optional(),
-                                        parameterWithName("sort").description("정렬 기준").optional(),
-                                        parameterWithName("asc").description("오름차순 여부").optional()),
+                                requestParameters(parameterWithName("keyword").description("검색할 리뷰 내용").optional())
+                                        .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
                                         .andWithPrefix("content[].", getReviewResponseFields())
                                         .andWithPrefix("content[].user.", getUserResponseFields())
@@ -122,7 +127,7 @@ public class ReviewDocumentTest {
 
     @Test
     public void getReview() throws Exception {
-        given(reviewService.getReview(any(), any())).willReturn(new ReviewDto.Response(user, review));
+        given(reviewService.getReview(any(), any())).willReturn(ReviewDto.Response.of(review, user));
 
         mockMvc.perform(get("/api/v1/reviews/{review-id}", "1"))
                 .andExpect(status().isOk())
@@ -140,7 +145,7 @@ public class ReviewDocumentTest {
 
     @Test
     public void postReview() throws Exception {
-        given(reviewService.postReview(any(), any())).willReturn(new ReviewDto.Response(user, review));
+        given(reviewService.postReview(any(), any())).willReturn(ReviewDto.Response.of(review, user));
 
         mockMvc.perform(multipart("/api/v1/reviews")
                                 .file(new MockMultipartFile("images", "image_name", "", InputStream.nullInputStream()))
@@ -166,7 +171,7 @@ public class ReviewDocumentTest {
 
     @Test
     public void patchReview() throws Exception {
-        given(reviewService.patchReview(any(), any(), any())).willReturn(new ReviewDto.Response(user, review));
+        given(reviewService.patchReview(any(), any(), any())).willReturn(ReviewDto.Response.of(review, user));
 
         mockMvc.perform(multipart("/api/v1/reviews/{review-id}", "1")
                                 .file(new MockMultipartFile("new_images", "image_name", "", InputStream.nullInputStream()))
@@ -182,8 +187,7 @@ public class ReviewDocumentTest {
                 .andDo(document("review-patch",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
-                                pathParameters(
-                                        parameterWithName("review-id").description("선택할 리뷰 아이디")),
+                                pathParameters(parameterWithName("review-id").description("선택할 리뷰 아이디")),
                                 requestParts(partWithName("new_images").description("추가할 리뷰 이미지")),
                                 requestParameters(
                                         parameterWithName("content").description("리뷰 내용"),
@@ -209,7 +213,7 @@ public class ReviewDocumentTest {
 
     @Test
     public void getHotReviews() throws Exception {
-        List<ReviewDto.Response> reviews = List.of(new ReviewDto.Response(user, review));
+        List<ReviewDto.Response> reviews = List.of(ReviewDto.Response.of(review, user));
         given(reviewService.getHotReviews(any())).willReturn(new ReviewDto.HotResponse(reviews, reviews, reviews));
 
         mockMvc.perform(get("/api/v1/reviews/hot"))
@@ -226,12 +230,12 @@ public class ReviewDocumentTest {
 
     @Test
     public void getHallOfFameReviews() throws Exception {
-        List<ReviewDto.Response> reviews = List.of(new ReviewDto.Response(user, review));
+        List<ReviewDto.Response> reviews = List.of(ReviewDto.Response.of(review, user));
         given(reviewService.getHallOfFameReviews(any())).willReturn(new ReviewDto.HallOfFameResponse(reviews));
 
         mockMvc.perform(get("/api/v1/reviews/hall-of-fame"))
                 .andExpect(status().isOk())
-                .andDo(document("review-hot",
+                .andDo(document("review-hall-of-fame",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 responseFields(subsectionWithPath("hall_of_fame_reviews").type(ARRAY).description("명예의 전당"))

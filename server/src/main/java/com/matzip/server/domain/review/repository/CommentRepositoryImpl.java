@@ -2,8 +2,10 @@ package com.matzip.server.domain.review.repository;
 
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.model.Comment;
+import com.matzip.server.domain.review.model.CommentProperty;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -30,13 +32,34 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Slice<Comment> searchCommentByKeyword(CommentDto.SearchRequest searchRequest) {
+    public Slice<Comment> searchCommentsByKeyword(CommentDto.SearchRequest searchRequest) {
+        return searchWithConditions(
+                searchRequest.getAsc() ? Order.ASC : Order.DESC,
+                searchRequest.getSort(),
+                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
+                commentContentContaining(searchRequest.getKeyword()));
+    }
+
+    @Override
+    public Slice<Comment> searchMyCommentsByKeyword(CommentDto.SearchRequest searchRequest, Long myId) {
+        return searchWithConditions(
+                searchRequest.getAsc() ? Order.ASC : Order.DESC,
+                searchRequest.getSort(),
+                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
+                commentContentContaining(searchRequest.getKeyword()),
+                user.id.eq(myId));
+    }
+
+    private BooleanExpression commentContentContaining(String keyword) {
+        return keyword == null ? null : comment.content.contains(keyword);
+    }
+
+    private Slice<Comment> searchWithConditions(
+            Order order, CommentProperty commentProperty, Pageable pageable, BooleanExpression... conditions) {
         List<Comment> comments;
-        Order order = searchRequest.getAsc() ? Order.ASC : Order.DESC;
-        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getSize());
         OrderSpecifier<LocalDateTime> defaultOrder = new OrderSpecifier<>(Order.DESC, review.createdAt);
 
-        if (searchRequest.getSort() == USER_NUMBER_OF_FOLLOWERS) {
+        if (commentProperty == USER_NUMBER_OF_FOLLOWERS) {
             NumberPath<Long> followers = Expressions.numberPath(Long.class, "followers");
 
             comments = jpaQueryFactory
@@ -45,7 +68,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                     .leftJoin(comment.user, user).fetchJoin()
                     .leftJoin(user.followers, follow)
                     .groupBy(comment, user)
-                    .where(comment.content.contains(searchRequest.getKeyword()))
+                    .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, followers), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
@@ -56,7 +79,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                     .select(comment)
                     .from(comment)
                     .leftJoin(comment.user, user).fetchJoin()
-                    .where(comment.content.contains(searchRequest.getKeyword()))
+                    .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, comment.createdAt))
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)

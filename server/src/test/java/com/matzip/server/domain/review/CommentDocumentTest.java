@@ -1,13 +1,13 @@
-package com.matzip.server.domain.review.api;
+package com.matzip.server.domain.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.review.api.CommentController;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.service.CommentService;
-import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -22,7 +22,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.FieldDescriptor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,8 +29,9 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
-import static com.matzip.server.domain.review.api.ReviewDocumentTest.getPageResponseFields;
-import static com.matzip.server.domain.user.api.UserDocumentTest.getUserResponseFields;
+import static com.matzip.server.domain.review.ReviewDocumentTest.getPageRequestParameters;
+import static com.matzip.server.domain.review.ReviewDocumentTest.getPageResponseFields;
+import static com.matzip.server.domain.user.UserDocumentTest.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -59,7 +59,7 @@ public class CommentDocumentTest {
 
     @BeforeEach
     void setUp() {
-        user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        user = new User("foo", "password");
         Review review = new Review(user, new ReviewDto.PostRequest("sample_review", null, 10, "location"));
         comment = new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
     }
@@ -78,7 +78,7 @@ public class CommentDocumentTest {
     @Test
     public void searchComments() throws Exception {
         given(commentService.searchComment(any(), any())).willReturn(new SliceImpl<>(
-                List.of(new CommentDto.Response(user, comment)), PageRequest.of(0, 20), true));
+                List.of(CommentDto.Response.of(comment, user)), PageRequest.of(0, 20), true));
 
         Parameters parameters = new Parameters(0, 20);
         parameters.putParameter("keyword", "sample");
@@ -87,12 +87,8 @@ public class CommentDocumentTest {
                 .andDo(document("comment-search",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
-                                requestParameters(
-                                        parameterWithName("keyword").description("검색할 리뷰 내용"),
-                                        parameterWithName("page").description("페이지 번호").optional(),
-                                        parameterWithName("size").description("페이지 크기").optional(),
-                                        parameterWithName("sort").description("정렬 기준").optional(),
-                                        parameterWithName("asc").description("오름차순 여부").optional()),
+                                requestParameters(parameterWithName("keyword").description("검색할 리뷰 내용"))
+                                        .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
                                         .andWithPrefix("content[].", getCommentResponseFields())
                                         .andWithPrefix("content[].user.", getUserResponseFields())
@@ -101,7 +97,7 @@ public class CommentDocumentTest {
 
     @Test
     public void postComment() throws Exception {
-        given(commentService.postComment(any(), any())).willReturn(new CommentDto.Response(user, comment));
+        given(commentService.postComment(any(), any())).willReturn(CommentDto.Response.of(comment, user));
 
         CommentDto.PostRequest request = new CommentDto.PostRequest(1L, "sample_comment");
         mockMvc.perform(post("/api/v1/comments")
@@ -121,7 +117,7 @@ public class CommentDocumentTest {
 
     @Test
     public void getComment() throws Exception {
-        given(commentService.getComment(any(), any())).willReturn(new CommentDto.Response(user, comment));
+        given(commentService.getComment(any(), any())).willReturn(CommentDto.Response.of(comment, user));
 
         mockMvc.perform(get("/api/v1/comments/{comment-id}", "1"))
                 .andExpect(status().isOk())
@@ -137,7 +133,7 @@ public class CommentDocumentTest {
 
     @Test
     public void putComment() throws Exception {
-        given(commentService.putComment(any(), any(), any())).willReturn(new CommentDto.Response(user, comment));
+        given(commentService.putComment(any(), any(), any())).willReturn(CommentDto.Response.of(comment, user));
 
         CommentDto.PutRequest request = new CommentDto.PutRequest("sample_comment");
         mockMvc.perform(put("/api/v1/comments/{comment-id}", "1")

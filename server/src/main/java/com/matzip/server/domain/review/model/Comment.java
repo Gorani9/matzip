@@ -2,7 +2,7 @@ package com.matzip.server.domain.review.model;
 
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.global.common.model.BaseTimeEntity;
+import com.matzip.server.global.common.model.BaseLazyDeletedTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +15,7 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Comment extends BaseTimeEntity {
+public class Comment extends BaseLazyDeletedTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User user;

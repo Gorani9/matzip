@@ -1,6 +1,5 @@
 package com.matzip.server;
 
-import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +22,7 @@ public class DataLoader implements ApplicationRunner {
     @Transactional
     @Override
     public void run(ApplicationArguments args) {
-        if (userRepository.findByUsername("admin").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("admin", adminPassword);
-            User user = new User(signUpRequest, passwordEncoder);
-            userRepository.save(user.toAdmin());
-        }
-        if (userRepository.findByUsername("qwer").isEmpty()) {
-            UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("qwer", adminPassword);
-            userRepository.save(new User(signUpRequest, passwordEncoder));
-        }
+        if (userRepository.findByUsername("qwer").isEmpty())
+            userRepository.save(new User("qwer", passwordEncoder.encode(adminPassword)));
     }
 }

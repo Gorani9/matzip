@@ -1,7 +1,9 @@
-package com.matzip.server.domain.user.api;
+package com.matzip.server.domain.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.user.api.UserController;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
@@ -17,7 +19,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.FieldDescriptor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,6 +26,9 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
+import static com.matzip.server.domain.me.MeDocumentTest.getMeResponseFields;
+import static com.matzip.server.domain.review.ReviewDocumentTest.getPageRequestParameters;
+import static com.matzip.server.domain.review.ReviewDocumentTest.getPageResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -82,9 +86,9 @@ public class UserDocumentTest {
 
     @Test
     public void userSignUp() throws Exception {
+        User user = new User("foo", "1SimplePassword!");
         UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("foo", "1SimplePassword!");
-        User user = new User(signUpRequest, new BCryptPasswordEncoder());
-        UserDto.Response response = new UserDto.Response(user, user);
+        MeDto.Response response = new MeDto.Response(user);
         given(userService.createUser(any())).willReturn(new UserDto.SignUpResponse(response, "token"));
 
         mockMvc.perform(post("/api/v1/users")
@@ -97,15 +101,14 @@ public class UserDocumentTest {
                                 requestFields(
                                         fieldWithPath("username").type(STRING).description("유저네임"),
                                         fieldWithPath("password").type(STRING).description("비밀번호")),
-                                responseFields(getUserResponseFields())
+                                responseFields(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
     @Test
     public void fetchUser() throws Exception {
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("foo", "1SimplePassword!");
-        User user = new User(signUpRequest, new BCryptPasswordEncoder());
-        UserDto.Response response = new UserDto.Response(user, user);
+        User user = new User("foo", "1SimplePassword!");
+        UserDto.DetailedResponse response = new UserDto.DetailedResponse(user, user);
         given(userService.fetchUser(any(), any())).willReturn(response);
 
         mockMvc.perform(get("/api/v1/users/{username}", "foo"))
@@ -121,15 +124,11 @@ public class UserDocumentTest {
 
     @Test
     public void searchUser() throws Exception {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        UserDto.SignUpRequest fooRequest = new UserDto.SignUpRequest("foo", "1SimplePassword!");
-        UserDto.SignUpRequest barRequest = new UserDto.SignUpRequest("bar", "1SimplePassword!");
-        UserDto.SignUpRequest barRequest2 = new UserDto.SignUpRequest("bar2", "1SimplePassword!");
-        User foo = new User(fooRequest, passwordEncoder);
-        User bar = new User(barRequest, passwordEncoder);
-        User bar2 = new User(barRequest2, passwordEncoder);
-        UserDto.Response barResponse = new UserDto.Response(bar, foo);
-        UserDto.Response barResponse2 = new UserDto.Response(bar2, foo);
+        User foo = new User("foo", "1SimplePassword!");
+        User bar = new User("bar", "1SimplePassword!");
+        User bar2 = new User("bar2", "1SimplePassword!");
+        UserDto.Response barResponse = UserDto.Response.of(bar, foo);
+        UserDto.Response barResponse2 = UserDto.Response.of(bar2, foo);
         given(userService.searchUsers(any(), any())).willReturn(new SliceImpl<>(
                 List.of(barResponse, barResponse2),
                 PageRequest.of(0, 20),
@@ -143,12 +142,10 @@ public class UserDocumentTest {
                 .andDo(document("user-search",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
-                                requestParameters(
-                                        parameterWithName("username").description("검색할 유저네임"),
-                                        parameterWithName("page").description("페이지 번호").optional(),
-                                        parameterWithName("size").description("페이지 크기").optional(),
-                                        parameterWithName("sort").description("정렬 기준").optional(),
-                                        parameterWithName("asc").description("오름차순 여부").optional())
+                                requestParameters(parameterWithName("username").description("검색할 유저네임"))
+                                        .and(getPageRequestParameters()),
+                                responseFields(getPageResponseFields())
+                                        .andWithPrefix("content[].", getUserResponseFields())
                 ));
     }
 }

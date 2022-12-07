@@ -1,8 +1,9 @@
-package com.matzip.server.domain.user.api;
+package com.matzip.server.domain.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
+import com.matzip.server.domain.user.api.UserController;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.service.UserService;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.MultiValueMap;
@@ -43,18 +43,17 @@ class UserControllerTest {
     private UserService userService;
     @Autowired
     private ObjectMapper objectMapper;
-
     private Authentication authentication;
 
     @BeforeEach
     void init() {
-        User user = new User(new UserDto.SignUpRequest("foo", "password"), new BCryptPasswordEncoder());
+        User user = new User("foo", "password");
         UserPrincipal userPrincipal = new UserPrincipal(user);
         authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
-    private void signUp(String password, ExpectedStatus expectedStatus) throws Exception {
-        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest("foo", password);
+    private void signUp(String username, String password, ExpectedStatus expectedStatus) throws Exception {
+        UserDto.SignUpRequest signUpRequest = new UserDto.SignUpRequest(username, password);
         given(userService.createUser(any())).willReturn(new UserDto.SignUpResponse(null, null));
         mockMvc.perform(post("/api/v1/users")
                                 .with(authentication(authentication)).with(csrf())
@@ -73,14 +72,30 @@ class UserControllerTest {
 
     @Test
     void signUpTest() throws Exception {
-        signUp("simplePassword1!", OK);
-        signUp("maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", OK);
-        signUp("short", BAD_REQUEST);
-        signUp("veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!", BAD_REQUEST);
-        signUp("noNumeric!", BAD_REQUEST);
-        signUp("noSpecial1", BAD_REQUEST);
-        signUp("no_upper_case1!", BAD_REQUEST);
-        signUp("NO_LOWER_CASE1!", BAD_REQUEST);
+        signUp("foo","simplePassword1!", OK);
+
+        /* validate username */
+        signUp("", "simplePassword1!", BAD_REQUEST);
+        signUp("maxLengthOfUsernameIs.30.chars", "simplePassword1!", OK);
+        signUp("maxLengthOfUsername.Is.30.chars", "simplePassword1!", BAD_REQUEST);
+        signUp("specialForbidden!", "simplePassword1!", BAD_REQUEST);
+        signUp("space Forbidden", "simplePassword1!", BAD_REQUEST);
+        signUp("underscore_username", "simplePassword1!", OK);
+        signUp("1111", "simplePassword1!", OK);
+        signUp("using_dot.is_allowed", "simplePassword1!", OK);
+        signUp(".start_with_dot_is_allowed", "simplePassword1!", OK);
+        signUp("end_with_dot_is_not_allowed.", "simplePassword1!", BAD_REQUEST);
+        signUp("double_dot.._is_not_allowed", "simplePassword1!", BAD_REQUEST);
+
+        /* validate password */
+        signUp("foo","maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", OK);
+        signUp("foo","short", BAD_REQUEST);
+        signUp("foo","veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!", BAD_REQUEST);
+        signUp("foo","noNumeric!", BAD_REQUEST);
+        signUp("foo","noSpecial1", BAD_REQUEST);
+        signUp("foo","no_upper_case1!", BAD_REQUEST);
+        signUp("foo","NO_LOWER_CASE1!", BAD_REQUEST);
+
     }
 
     @Test

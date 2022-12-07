@@ -1,0 +1,55 @@
+== Review API
+.공통 Response
+include::{snippets}/review-fetch/response-fields.adoc[]
+
+=== CRUD
+
+==== Post Review
+.Request
+include::{snippets}/review-post/http-request.adoc[]
+include::{snippets}/review-post/request-parts.adoc[]
+include::{snippets}/review-post/request-parameters.adoc[]
+.Response
+include::{snippets}/review-post/http-response.adoc[]
+
+==== Fetch Review
+.Request
+include::{snippets}/review-fetch/http-request.adoc[]
+include::{snippets}/review-fetch/path-parameters.adoc[]
+.Response
+include::{snippets}/review-fetch/http-response.adoc[]
+
+==== Patch Review
+.Request
+include::{snippets}/review-patch/http-request.adoc[]
+include::{snippets}/review-patch/path-parameters.adoc[]
+include::{snippets}/review-patch/request-parts.adoc[]
+include::{snippets}/review-patch/request-parameters.adoc[]
+.Response
+include::{snippets}/review-patch/http-response.adoc[]
+
+==== Delete Review
+.Request
+include::{snippets}/review-delete/http-request.adoc[]
+include::{snippets}/review-delete/path-parameters.adoc[]
+.Response
+include::{snippets}/review-delete/http-response.adoc[]
+
+==== Search Review
+.Request
+include::{snippets}/review-search/http-request.adoc[]
+include::{snippets}/review-search/request-parameters.adoc[]
+.Response
+include::{snippets}/review-search/http-response.adoc[]
+
+==== Get Hot Reviews
+.Request
+include::{snippets}/review-hot/http-request.adoc[]
+.Response
+include::{snippets}/review-hot/http-response.adoc[]
+
+==== Get Hall of Fame
+.Request
+include::{snippets}/review-hall-of-fame/http-request.adoc[]
+.Response
+include::{snippets}/review-hall-of-fame/http-response.adoc[]

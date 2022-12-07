@@ -1,0 +1,16 @@
+= Matzip Server API Document
+:toc: left
+:toclevels: 3
+:sectlinks:
+
+include::{docdir}/user.adoc[]
+
+include::{docdir}/review.adoc[]
+
+include::{docdir}/comment.adoc[]
+
+include::{docdir}/me.adoc[]
+
+== Admin API
+
+include::{docdir}/admin-user.adoc[]
