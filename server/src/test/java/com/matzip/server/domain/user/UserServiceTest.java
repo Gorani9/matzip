@@ -1,7 +1,7 @@
 package com.matzip.server.domain.user;
 
 import com.matzip.server.domain.user.dto.UserDto;
-import com.matzip.server.domain.user.exception.AccessBlockedUserException;
+import com.matzip.server.domain.user.exception.AccessBlockedOrDeletedUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
@@ -150,6 +150,6 @@ class UserServiceTest {
         target.block("test");
 
         // then
-        assertThrows(AccessBlockedUserException.class, () -> userService.fetchUser(1L, "target"));
+        assertThrows(AccessBlockedOrDeletedUserException.class, () -> userService.fetchUser(1L, "target"));
     }
 }

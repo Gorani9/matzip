@@ -72,7 +72,7 @@ public class MeDocumentTest {
     void setUp() {
         user = new User("foo", "password");
         review =  new Review(user, new ReviewDto.PostRequest("sample_review", null, 10, "location"));
-        comment = new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
+        comment = new Comment(user, review, "sample_comment");
         scrap = new Scrap(user, review);
         scrap.setDescription("sample scrap");
         meResponse = new MeDto.Response(user);
@@ -269,7 +269,7 @@ public class MeDocumentTest {
     @Test
     public void searchMyComments() throws Exception {
         given(meService.searchMyComments(any(), any())).willReturn(new SliceImpl<>(
-                List.of(CommentDto.Response.of(comment, user)), PageRequest.of(0, 20), true));
+                List.of(new CommentDto.Response(comment, user)), PageRequest.of(0, 20), true));
 
         Parameters parameters = new Parameters(0, 20);
         parameters.putParameter("keyword", "sample");

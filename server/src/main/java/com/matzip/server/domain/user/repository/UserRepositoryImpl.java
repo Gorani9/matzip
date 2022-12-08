@@ -64,7 +64,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         if (userProperty == USERNAME) {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user)
+                    .from(user).leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -73,7 +73,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         } else if (userProperty == MATZIP_LEVEL) {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user)
+                    .from(user).leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
@@ -84,7 +84,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
 
             users = jpaQueryFactory
                     .select(user, follow.count().as(followers))
-                    .from(user)
+                    .from(user).leftJoin(user.userImage).fetchJoin()
                     .leftJoin(user.followers, follow)
                     .groupBy(user)
                     .where(conditions)
@@ -96,7 +96,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         } else {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user)
+                    .from(user).leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.createdAt))
                     .offset(pageable.getOffset())

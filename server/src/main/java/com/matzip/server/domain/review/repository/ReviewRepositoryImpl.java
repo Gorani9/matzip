@@ -58,9 +58,13 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
     @Override
     public List<Review> fetchHotReviews(LocalDateTime from, int size) {
-        Pageable pageable = PageRequest.of(0, size);
-        BooleanExpression after = from == null ? null : review.createdAt.after(from);
-        return searchWithConditions(Order.DESC, NUMBER_OF_HEARTS, pageable, after).getContent();
+        return searchWithConditions(
+                Order.DESC,
+                NUMBER_OF_HEARTS,
+                PageRequest.of(0, size),
+                from == null ? null : review.createdAt.after(from),
+                review.blocked.isFalse(),
+                review.deleted.isFalse()).getContent();
     }
 
     private BooleanExpression reviewContentContaining(String keyword) {
@@ -76,7 +80,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.user.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -86,7 +90,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.user.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
@@ -98,9 +102,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, follow.count().as(followers))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(user.followers, follow)
-                    .groupBy(review, user)
+                    .groupBy(review)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, followers), defaultOrder)
                     .offset(pageable.getOffset())
@@ -113,9 +117,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, heart.count().as(hearts))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.hearts, heart)
-                    .groupBy(review, user)
+                    .groupBy(review)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, hearts), defaultOrder)
                     .offset(pageable.getOffset())
@@ -128,9 +132,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, scrap.count().as(scraps))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.scraps, scrap)
-                    .groupBy(review, user)
+                    .groupBy(review)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, scraps), defaultOrder)
                     .offset(pageable.getOffset())
@@ -143,9 +147,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, comment.count().as(comments))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.comments, comment)
-                    .groupBy(review, user)
+                    .groupBy(review)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, comments), defaultOrder)
                     .offset(pageable.getOffset())
@@ -156,7 +160,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.rating), defaultOrder)
                     .offset(pageable.getOffset())
@@ -166,7 +170,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.createdAt))
                     .offset(pageable.getOffset())

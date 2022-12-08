@@ -2,15 +2,14 @@ package com.matzip.server.domain.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.ExpectedStatus;
-import com.matzip.server.Parameters;
 import com.matzip.server.domain.review.api.CommentController;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.service.CommentService;
-import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +18,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.util.MultiValueMap;
 
 import static com.matzip.server.ExpectedStatus.BAD_REQUEST;
 import static com.matzip.server.ExpectedStatus.OK;
@@ -54,14 +51,6 @@ class CommentControllerTest {
         authentication = new MatzipAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 
-    private void searchComments(
-            MultiValueMap<String, String> parameters, ExpectedStatus expectedStatus) throws Exception {
-        mockMvc.perform(get("/api/v1/comments")
-                                .with(authentication(authentication))
-                                .queryParams(parameters))
-                .andExpect(status().is(expectedStatus.getStatusCode()));
-    }
-
     private void postComment(String content, ExpectedStatus expectedStatus) throws Exception {
         CommentDto.PostRequest request = new CommentDto.PostRequest(1L, content);
         mockMvc.perform(post("/api/v1/comments")
@@ -71,7 +60,13 @@ class CommentControllerTest {
                 .andExpect(status().is(expectedStatus.getStatusCode()));
     }
 
+    private void fetchComment(String id, ExpectedStatus expectedStatus) throws Exception {
+        mockMvc.perform(get("/api/v1/comments/{comment-id}", id).with(authentication(authentication)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+    }
+
     @Test
+    @DisplayName("댓글 작성 테스트: request 검증")
     void postCommentTest() throws Exception {
         postComment("content", OK);
 
@@ -84,77 +79,12 @@ class CommentControllerTest {
     }
 
     @Test
-    void searchCommentsTest() throws Exception {
-        Parameters parameters;
-
-        /* page must be positive or zero */
-        parameters = new Parameters(-1, 15);
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("page", "0");
-        searchComments(parameters, OK);
-        parameters.putParameter("page", "1");
-        searchComments(parameters, OK);
-
-        /* size must be positive, smaller or equal to 100 */
-        parameters = new Parameters(0, 0);
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("size", "-1");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("size", "101");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("size", "100");
-        searchComments(parameters, OK);
-
-        /* asc must be either true or false or null */
-        parameters = new Parameters(0, 15);
-        parameters.putParameter("asc", "boolean");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("asc", "null");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("asc", "false");
-        searchComments(parameters, OK);
-        parameters.putParameter("asc", "true");
-        searchComments(parameters, OK);
-        parameters.putParameter("asc", null);
-        searchComments(parameters, OK);
-
-        /* sort must be one of these followings: follower */
-        parameters = new Parameters(0, 15);
-        parameters.putParameter("sort", "followers");
-        searchComments(parameters, OK);
-        parameters.putParameter("sort", "    ");
-        searchComments(parameters, OK);
-        parameters.putParameter("sort", "");
-        searchComments(parameters, OK);
-        parameters.putParameter("sort", null);
-        searchComments(parameters, OK);
-        parameters.putParameter("sort", "username");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "level");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "hearts");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "scraps");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "comments");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "rating");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "createdAt");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "matzipLevel");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "modifiedAt");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "id");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "password");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "role");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "profileString");
-        searchComments(parameters, BAD_REQUEST);
-        parameters.putParameter("sort", "image");
-        searchComments(parameters, BAD_REQUEST);
+    @DisplayName("댓글 조회 테스트: 댓글 아이디 경로 변수 검증")
+    void fetchCommentTest() throws Exception {
+        fetchComment("0", BAD_REQUEST);
+        fetchComment("alphabet", BAD_REQUEST);
+        fetchComment("!!", BAD_REQUEST);
+        fetchComment("-1", BAD_REQUEST);
+        fetchComment("1", OK);
     }
 }

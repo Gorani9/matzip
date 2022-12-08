@@ -12,8 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly=true)
@@ -34,7 +32,6 @@ public class AdminUserService {
     @Transactional
     public AdminDto.UserResponse patchUserById(Long userId, AdminDto.UserPatchRequest userPatchRequest) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserIdNotFoundException(userId));
-        Optional.ofNullable(userPatchRequest.getProfileImageUrl()).ifPresent(i -> imageService.deleteUserImage(user));
         return new AdminDto.UserResponse(user.patchFromAdmin(userPatchRequest));
     }
 

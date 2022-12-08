@@ -5,7 +5,6 @@ import com.matzip.server.domain.review.exception.InvalidCommentPropertyException
 import java.util.Arrays;
 
 public enum CommentProperty {
-    USER_NUMBER_OF_FOLLOWERS("followers")
     ;
 
     private final String webNaming;

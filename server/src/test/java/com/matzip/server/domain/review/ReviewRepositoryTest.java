@@ -6,7 +6,6 @@ import com.matzip.server.domain.me.model.Scrap;
 import com.matzip.server.domain.me.repository.FollowRepository;
 import com.matzip.server.domain.me.repository.HeartRepository;
 import com.matzip.server.domain.me.repository.ScrapRepository;
-import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto.PostRequest;
 import com.matzip.server.domain.review.dto.ReviewDto.SearchRequest;
 import com.matzip.server.domain.review.model.Comment;
@@ -416,14 +415,11 @@ public class ReviewRepositoryTest {
         Review review3 = reviewRepository.save(
                 new Review(user, new PostRequest("content", null, 10, "location")));
         for (int i = 0; i < 8; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review1,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review1, "comment"));
         for (int i = 0; i < 10; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review2,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review2, "comment"));
         for (int i = 0; i < 7; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review3,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review3, "comment"));
         SearchRequest request = new SearchRequest("content", 0, 10, NUMBER_OF_COMMENTS, true);
 
         // when
@@ -445,14 +441,11 @@ public class ReviewRepositoryTest {
         Review review3 = reviewRepository.save(
                 new Review(user, new PostRequest("content", null, 10, "location")));
         for (int i = 0; i < 9; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review1,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review1, "comment"));
         for (int i = 0; i < 3; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review2,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review2, "comment"));
         for (int i = 0; i < 4; i++) commentRepository.save(new Comment(
-                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review3,
-                new CommentDto.PostRequest(1L, "comment")));
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review3, "comment"));
         SearchRequest request = new SearchRequest("content", 0, 10, NUMBER_OF_COMMENTS, false);
 
         // when

@@ -130,7 +130,7 @@ public class MeService {
 
     public Slice<CommentDto.Response> searchMyComments(Long myId, CommentDto.SearchRequest searchRequest) {
         User me = userRepository.findMeById(myId);
-        return commentRepository.searchMyCommentsByKeyword(searchRequest, myId).map(c -> CommentDto.Response.of(c, me));
+        return commentRepository.searchMyCommentsByKeyword(searchRequest, myId).map(c -> new CommentDto.Response(c, me));
     }
 
     public Slice<ScrapDto.Response> searchMyScraps(Long myId, ScrapDto.SearchRequest searchRequest) {

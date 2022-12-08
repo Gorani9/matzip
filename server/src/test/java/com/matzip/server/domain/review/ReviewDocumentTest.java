@@ -2,7 +2,6 @@ package com.matzip.server.domain.review;
 
 import com.matzip.server.Parameters;
 import com.matzip.server.domain.review.api.ReviewController;
-import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.model.Comment;
 import com.matzip.server.domain.review.model.Review;
@@ -60,7 +59,7 @@ public class ReviewDocumentTest {
     void setUp() {
         user = new User("foo", "password");
         review =  new Review(user, new ReviewDto.PostRequest("sample_review", null, 10, "location"));
-        new Comment(user, review, new CommentDto.PostRequest(1L, "sample_comment"));
+        new Comment(user, review, "sample_comment");
     }
 
     public static FieldDescriptor[] getPageResponseFields() {

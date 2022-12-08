@@ -91,8 +91,8 @@ public class ReviewDto {
         }
 
         public static BaseResponse ofNullable(Review review, User user) {
-            if (review.isBlocked()) return BlockedResponse.ofBlockedReview();
-            else if (review.isDeleted()) return DeletedResponse.ofDeletedReview();
+            if (review == null || review.isDeleted()) return DeletedResponse.ofDeletedReview();
+            else if (review.isBlocked()) return BlockedResponse.ofBlockedReview();
             else return new Response(review, user);
         }
 
@@ -104,7 +104,7 @@ public class ReviewDto {
     @Getter
     public static class DetailedResponse extends Response {
         private final List<String> imageUrls;
-        private final List<BaseResponse> comments;
+        private final List<CommentDto.Response> comments;
         private final Integer numberOfScraps;
         private final Integer numberOfHearts;
 
@@ -112,7 +112,7 @@ public class ReviewDto {
             super(review, user);
             this.imageUrls = review.getReviewImages().stream().map(ReviewImage::getImageUrl).collect(Collectors.toList());
             this.comments = review.getComments().stream()
-                    .filter(c -> !c.isBlocked()).map(c -> CommentDto.Response.ofBlockable(c, user)).collect(Collectors.toList());
+                    .filter(c -> !c.isBlocked()).map(c -> new CommentDto.Response(c, user)).collect(Collectors.toList());
             this.numberOfScraps = review.getScraps().size();
             this.numberOfHearts = review.getHearts().size();
         }

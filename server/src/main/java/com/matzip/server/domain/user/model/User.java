@@ -73,6 +73,8 @@ public class User extends BaseLazyDeletedTimeEntity {
     public User patchFromAdmin(AdminDto.UserPatchRequest userPatchRequest) {
         if (Boolean.TRUE.equals(userPatchRequest.getUsername()))
             this.username = "random-user-" + LocalDateTime.now() + "-" + UUID.randomUUID();
+        if (Boolean.TRUE.equals(userPatchRequest.getProfileImageUrl()) && userImage != null)
+            this.userImage.delete();
         if (Boolean.TRUE.equals(userPatchRequest.getProfileString()))
             this.profileString = null;
         if (Optional.ofNullable(userPatchRequest.getMatzipLevel()).isPresent())

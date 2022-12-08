@@ -1,6 +1,5 @@
 package com.matzip.server.domain.review.model;
 
-import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.common.model.BaseLazyDeletedTimeEntity;
 import lombok.Getter;
@@ -27,12 +26,12 @@ public class Comment extends BaseLazyDeletedTimeEntity {
     @NotBlank
     private String content;
 
-    public Comment(User user, Review review, CommentDto.PostRequest postRequest) {
+    public Comment(User user, Review review, String content) {
         this.user = user;
         user.addComment(this);
         this.review = review;
         review.addComment(this);
-        this.content = postRequest.getContent();
+        this.content = content;
     }
 
     public void setContent(String content) {

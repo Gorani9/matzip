@@ -73,8 +73,8 @@ public class UserDto {
         }
 
         public static BaseResponse ofNullable(User user, User me) {
-            if (user.isBlocked()) return BlockedResponse.ofBlockedUser();
-            else if (user.isDeleted()) return DeletedResponse.ofDeletedUser();
+            if (user == null || user.isDeleted()) return DeletedResponse.ofDeletedUser();
+            else if (user.isBlocked()) return BlockedResponse.ofBlockedUser();
             else return new Response(user, me);
         }
 

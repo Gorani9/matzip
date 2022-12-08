@@ -2,7 +2,7 @@ package com.matzip.server.domain.user.service;
 
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.dto.UserDto.*;
-import com.matzip.server.domain.user.exception.AccessBlockedUserException;
+import com.matzip.server.domain.user.exception.AccessBlockedOrDeletedUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
@@ -48,7 +48,7 @@ public class UserService {
     public DetailedResponse fetchUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (user.isBlocked()) throw new AccessBlockedUserException(username);
+        if (user.isBlocked() || user.isDeleted()) throw new AccessBlockedOrDeletedUserException(username);
         return new DetailedResponse(user, me);
     }
 

@@ -6,10 +6,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.matzip.server.domain.image.exception.DeleteReviewLastImageException;
-import com.matzip.server.domain.image.exception.FileDeleteException;
-import com.matzip.server.domain.image.exception.FileUploadException;
-import com.matzip.server.domain.image.exception.UnsupportedFileExtensionException;
+import com.matzip.server.domain.image.exception.*;
 import com.matzip.server.domain.image.model.ReviewImage;
 import com.matzip.server.domain.image.model.UserImage;
 import com.matzip.server.domain.image.repository.ReviewImageRepository;
@@ -52,20 +49,17 @@ public class ImageService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void uploadUserImage(User user, MultipartFile image) {
         String imageUrl = uploadImage(user.getUsername(), image);
-        deleteUserImage(user);
+        if (user.getUserImage() != null) {
+            deleteImage(user.getUserImage().getImageUrl());
+            userImageRepository.delete(user.getUserImage());
+        }
         userImageRepository.save(new UserImage(user, imageUrl));
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public void deleteUserImage(User user) {
-        if (user.getUserImage() != null) {
-            deleteImage(user.getUserImage().getImageUrl());
-            user.setUserImage(null);
-        }
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
     public void uploadReviewImages(User user, Review review, List<MultipartFile> images) {
+        if (review.getReviewImages().stream().filter(i -> !i.isBlocked() && !i.isDeleted()).count() + images.size() > 10)
+            throw new OverloadReviewImagesException();
         for (MultipartFile image : images) {
             reviewImageRepository.save(new ReviewImage(review, uploadImage(user.getUsername(), image)));
         }
@@ -73,12 +67,9 @@ public class ImageService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void deleteReviewImages(Review review, List<String> urls) {
-        if (review.getReviewImages().stream().allMatch(i -> urls.contains(i.getImageUrl())))
+        review.getReviewImages().forEach(i -> { if (!i.isBlocked() && urls.contains(i.getImageUrl())) i.delete(); });
+        if (review.getReviewImages().stream().allMatch(i -> i.isBlocked() || i.isDeleted()))
             throw new DeleteReviewLastImageException();
-        for (String url : urls) {
-            deleteImage(url);
-        }
-        review.deleteImages(urls);
     }
 
     private String generateFileName(String username, String originalFileName) {
