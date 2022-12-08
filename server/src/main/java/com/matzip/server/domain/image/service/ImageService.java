@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.matzip.server.domain.image.exception.DeleteReviewLastImageException;
 import com.matzip.server.domain.image.exception.FileDeleteException;
 import com.matzip.server.domain.image.exception.FileUploadException;
 import com.matzip.server.domain.image.exception.UnsupportedFileExtensionException;
@@ -72,6 +73,8 @@ public class ImageService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void deleteReviewImages(Review review, List<String> urls) {
+        if (review.getReviewImages().stream().allMatch(i -> urls.contains(i.getImageUrl())))
+            throw new DeleteReviewLastImageException();
         for (String url : urls) {
             deleteImage(url);
         }

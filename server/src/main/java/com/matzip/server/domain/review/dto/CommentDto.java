@@ -56,7 +56,7 @@ public class CommentDto {
             super(true);
             this.id = comment.getId();
             this.reviewId = comment.getReview().getId();
-            this.user = UserDto.Response.ofBlockable(comment.getUser(), user);
+            this.user = UserDto.Response.ofNullable(comment.getUser(), user);
             this.content = comment.getContent();
             this.deletable = user == comment.getUser();
         }

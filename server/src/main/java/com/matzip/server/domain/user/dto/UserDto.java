@@ -9,6 +9,7 @@ import com.matzip.server.domain.user.validation.Password;
 import com.matzip.server.domain.user.validation.Username;
 import com.matzip.server.global.common.dto.BaseResponse;
 import com.matzip.server.global.common.dto.BlockedResponse;
+import com.matzip.server.global.common.dto.DeletedResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -71,8 +72,9 @@ public class UserDto {
             this.isMe = user == me;
         }
 
-        public static BaseResponse ofBlockable(User user, User me) {
+        public static BaseResponse ofNullable(User user, User me) {
             if (user.isBlocked()) return BlockedResponse.ofBlockedUser();
+            else if (user.isDeleted()) return DeletedResponse.ofDeletedUser();
             else return new Response(user, me);
         }
 

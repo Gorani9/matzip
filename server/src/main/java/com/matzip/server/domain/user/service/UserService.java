@@ -1,7 +1,7 @@
 package com.matzip.server.domain.user.service;
 
 import com.matzip.server.domain.me.dto.MeDto;
-import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.dto.UserDto.*;
 import com.matzip.server.domain.user.exception.AccessBlockedUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
@@ -26,12 +26,12 @@ public class UserService {
 
     private final JwtProvider jwtProvider;
 
-    public UserDto.DuplicateResponse isUsernameTakenBySomeone(String username) {
-        return new UserDto.DuplicateResponse(userRepository.existsByUsername(username));
+    public DuplicateResponse isUsernameTakenBySomeone(String username) {
+        return new DuplicateResponse(userRepository.existsByUsername(username));
     }
 
     @Transactional
-    public UserDto.SignUpResponse createUser(UserDto.SignUpRequest signUpRequest) {
+    public SignUpResponse createUser(SignUpRequest signUpRequest) {
         String username = signUpRequest.getUsername();
         String password = passwordEncoder.encode(signUpRequest.getPassword());
         if (userRepository.existsByUsername(username))
@@ -42,19 +42,19 @@ public class UserService {
                 userPrincipal,
                 null,
                 userPrincipal.getAuthorities()));
-        return new UserDto.SignUpResponse(new MeDto.Response(user), token);
+        return new SignUpResponse(new MeDto.Response(user), token);
     }
 
-    public UserDto.DetailedResponse fetchUser(Long myId, String username) {
+    public DetailedResponse fetchUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
         if (user.isBlocked()) throw new AccessBlockedUserException(username);
-        return new UserDto.DetailedResponse(user, me);
+        return new DetailedResponse(user, me);
     }
 
-    public Slice<UserDto.Response> searchUsers(Long myId, UserDto.SearchRequest searchRequest) {
+    public Slice<Response> searchUsers(Long myId, SearchRequest searchRequest) {
         User me = userRepository.findMeById(myId);
         Slice<User> users = userRepository.searchUsersByUsername(searchRequest);
-        return users.map(user -> UserDto.Response.of(user, me));
+        return users.map(user -> Response.of(user, me));
     }
 }

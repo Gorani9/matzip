@@ -39,7 +39,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                 searchRequest.getAsc() ? Order.ASC : Order.DESC,
                 searchRequest.getSort(),
                 PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
-                reviewContentContaining(searchRequest.getKeyword()));
+                reviewContentContaining(searchRequest.getKeyword()),
+                review.blocked.isFalse(),
+                review.deleted.isFalse());
     }
 
     @Override
@@ -49,7 +51,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                 searchRequest.getSort(),
                 PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
                 reviewContentContaining(searchRequest.getKeyword()),
-                user.id.eq(myId));
+                user.id.eq(myId),
+                review.blocked.isFalse(),
+                review.deleted.isFalse());
     }
 
     @Override

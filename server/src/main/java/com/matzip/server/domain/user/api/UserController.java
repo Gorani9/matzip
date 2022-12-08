@@ -2,6 +2,10 @@ package com.matzip.server.domain.user.api;
 
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.dto.UserDto.DetailedResponse;
+import com.matzip.server.domain.user.dto.UserDto.DuplicateResponse;
+import com.matzip.server.domain.user.dto.UserDto.Response;
+import com.matzip.server.domain.user.dto.UserDto.SearchRequest;
 import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.domain.user.validation.Username;
@@ -35,25 +39,25 @@ public class UserController {
     }
 
     @GetMapping("/exists")
-    public ResponseEntity<UserDto.DuplicateResponse> checkDuplicateUsername(
+    public ResponseEntity<DuplicateResponse> checkDuplicateUsername(
             @RequestParam @Username String username) {
         return ResponseEntity.ok().body(userService.isUsernameTakenBySomeone(username));
     }
 
     @GetMapping
-    public ResponseEntity<Slice<UserDto.Response>> searchUsersByUsername(
+    public ResponseEntity<Slice<Response>> searchUsersByUsername(
             @CurrentUser Long myId,
             @RequestParam("username") @NotBlank String username,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String userProperty,
             @RequestParam(value = "asc", required = false, defaultValue = "false") Boolean asc) {
-        return ResponseEntity.ok().body(userService.searchUsers(myId, new UserDto.SearchRequest(
-                username, page, size, UserProperty.from(userProperty), asc)));
+        return ResponseEntity.ok().body(userService.searchUsers(
+                myId, new SearchRequest(username, page, size, UserProperty.from(userProperty), asc)));
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserDto.DetailedResponse> fetchUserByUsername(
+    public ResponseEntity<DetailedResponse> fetchUserByUsername(
             @CurrentUser Long myId, @PathVariable("username") @Username String username) {
         return ResponseEntity.ok().body(userService.fetchUser(myId, username));
     }

@@ -31,10 +31,10 @@ public class ReviewService {
         User me = userRepository.findMeById(myId);
         Review review = new Review(me, postRequest);
         imageService.uploadReviewImages(me, review, postRequest.getImages());
-        return ReviewDto.Response.of(reviewRepository.save(review), me);
+        return ReviewDto.Response.of(review, me);
     }
 
-    public ReviewDto.Response getReview(Long myId, Long reviewId) {
+    public ReviewDto.Response fetchReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         return ReviewDto.Response.of(
                 reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId)), me);
@@ -60,7 +60,7 @@ public class ReviewService {
             imageService.deleteReviewImages(review, patchRequest.getOldUrls());
         if (Optional.ofNullable(patchRequest.getRating()).isPresent())
             review.setRating(patchRequest.getRating());
-        return ReviewDto.Response.of(reviewRepository.save(review), me);
+        return ReviewDto.Response.of(review, me);
     }
 
     @Transactional
@@ -69,8 +69,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.getUser() != me)
             throw new ReviewChangeByAnonymousException();
-        reviewRepository.delete(review);
-        me.deleteReview(review);
+        review.delete();
     }
 
     public ReviewDto.HotResponse getHotReviews(Long myId) {

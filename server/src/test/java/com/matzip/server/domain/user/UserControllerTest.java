@@ -10,6 +10,7 @@ import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("유저 회원가입 테스트: 유저네임, 비밀번호 검증")
     void signUpTest() throws Exception {
         signUp("foo","simplePassword1!", OK);
 
@@ -99,6 +101,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("유저 검색 테스트: 파라미터 검증")
     void searchUsersByUsernameTest() throws Exception {
         Parameters parameters;
 

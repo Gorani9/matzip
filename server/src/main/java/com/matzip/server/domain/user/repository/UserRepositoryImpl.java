@@ -83,9 +83,9 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
             NumberPath<Long> followers = Expressions.numberPath(Long.class, "followers");
 
             users = jpaQueryFactory
-                    .select(user, user.count().as(followers))
-                    .from(follow)
-                    .rightJoin(follow.followee, user)
+                    .select(user, follow.count().as(followers))
+                    .from(user)
+                    .leftJoin(user.followers, follow)
                     .groupBy(user)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, followers), defaultOrder)

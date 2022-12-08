@@ -4,11 +4,11 @@ import com.matzip.server.ExpectedStatus;
 import com.matzip.server.Parameters;
 import com.matzip.server.domain.review.api.ReviewController;
 import com.matzip.server.domain.review.service.ReviewService;
-import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.MultiValueMap;
@@ -72,7 +71,24 @@ class ReviewControllerTest {
                 .andExpect(status().is(expectedStatus.getStatusCode()));
     }
 
+    private void fetchReview(String id, ExpectedStatus expectedStatus) throws Exception {
+        mockMvc.perform(get("/api/v1/reviews/{review-id}", id)
+                                .with(authentication(authentication)))
+                .andExpect(status().is(expectedStatus.getStatusCode()));
+    }
+
     @Test
+    @DisplayName("리뷰 조회 테스트: 리뷰 아이디 경로 변수 검증")
+    void fetchReviewTest() throws Exception {
+        fetchReview("0", BAD_REQUEST);
+        fetchReview("alphabet", BAD_REQUEST);
+        fetchReview("!!", BAD_REQUEST);
+        fetchReview("-1", BAD_REQUEST);
+        fetchReview("1", OK);
+    }
+
+    @Test
+    @DisplayName("리뷰 포스팅 테스트: 파라미터 검증")
     void postReviewTest() throws Exception {
         Parameters parameters;
 
@@ -123,6 +139,7 @@ class ReviewControllerTest {
     }
 
     @Test
+    @DisplayName("리뷰 검색 테스트: 파라미터 검증")
     void searchReviewsByContent() throws Exception {
         Parameters parameters;
 

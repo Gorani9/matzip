@@ -86,6 +86,24 @@ public class UserRepositoryTest {
     }
 
     @Test
+    @DisplayName("유저 검색 기본 테스트: 페이징")
+    public void searchUserTest_Basic_Paging() {
+        // given
+        User[] users = new User[10];
+        for (int i = 0; i < 10; i++) users[i] = userRepository.save(new User("user" + i, PASSWORD));
+        SearchRequest searchRequest = new SearchRequest("user", 1, 3, null, true);
+
+        // when
+        Slice<User> searchedUsers = userRepository.searchUsersByUsername(searchRequest);
+
+        // then
+        assertThat(searchedUsers.getContent()).containsExactly(users[3], users[4], users[5]);
+        assertThat(searchedUsers.hasNext()).isTrue();
+        assertThat(searchedUsers.isFirst()).isFalse();
+        assertThat(searchedUsers.isLast()).isFalse();
+    }
+
+    @Test
     @DisplayName("유저 검색 정렬 테스트: 유저네임 기준 오름차순 정렬")
     public void searchUserTest_Sort_Username_Asc() {
         // given
@@ -156,7 +174,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("유저 검색 정렬 테스트: 팔로워 기준 오름차순 정렬")
+    @DisplayName("유저 검색 정렬 테스트: 팔로워수 기준 오름차순 정렬")
     public void searchUserTest_Sort_Follower_Asc() {
         // given
         User user1 = userRepository.save(new User("user1", PASSWORD));
@@ -178,7 +196,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    @DisplayName("유저 검색 정렬 테스트: 팔로워 기준 내림차순 정렬")
+    @DisplayName("유저 검색 정렬 테스트: 팔로워수 기준 내림차순 정렬")
     public void searchUserTest_Sort_Follower_Desc() {
         // given
         User user1 = userRepository.save(new User("user1", PASSWORD));

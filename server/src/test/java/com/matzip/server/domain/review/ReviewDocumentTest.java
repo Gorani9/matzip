@@ -127,7 +127,7 @@ public class ReviewDocumentTest {
 
     @Test
     public void getReview() throws Exception {
-        given(reviewService.getReview(any(), any())).willReturn(ReviewDto.Response.of(review, user));
+        given(reviewService.fetchReview(any(), any())).willReturn(ReviewDto.Response.of(review, user));
 
         mockMvc.perform(get("/api/v1/reviews/{review-id}", "1"))
                 .andExpect(status().isOk())

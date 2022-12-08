@@ -43,21 +43,25 @@ public class ReviewController {
         return ResponseEntity.ok().body(reviewService.postReview(myId, postRequest));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ReviewDto.Response> getReview(@CurrentUser Long myId, @PathVariable("id") Long reviewId) {
-        return ResponseEntity.ok().body(reviewService.getReview(myId, reviewId));
+    @GetMapping("/{review-id}")
+    public ResponseEntity<ReviewDto.Response> getReview(
+            @CurrentUser Long myId,
+            @PathVariable("review-id") @Positive Long reviewId) {
+        return ResponseEntity.ok().body(reviewService.fetchReview(myId, reviewId));
     }
 
-    @PatchMapping(value="/{id}", consumes={"multipart/form-data"})
+    @PatchMapping(value="/{review-id}", consumes={"multipart/form-data"})
     public ResponseEntity<ReviewDto.Response> patchReview(
             @CurrentUser Long myId,
-            @PathVariable("id") Long reviewId,
+            @PathVariable("review-id") @Positive Long reviewId,
             @ModelAttribute @Valid ReviewDto.PatchRequest patchRequest) {
         return ResponseEntity.ok().body(reviewService.patchReview(myId, reviewId, patchRequest));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteReview(@CurrentUser Long myId, @PathVariable("id") Long reviewId) {
+    @DeleteMapping("/{review-id}")
+    public ResponseEntity<Object> deleteReview(
+            @CurrentUser Long myId,
+            @PathVariable("review-id") @Positive Long reviewId) {
         reviewService.deleteReview(myId, reviewId);
         return ResponseEntity.ok().build();
     }
