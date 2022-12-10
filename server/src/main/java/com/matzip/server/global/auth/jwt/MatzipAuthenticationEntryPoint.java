@@ -22,7 +22,6 @@ public class MatzipAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException authException) throws IOException {
-        logger.error("commence: " + authException.getMessage());
         Gson gson = new Gson();
         ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_AUTH_FAILED, authException.getMessage());
         response.setContentType("application/json");

@@ -1,0 +1,54 @@
+=== User
+.Normal Response
+include::{snippets}/admin-user-fetch/response-fields.adoc[]
+
+==== Search User
+.Request
+include::{snippets}/admin-user-search/http-request.adoc[]
+include::{snippets}/admin-user-search/request-parameters.adoc[]
+.Response
+include::{snippets}/admin-user-search/http-response.adoc[]
+
+==== Fetch User
+.Request
+include::{snippets}/admin-user-fetch/http-request.adoc[]
+include::{snippets}/admin-user-fetch/path-parameters.adoc[]
+.Response
+include::{snippets}/admin-user-fetch/http-response.adoc[]
+
+==== Lock User
+.Request
+include::{snippets}/admin-lock-user/http-request.adoc[]
+include::{snippets}/admin-lock-user/path-parameters.adoc[]
+.Response
+include::{snippets}/admin-lock-user/http-response.adoc[]
+
+==== Unlock User
+.Request
+include::{snippets}/admin-unlock-user/http-request.adoc[]
+include::{snippets}/admin-unlock-user/path-parameters.adoc[]
+.Response
+include::{snippets}/admin-unlock-user/http-response.adoc[]
+
+==== Patch User
+.Request
+include::{snippets}/admin-user-patch/http-request.adoc[]
+include::{snippets}/admin-user-patch/path-parameters.adoc[]
+include::{snippets}/admin-user-patch/request-fields.adoc[]
+.Response
+include::{snippets}/admin-user-patch/http-response.adoc[]
+
+==== Change User Password
+.Request
+include::{snippets}/admin-user-change-password/http-request.adoc[]
+include::{snippets}/admin-user-change-password/path-parameters.adoc[]
+include::{snippets}/admin-user-change-password/request-fields.adoc[]
+.Response
+include::{snippets}/admin-user-change-password/http-response.adoc[]
+
+==== Delete User
+.Request
+include::{snippets}/admin-user-delete/http-request.adoc[]
+include::{snippets}/admin-user-delete/path-parameters.adoc[]
+.Response
+include::{snippets}/admin-user-delete/http-response.adoc[]

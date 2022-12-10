@@ -3,84 +3,71 @@ package com.matzip.server.domain.admin.api;
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.admin.service.AdminUserService;
 import com.matzip.server.domain.me.dto.MeDto;
-import com.matzip.server.domain.user.validation.UserProperty;
+import com.matzip.server.domain.user.model.UserProperty;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.hibernate.validator.constraints.Length;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping("/admin/api/v1/users")
 public class AdminUserController {
     private final AdminUserService adminUserService;
 
     @GetMapping
-    public ResponseEntity<Page<AdminDto.UserResponse>> getUsers(
-            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="false") Boolean ascending,
-            @RequestParam(defaultValue="false") Boolean withAdmin) {
+    public ResponseEntity<Slice<AdminDto.UserResponse>> searchByUsername(
+            @RequestParam(value = "username", required = false) @Length(max = 30) String username,
+            @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
+            @RequestParam(value = "sort", required = false) String userProperty,
+            @RequestParam(value = "asc", required = false, defaultValue = "false") Boolean asc,
+            @RequestParam(value = "with-blocked", required = false, defaultValue = "false") Boolean withBlocked) {
+
         return ResponseEntity.ok()
-                .body(adminUserService.listUsers(new AdminDto.UserListRequest(
-                        pageNumber,
-                        pageSize,
-                        sortedBy,
-                        ascending,
-                        withAdmin)));
+                .body(adminUserService.searchUsers(new AdminDto.UserSearchRequest(
+                        username, page, size, UserProperty.from(userProperty), asc, withBlocked)));
     }
 
-    @GetMapping("/username")
-    public ResponseEntity<Page<AdminDto.UserResponse>> searchUsersByUsername(
-            @RequestParam(defaultValue="0") @Valid @PositiveOrZero Integer pageNumber,
-            @RequestParam(defaultValue="15") @Valid @Positive Integer pageSize,
-            @RequestParam(defaultValue="createdAt") @Valid @UserProperty String sortedBy,
-            @RequestParam(defaultValue="false") Boolean ascending,
-            @RequestParam @Valid @NotBlank String username,
-            @RequestParam(required=false) Boolean isNonLocked) {
-        return ResponseEntity.ok().body(adminUserService.searchUsers(
-                new AdminDto.UserSearchRequest(pageNumber, pageSize, sortedBy, ascending, username, isNonLocked)));
+    @GetMapping("/{user-id}")
+    public ResponseEntity<AdminDto.UserResponse> fetchUserById(@PathVariable("user-id") @Positive Long userId) {
+        return ResponseEntity.ok().body(adminUserService.fetchUserById(userId));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AdminDto.UserResponse> getUserById(@PathVariable("id") @Valid @Positive Long id) {
-        return ResponseEntity.ok().body(adminUserService.findUserById(id));
-    }
-
-    @PatchMapping("/{id}")
+    @PatchMapping("/{user-id}")
     public ResponseEntity<AdminDto.UserResponse> patchUserById(
-            @PathVariable("id") @Valid @Positive Long id,
+            @PathVariable("user-id") @Positive Long userId,
             @RequestBody AdminDto.UserPatchRequest userPatchRequest) {
-        return ResponseEntity.ok().body(adminUserService.patchUserById(id, userPatchRequest));
+        return ResponseEntity.ok().body(adminUserService.patchUserById(userId, userPatchRequest));
     }
 
-    @PostMapping("/{id}/lock")
-    public ResponseEntity<AdminDto.UserResponse> lockUser(@PathVariable("id") @Valid @Positive Long id) {
-        return ResponseEntity.ok().body(adminUserService.lockUser(id));
+    @PutMapping("/{user-id}/lock")
+    public ResponseEntity<AdminDto.UserResponse> lockUser(@PathVariable("user-id") @Positive Long userId) {
+        return ResponseEntity.ok().body(adminUserService.lockUser(userId));
     }
 
-    @DeleteMapping("/{id}/lock")
-    public ResponseEntity<AdminDto.UserResponse> unlockUser(@PathVariable("id") @Valid @Positive Long id) {
-        return ResponseEntity.ok().body(adminUserService.unlockUser(id));
+    @DeleteMapping("/{user-id}/lock")
+    public ResponseEntity<AdminDto.UserResponse> unlockUser(@PathVariable("user-id") @Positive Long userId) {
+        return ResponseEntity.ok().body(adminUserService.unlockUser(userId));
     }
 
-    @PutMapping("/{id}/password")
+    @PutMapping("/{user-id}/password")
     public ResponseEntity<AdminDto.UserResponse> changeUserPassword(
-            @PathVariable("id") @Valid @Positive Long id,
+            @PathVariable("user-id") @Positive Long userId,
             @RequestBody @Valid MeDto.PasswordChangeRequest passwordChangeRequest) {
-        return ResponseEntity.ok().body(adminUserService.changeUserPassword(id, passwordChangeRequest));
+        return ResponseEntity.ok().body(adminUserService.changeUserPassword(userId, passwordChangeRequest));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteUser(@PathVariable("id") @Valid @Positive Long id) {
+    @DeleteMapping("/{user-id}")
+    public ResponseEntity<Object> deleteUser(@PathVariable("user-id") @Positive Long id) {
         adminUserService.deleteUser(id);
         return ResponseEntity.ok().build();
     }

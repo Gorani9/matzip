@@ -1,7 +1,5 @@
 package com.matzip.server.domain.me.service;
 
-import com.matzip.server.domain.admin.exception.DeleteAdminUserException;
-import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
 import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.me.dto.HeartDto;
 import com.matzip.server.domain.me.dto.MeDto;
@@ -18,24 +16,22 @@ import com.matzip.server.domain.me.repository.HeartRepository;
 import com.matzip.server.domain.me.repository.ScrapRepository;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
+import com.matzip.server.domain.review.exception.AccessBlockedOrDeletedReviewException;
 import com.matzip.server.domain.review.exception.ReviewNotFoundException;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.CommentRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.exception.AccessBlockedOrDeletedUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -60,141 +56,146 @@ public class MeService {
     private final ImageService imageService;
 
     @Transactional
-    public MeDto.Response changePassword(String username, MeDto.PasswordChangeRequest passwordChangeRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        return new MeDto.Response(userRepository.save(user.changePassword(passwordChangeRequest, passwordEncoder)));
+    public MeDto.Response changePassword(Long myId, MeDto.PasswordChangeRequest passwordChangeRequest) {
+        User me = userRepository.findMeById(myId);
+        me.setPassword(passwordEncoder.encode(passwordChangeRequest.getPassword()));
+        return new MeDto.Response(me);
     }
 
     @Transactional
-    public MeDto.Response changeUsername(String username, MeDto.UsernameChangeRequest usernameChangeRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (userRepository.existsByUsername(usernameChangeRequest.getUsername()))
-            throw new UsernameAlreadyExistsException(usernameChangeRequest.getUsername());
-        return new MeDto.Response(userRepository.save(user.changeUsername(usernameChangeRequest)));
+    public MeDto.Response changeUsername(Long myId, MeDto.UsernameChangeRequest usernameChangeRequest) {
+        User me = userRepository.findMeById(myId);
+        String username = usernameChangeRequest.getUsername();
+        if (userRepository.existsByUsername(username)) throw new UsernameAlreadyExistsException(username);
+        me.setUsername(username);
+        return new MeDto.Response(me);
     }
 
-    public MeDto.Response getMe(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        return new MeDto.Response(user);
-    }
-
-    @Transactional
-    public void deleteMe(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (user.getRole().equals("ADMIN")) throw new DeleteAdminUserException();
-        userRepository.delete(user);
+    public MeDto.Response getMe(Long myId) {
+        return new MeDto.Response(userRepository.findMeById(myId));
     }
 
     @Transactional
-    public MeDto.Response patchMe(String username, MeDto.PatchProfileRequest patchProfileRequest) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        Optional<MultipartFile> profileImage = Optional.ofNullable(patchProfileRequest.getProfileImage());
-        Optional<String> profileString = Optional.ofNullable(patchProfileRequest.getProfileString());
-        profileImage.ifPresent(i -> {
-            String profileImageUrl = imageService.uploadImage(user.getUsername(), i);
-            imageService.deleteImage(user.getProfileImageUrl());
-            user.setProfileImageUrl(profileImageUrl);
-        });
-        profileString.ifPresent(user::setProfileString);
-        userRepository.save(user);
-        return new MeDto.Response(user);
-    }
-
-    public Page<UserDto.Response> getMyFollows(Long myId, MeDto.FindFollowRequest findFollowRequest) {
-        User me = userRepository.findById(myId).orElseThrow(() -> new UserIdNotFoundException(myId));
-        boolean isFollowing = findFollowRequest.getType().equals("following");
-        String property = (isFollowing ? "followee_" : "follower_") + findFollowRequest.getSortedBy();
-        Sort sort = findFollowRequest.getAscending() ? Sort.by(property).ascending() : Sort.by(property).descending();
-        Pageable pageable = PageRequest.of(findFollowRequest.getPageNumber(), findFollowRequest.getPageSize(), sort);
-
-        return isFollowing ?
-               followRepository.findAllByFollowerId(pageable, myId)
-                       .map(f -> new UserDto.Response(f.getFollowee(), me)) :
-               followRepository.findAllByFolloweeId(pageable, myId)
-                       .map(f -> new UserDto.Response(f.getFollower(), me));
+    public void deleteMe(Long myId) {
+        User me = userRepository.findMeById(myId);
+        followRepository.deleteAll(me.getFollowers());
+        heartRepository.deleteAll(me.getHearts());
+        scrapRepository.deleteAll(me.getScraps());
+        me.delete();
     }
 
     @Transactional
-    public MeDto.Response followUser(String username, String followeeUsername) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+    public MeDto.Response patchMe(Long myId, MeDto.PatchProfileRequest patchProfileRequest) {
+        User me = userRepository.findMeById(myId);
+        Optional.ofNullable(patchProfileRequest.getImage()).ifPresent(i -> imageService.uploadUserImage(me, i));
+        Optional.ofNullable(patchProfileRequest.getProfile()).ifPresent(me::setProfileString);
+        return new MeDto.Response(me);
+    }
+
+    public Slice<UserDto.Response> searchMyFollowers(Long myId, UserDto.SearchRequest searchRequest) {
+        User me = userRepository.findMeById(myId);
+        return followRepository.searchMyFollowersByUsername(searchRequest, myId).map(u -> UserDto.Response.of(u, me));
+    }
+
+    public Slice<UserDto.Response> searchMyFollowings(Long myId, UserDto.SearchRequest searchRequest) {
+        User me = userRepository.findMeById(myId);
+        return followRepository.searchMyFollowingsByUsername(searchRequest, myId).map(u -> UserDto.Response.of(u, me));
+    }
+
+    @Transactional
+    public MeDto.Response followUser(Long myId, String followeeUsername) {
+        User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(followeeUsername)
                 .orElseThrow(() -> new UsernameNotFoundException(followeeUsername));
-        if (user.getUsername().equals(followeeUsername)) throw new FollowMeException();
-        if (!followRepository.existsByFollowerIdAndFolloweeId(user.getId(), followee.getId())) {
-            Follow follow = new Follow(user, followee);
-            followRepository.save(follow);
-        }
-        return new MeDto.Response(user);
+        if (followee.isBlocked() || followee.isDeleted()) throw new AccessBlockedOrDeletedUserException(followeeUsername);
+        if (me == followee) throw new FollowMeException();
+        if (!me.isFollowing(followee)) followRepository.save(new Follow(me, followee));
+        return new MeDto.Response(me);
     }
 
     @Transactional
-    public MeDto.Response unfollowUser(String username, String followeeUsername) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
+    public MeDto.Response unfollowUser(Long myId, String followeeUsername) {
+        User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(followeeUsername)
                 .orElseThrow(() -> new UsernameNotFoundException(followeeUsername));
-        followRepository.deleteByFollowerIdAndFolloweeId(user.getId(), followee.getId());
-        followRepository.flush();
-        return new MeDto.Response(user);
+        if (followee.isBlocked() || followee.isDeleted()) throw new AccessBlockedOrDeletedUserException(followeeUsername);
+        followRepository.findByFollowerIdAndFolloweeId(myId, followee.getId()).ifPresent(
+                f -> {
+                    me.deleteFollowing(f);
+                    followee.deleteFollower(f);
+                    followRepository.delete(f);
+                }
+        );
+        return new MeDto.Response(me);
 
     }
 
-    public Page<ReviewDto.Response> getMyReviews(User user, MeDto.FindReviewRequest findReviewRequest) {
-        Sort sort = findReviewRequest.getAscending() ? Sort.by(findReviewRequest.getSortedBy()).ascending()
-                                                     : Sort.by(findReviewRequest.getSortedBy()).descending();
-        Pageable pageable = PageRequest.of(findReviewRequest.getPageNumber(), findReviewRequest.getPageSize(), sort);
-        return reviewRepository.findAllByUser_Username(pageable, user.getUsername())
-                .map(r -> new ReviewDto.Response(user, r));
+    public Slice<ReviewDto.Response> searchMyReviews(Long myId, ReviewDto.SearchRequest searchRequest) {
+        User me = userRepository.findMeById(myId);
+        return reviewRepository.searchMyReviewsByKeyword(searchRequest, myId).map(r -> ReviewDto.Response.of(r, me));
     }
 
-    public Page<CommentDto.Response> getMyComments(User user, MeDto.FindCommentRequest findCommentRequest) {
-        Sort sort = findCommentRequest.getAscending() ? Sort.by(findCommentRequest.getSortedBy()).ascending()
-                                                      : Sort.by(findCommentRequest.getSortedBy()).descending();
-        Pageable pageable = PageRequest.of(findCommentRequest.getPageNumber(), findCommentRequest.getPageSize(), sort);
-        return commentRepository.findAllByUser_Username(pageable, user.getUsername())
-                .map(r -> new CommentDto.Response(user, r));
+    public Slice<CommentDto.Response> searchMyComments(Long myId, CommentDto.SearchRequest searchRequest) {
+        User me = userRepository.findMeById(myId);
+        return commentRepository.searchMyCommentsByKeyword(searchRequest, myId).map(c -> new CommentDto.Response(c, me));
     }
 
-    public Page<ScrapDto.Response> getMyScraps(User user, MeDto.FindReviewRequest findReviewRequest) {
-        Sort sort = findReviewRequest.getAscending() ? Sort.by(findReviewRequest.getSortedBy()).ascending()
-                                                     : Sort.by(findReviewRequest.getSortedBy()).descending();
-        Pageable pageable = PageRequest.of(findReviewRequest.getPageNumber(), findReviewRequest.getPageSize(), sort);
-        return scrapRepository.findAllByUser_Username(pageable, user.getUsername()).map(ScrapDto.Response::new);
+    public Slice<ScrapDto.Response> searchMyScraps(Long myId, ScrapDto.SearchRequest searchRequest) {
+        return scrapRepository.searchMyScrapsByKeyword(searchRequest, myId).map(ScrapDto.Response::new);
     }
 
     @Transactional
-    public HeartDto.Response heartReview(User user, Long reviewId) {
-        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (review.getUser().getUsername().equals(user.getUsername()))
+    public HeartDto.Response heartReview(Long myId, Long reviewId) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
+        if (review.getUser() == me)
             throw new HeartMyReviewException();
-        if (heartRepository.existsByUser_UsernameAndReview_Id(user.getUsername(), reviewId))
+        if (heartRepository.existsByUserIdAndReviewId(myId, reviewId))
             throw new DuplicateHeartException();
-        heartRepository.save(new Heart(user, review));
+        heartRepository.save(new Heart(me, review));
         return new HeartDto.Response(review.getHearts().size());
     }
 
     @Transactional
-    public HeartDto.Response deleteHeartFromReview(User user, Long reviewId) {
-        heartRepository.deleteByUser_UsernameAndReview_Id(user.getUsername(), reviewId);
-        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        heartRepository.flush();
+    public HeartDto.Response deleteHeartFromReview(Long myId, Long reviewId) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
+        heartRepository.findByUserIdAndReviewId(myId, reviewId).ifPresent(
+                h -> {
+                    me.deleteHeart(h);
+                    review.deleteHeart(h);
+                    heartRepository.delete(h);
+                }
+        );
         return new HeartDto.Response(review.getHearts().size());
     }
 
     @Transactional
-    public ScrapDto.Response scrapReview(String username, Long reviewId, ScrapDto.Request request) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        Review review = reviewRepository.findAllById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (review.getUser().getUsername().equals(username))
+    public ScrapDto.Response scrapReview(Long myId, Long reviewId, ScrapDto.PostRequest postRequest) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
+        if (review.getUser() == me)
             throw new ScrapMyReviewException();
-        Scrap scrap = scrapRepository.findByUser_UsernameAndReview_Id(username, review.getId())
-                .orElse(new Scrap(user, review));
-        scrap.setDescription(request.getDescription());
-        return new ScrapDto.Response(scrapRepository.save(scrap));
+        Scrap scrap = scrapRepository.findByUserIdAndReviewId(myId, reviewId)
+                .orElse(scrapRepository.save(new Scrap(me, review)));
+        scrap.setDescription(postRequest.getDescription());
+        return new ScrapDto.Response(scrap);
     }
 
     @Transactional
-    public void deleteMyScrap(User user, Long reviewId) {
-        scrapRepository.deleteByUser_UsernameAndReview_id(user.getUsername(), reviewId);
-        scrapRepository.flush();
+    public void deleteMyScrap(Long myId, Long reviewId) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
+        scrapRepository.findByUserIdAndReviewId(myId, reviewId).ifPresent(
+                s -> {
+                    me.deleteScrap(s);
+                    review.deleteScrap(s);
+                    scrapRepository.delete(s);
+                }
+        );
     }
 }

@@ -4,12 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
 import javax.validation.ConstraintViolationException;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class MatzipControllerAdvice {
@@ -24,19 +26,32 @@ public class MatzipControllerAdvice {
     @ExceptionHandler(value=ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(value=MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> constraintViolation(MethodArgumentNotValidException e) {
+        logger.info(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getFieldError().getDefaultMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponse> multipartException(MultipartException e) {
         logger.info(e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()),
+                HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value=NotAllowedException.class)

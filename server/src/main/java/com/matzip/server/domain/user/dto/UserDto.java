@@ -1,18 +1,21 @@
 package com.matzip.server.domain.user.dto;
 
+import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.me.model.Follow;
+import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.domain.user.validation.Password;
-import com.matzip.server.domain.user.validation.UserProperty;
 import com.matzip.server.domain.user.validation.Username;
+import com.matzip.server.global.common.dto.BaseResponse;
+import com.matzip.server.global.common.dto.BlockedResponse;
+import com.matzip.server.global.common.dto.DeletedResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
-import java.util.Objects;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Validated
 public class UserDto {
@@ -28,16 +31,11 @@ public class UserDto {
     @RequiredArgsConstructor
     @Getter
     public static class SearchRequest {
-        @PositiveOrZero
-        private final Integer pageNumber;
-        @Positive
-        private final Integer pageSize;
-        @UserProperty
-        private final String sortedBy;
-        @NotNull
-        private final Boolean ascending;
-        @NotBlank
         private final String username;
+        private final Integer page;
+        private final Integer size;
+        private final UserProperty sort;
+        private final Boolean asc;
     }
 
     @RequiredArgsConstructor
@@ -49,32 +47,60 @@ public class UserDto {
     @RequiredArgsConstructor
     @Getter
     public static class SignUpResponse {
-        private final Response response;
+        private final MeDto.Response response;
         private final String token;
     }
 
     @Getter
-    public static class Response {
+    public static class Response extends BaseResponse {
         protected final String username;
         protected final String profileImageUrl;
         protected final String profileString;
         protected final Integer matzipLevel;
-        private final Integer numberOfFollowers;
-        private final Integer numberOfFollowings;
         private final Boolean isMyFollowing;
         private final Boolean isMyFollower;
         private final Boolean isMe;
 
-        public Response(User user, User me) {
+        protected Response(User user, User me) {
+            super(true);
             this.username = user.getUsername();
-            this.profileImageUrl = user.getProfileImageUrl();
+            this.profileImageUrl = user.getUserImage() == null ? null : user.getUserImage().getImageUrl();
             this.profileString = user.getProfileString();
             this.matzipLevel = user.getMatzipLevel();
-            this.numberOfFollowers = user.getFollowers().size();
-            this.numberOfFollowings = user.getFollowings().size();
-            this.isMyFollowing = me.getFollowings().contains(user);
-            this.isMyFollower = me.getFollowers().contains(user);
-            this.isMe = Objects.equals(user.getId(), me.getId());
+            this.isMyFollowing = me.isFollowing(user);
+            this.isMyFollower = me.isFollowedBy(user);
+            this.isMe = user == me;
+        }
+
+        public static BaseResponse ofNullable(User user, User me) {
+            if (user == null || user.isDeleted()) return DeletedResponse.ofDeletedUser();
+            else if (user.isBlocked()) return BlockedResponse.ofBlockedUser();
+            else return new Response(user, me);
+        }
+
+        public static Response of(User user, User me) {
+            return new Response(user, me);
+        }
+    }
+
+    @Getter
+    public static class DetailedResponse extends Response {
+        private final List<Response> followers;
+        private final Integer numberOfFollowers;
+        private final List<Response> followings;
+        private final Integer numberOfFollowings;
+        private final List<ReviewDto.Response> reviews;
+
+        public DetailedResponse(User user, User me) {
+            super(user, me);
+            this.followers = user.getFollowers().stream().map(Follow::getFollower).filter(u -> !u.isBlocked())
+                    .map(u -> Response.of(u, me)).collect(Collectors.toList());
+            this.numberOfFollowers = this.followers.size();
+            this.followings = user.getFollowings().stream().map(Follow::getFollowee).filter(u -> !u.isBlocked())
+                    .map(u -> Response.of(u, me)).collect(Collectors.toList());
+            this.numberOfFollowings = this.followings.size();
+            this.reviews = user.getReviews().stream().filter(r -> !r.isBlocked())
+                    .map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
         }
     }
 }

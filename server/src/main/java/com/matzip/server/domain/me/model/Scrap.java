@@ -6,21 +6,18 @@ import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="scrap")
 @NoArgsConstructor
 @Getter
 public class Scrap extends BaseTimeEntity {
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Review review;
 
@@ -28,12 +25,9 @@ public class Scrap extends BaseTimeEntity {
 
     public Scrap(User user, Review review) {
         this.user = user;
+        user.addScrap(this);
         this.review = review;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Scrap && this.user.equals(((Scrap) obj).user) && this.review.equals(((Scrap) obj).review);
+        review.addScrap(this);
     }
 
     public void setDescription(String description) {

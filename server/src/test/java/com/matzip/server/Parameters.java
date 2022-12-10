@@ -8,7 +8,11 @@ import java.util.Collections;
 public class Parameters extends LinkedMultiValueMap<String, String> {
     public Parameters() {
         super();
-        this.putParameter("pageNumber", "0").putParameter("pageSize", "15");
+    }
+
+    public Parameters(int page, int size) {
+        super();
+        this.putParameter("page", String.valueOf(page)).putParameter("size", String.valueOf(size));
     }
 
     public Parameters putParameter(String key, String value) {

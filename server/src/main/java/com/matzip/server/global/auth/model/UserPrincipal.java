@@ -7,21 +7,22 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 
 @Getter
 public class UserPrincipal implements UserDetails {
     private final User user;
+    private final GrantedAuthority grantedAuthority;
 
     public UserPrincipal(User user) {
         this.user = user;
+        this.grantedAuthority = user.getUsername().equals("admin") ?
+                                new SimpleGrantedAuthority("ADMIN") : new SimpleGrantedAuthority("NORMAL");
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = Optional.ofNullable(user.getRole()).orElse("NORMAL");
-        return Collections.singleton(new SimpleGrantedAuthority(role));
+        return List.of(grantedAuthority);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class UserPrincipal implements UserDetails {
         return true;
     }
 
-    public User getUser() {
-        return user;
+    public Long getUserId() {
+        return user.getId();
     }
 }

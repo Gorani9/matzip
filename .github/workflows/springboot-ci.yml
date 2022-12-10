@@ -54,7 +54,7 @@ jobs:
       run: ./gradlew test --no-daemon
       working-directory: server
       env:
-        DB_URL: jdbc:mysql://localhost:3306/matzip_db
+        DB_TEST_URL: jdbc:mysql://localhost:3306/matzip_db
         DB_USERNAME: ${{ secrets.DB_USERNAME }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}

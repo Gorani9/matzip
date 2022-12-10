@@ -3,10 +3,10 @@ package com.matzip.server.global.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matzip.server.global.auth.filter.JwtAuthenticationFilter;
 import com.matzip.server.global.auth.filter.MatzipAuthenticationFilter;
-import com.matzip.server.global.auth.jwt.MatzipAuthenticationEntryPoint;
 import com.matzip.server.global.auth.jwt.JwtProvider;
-import com.matzip.server.global.auth.service.UserPrincipalDetailsService;
 import com.matzip.server.global.auth.jwt.MatzipAccessDeniedHandler;
+import com.matzip.server.global.auth.jwt.MatzipAuthenticationEntryPoint;
+import com.matzip.server.global.auth.service.UserPrincipalDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,7 +62,9 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, GET_WHITELIST).permitAll()
                 .antMatchers(HttpMethod.POST, POST_WHITELIST).permitAll()
-                .antMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
+                .antMatchers("/admin/api/v1/**").hasAnyAuthority("ADMIN")
+                .antMatchers("/api/v1/**").hasAnyAuthority("NORMAL")
+                .antMatchers(HttpMethod.GET, "/docs/**").permitAll()
                 .anyRequest().authenticated();
         return http.build();
     }

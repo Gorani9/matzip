@@ -6,31 +6,25 @@ import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="heart")
 @NoArgsConstructor
 @Getter
 public class Heart extends BaseTimeEntity {
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Review review;
 
     public Heart(User user, Review review) {
         this.user = user;
+        user.addHeart(this);
         this.review = review;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Heart && this.user.equals(((Heart) obj).user) && this.review.equals(((Heart) obj).review);
+        review.addHeart(this);
     }
 }

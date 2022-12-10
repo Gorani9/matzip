@@ -45,8 +45,9 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             FilterChain chain,
             Authentication authResult) throws IOException {
         User user = ((UserPrincipal) authResult.getPrincipal()).getUser();
-        if (!user.getIsNonLocked()) {
-            ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_LOCKED, "Current user is locked.");
+        if (user.isBlocked() || user.isDeleted()) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    ErrorType.USER_BLOCKED_OR_DELETED, "Current user is blocked or deleted.");
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
             response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
@@ -68,7 +69,6 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             HttpServletResponse response,
             AuthenticationException failed) throws IOException, ServletException {
         super.unsuccessfulAuthentication(request, response, failed);
-        logger.error("Unsuccessful Authentication: " + failed.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_ACCESS_DENIED, failed.getMessage());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
@@ -80,16 +80,16 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
     public Authentication attemptAuthentication(
             HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         LoginDto.LoginRequest parsedRequest;
-        try {
-            parsedRequest = parseRequest(request);
-        } catch (IOException e) {
-            throw new com.matzip.server.global.common.exception.IOException();
-        }
+        parsedRequest = parseRequest(request);
         return super.getAuthenticationManager().authenticate(
                 new UsernamePasswordAuthenticationToken(parsedRequest.getUsername(), parsedRequest.getPassword()));
     }
 
-    private LoginDto.LoginRequest parseRequest(HttpServletRequest request) throws IOException {
-        return new ObjectMapper().readValue(request.getReader(), LoginDto.LoginRequest.class);
+    private LoginDto.LoginRequest parseRequest(HttpServletRequest request) {
+        try {
+            return new ObjectMapper().readValue(request.getReader(), LoginDto.LoginRequest.class);
+        } catch (IOException e) {
+            throw new com.matzip.server.global.common.exception.IOException();
+        }
     }
 }

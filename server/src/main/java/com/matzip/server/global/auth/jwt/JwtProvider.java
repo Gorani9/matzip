@@ -51,7 +51,7 @@ public final class JwtProvider {
 
     public String generateAccessToken(Authentication authentication) {
         Claims claims = Jwts.claims().setSubject(authentication.getName());
-        claims.put("roles", authentication.getAuthorities());
+        claims.put("role", authentication.getAuthorities().stream().findFirst());
         Date now = new Date();
         long accessTokenValidTime = 2 * 60 * 60 * 1000L;
         return tokenPrefix + Jwts.builder().setClaims(claims).setIssuedAt(now)
@@ -68,8 +68,8 @@ public final class JwtProvider {
             return false;
         }
         try {
-            getClaimsFromToken(token);
-            return true;
+            Claims claims = getClaimsFromToken(token);
+            return userPrincipalDetailsService.validate(claims.getSubject());
         } catch (SignatureException e) {
             logger.error("Invalid JWT signature.");
         } catch (MalformedJwtException e) {

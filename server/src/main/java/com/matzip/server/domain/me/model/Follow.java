@@ -22,6 +22,8 @@ public class Follow extends BaseTimeEntity {
 
     public Follow(User follower, User followee) {
         this.follower = follower;
+        follower.addFollowing(this);
         this.followee = followee;
+        followee.addFollower(this);
     }
 }
