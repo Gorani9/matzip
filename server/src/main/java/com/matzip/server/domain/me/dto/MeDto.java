@@ -33,9 +33,9 @@ public class MeDto {
     @RequiredArgsConstructor
     @Getter
     public static class PatchProfileRequest {
-        private final MultipartFile profileImage;
+        private final MultipartFile image;
         @Length(max=50)
-        private final String profileString;
+        private final String profile;
     }
 
     @RequiredArgsConstructor

@@ -1,17 +1,17 @@
 == Comment API
-.공통 Response
+.Normal Response
 include::{snippets}/comment-post/response-fields.adoc[]
 
 === CRUD
 
-==== Post Review
+==== Post Comment
 .Request
 include::{snippets}/comment-post/http-request.adoc[]
 include::{snippets}/comment-post/request-fields.adoc[]
 .Response
 include::{snippets}/comment-post/http-response.adoc[]
 
-==== Patch Review
+==== Patch Comment
 .Request
 include::{snippets}/comment-put/http-request.adoc[]
 include::{snippets}/comment-put/path-parameters.adoc[]
@@ -19,16 +19,9 @@ include::{snippets}/comment-put/request-body.adoc[]
 .Response
 include::{snippets}/comment-put/http-response.adoc[]
 
-==== Delete Review
+==== Delete Comment
 .Request
 include::{snippets}/comment-delete/http-request.adoc[]
 include::{snippets}/comment-delete/path-parameters.adoc[]
 .Response
 include::{snippets}/comment-delete/http-response.adoc[]
-
-==== Search Review
-.Request
-include::{snippets}/comment-search/http-request.adoc[]
-include::{snippets}/comment-search/request-parameters.adoc[]
-.Response
-include::{snippets}/comment-search/http-response.adoc[]

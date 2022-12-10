@@ -36,9 +36,8 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
+import static com.matzip.server.domain.DocumentFields.*;
 import static com.matzip.server.domain.review.CommentDocumentTest.getCommentResponseFields;
-import static com.matzip.server.domain.review.ReviewDocumentTest.*;
-import static com.matzip.server.domain.user.UserDocumentTest.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -102,7 +101,7 @@ public class MeDocumentTest {
                 .andDo(document("me-fetch",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -124,7 +123,7 @@ public class MeDocumentTest {
                                 getDocumentResponse(),
                                 requestParts(partWithName("new_image").description("바꿀 프로필 이미지").optional()),
                                 requestParameters(parameterWithName("profile_string").description("바꿀 프로필 메시지").optional()),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -151,7 +150,7 @@ public class MeDocumentTest {
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 requestFields(fieldWithPath("username").type(STRING).description("바꿀 유저네임")),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -168,7 +167,7 @@ public class MeDocumentTest {
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 requestFields(fieldWithPath("password").type(STRING).description("바꿀 비밀번호")),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -189,6 +188,7 @@ public class MeDocumentTest {
                                 requestParameters(parameterWithName("username").description("검색할 유저네임").optional())
                                         .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
+                                        .andWithPrefix("content[].", getNormalResponseField())
                                         .andWithPrefix("content[].", getUserResponseFields())
                 ));
     }
@@ -210,6 +210,7 @@ public class MeDocumentTest {
                                 requestParameters(parameterWithName("username").description("검색할 유저네임").optional())
                                         .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
+                                        .andWithPrefix("content[].", getNormalResponseField())
                                         .andWithPrefix("content[].", getUserResponseFields())
                 ));
     }
@@ -224,8 +225,7 @@ public class MeDocumentTest {
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("username").description("팔로우할 유저의 유저네임")),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
-
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -239,7 +239,7 @@ public class MeDocumentTest {
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("username").description("언팔로우할 유저의 유저네임")),
-                                responseFields(getMeResponseFields()).and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getMeResponseFields()).and(getUserResponseFields())
 
                 ));
     }
@@ -259,10 +259,10 @@ public class MeDocumentTest {
                                 requestParameters(parameterWithName("keyword").description("검색할 리뷰 내용").optional())
                                         .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
+                                        .andWithPrefix("content[].", getNormalResponseField())
                                         .andWithPrefix("content[].", getReviewResponseFields())
+                                        .andWithPrefix("content[].user.", getNormalResponseField())
                                         .andWithPrefix("content[].user.", getUserResponseFields())
-                                        .andWithPrefix("content[].comments[].", getCommentResponseFields())
-                                        .andWithPrefix("content[].comments[].user.", getUserResponseFields())
                 ));
     }
 
@@ -282,6 +282,7 @@ public class MeDocumentTest {
                                         .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
                                         .andWithPrefix("content[].", getCommentResponseFields())
+                                        .andWithPrefix("content[].user.", getNormalResponseField())
                                         .andWithPrefix("content[].user.", getUserResponseFields())
                 ));
     }
@@ -330,10 +331,10 @@ public class MeDocumentTest {
                                         .and(getPageRequestParameters()),
                                 responseFields(getPageResponseFields())
                                         .andWithPrefix("content[].", getScrapResponseFields())
+                                        .andWithPrefix("content[].review.", getNormalResponseField())
                                         .andWithPrefix("content[].review.", getReviewResponseFields())
+                                        .andWithPrefix("content[].review.user.", getNormalResponseField())
                                         .andWithPrefix("content[].review.user.", getUserResponseFields())
-                                        .andWithPrefix("content[].review.comments[].", getCommentResponseFields())
-                                        .andWithPrefix("content[].review.comments[].user.", getUserResponseFields())
                 ));
     }
 
@@ -352,10 +353,10 @@ public class MeDocumentTest {
                                 pathParameters(parameterWithName("review-id").description("스크랩할 리뷰 아이디")),
                                 requestFields(fieldWithPath("description").type(STRING).description("스크랩 설명")),
                                 responseFields(getScrapResponseFields())
+                                        .andWithPrefix("review.", getNormalResponseField())
                                         .andWithPrefix("review.", getReviewResponseFields())
+                                        .andWithPrefix("review.user.", getNormalResponseField())
                                         .andWithPrefix("review.user.", getUserResponseFields())
-                                        .andWithPrefix("review.comments[].", getCommentResponseFields())
-                                        .andWithPrefix("review.comments[].user.", getUserResponseFields())
                 ));
     }
 

@@ -253,7 +253,6 @@ class ReviewServiceTest {
         review1.block("test");
         review2.delete();
 
-
         // then
         assertThrows(AccessBlockedOrDeletedReviewException.class, () -> reviewService.patchReview(1L, 1L, request));
         assertThrows(AccessBlockedOrDeletedReviewException.class, () -> reviewService.patchReview(1L, 2L, request));

@@ -2,7 +2,6 @@ package com.matzip.server.domain.admin.service;
 
 import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.admin.exception.UserIdNotFoundException;
-import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ImageService imageService;
 
     public Slice<AdminDto.UserResponse> searchUsers(AdminDto.UserSearchRequest userSearchRequest) {
         return userRepository.adminSearchUsersByUsername(userSearchRequest).map(AdminDto.UserResponse::new);
@@ -38,12 +36,14 @@ public class AdminUserService {
     @Transactional
     public AdminDto.UserResponse lockUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserIdNotFoundException(userId));
+        user.block("admin");
         return new AdminDto.UserResponse(user);
     }
 
     @Transactional
     public AdminDto.UserResponse unlockUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserIdNotFoundException(userId));
+        user.unblock();
         return new AdminDto.UserResponse(user);
 
     }
@@ -51,7 +51,7 @@ public class AdminUserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserIdNotFoundException(userId));
-        userRepository.delete(user);
+        user.delete();
     }
 
     @Transactional

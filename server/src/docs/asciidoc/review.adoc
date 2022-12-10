@@ -1,5 +1,5 @@
 == Review API
-.공통 Response
+.Normal Response
 include::{snippets}/review-fetch/response-fields.adoc[]
 
 === CRUD

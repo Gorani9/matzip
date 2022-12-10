@@ -7,19 +7,22 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 @Getter
 public class UserPrincipal implements UserDetails {
     private final User user;
+    private final GrantedAuthority grantedAuthority;
 
     public UserPrincipal(User user) {
         this.user = user;
+        this.grantedAuthority = user.getUsername().equals("admin") ?
+                                new SimpleGrantedAuthority("ADMIN") : new SimpleGrantedAuthority("NORMAL");
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("NORMAL"));
+        return List.of(grantedAuthority);
     }
 
     @Override

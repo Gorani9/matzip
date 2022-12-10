@@ -7,9 +7,7 @@ import com.matzip.server.domain.me.model.ScrapProperty;
 import com.matzip.server.domain.user.model.QUser;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -42,11 +40,12 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                 searchRequest.getSort(),
                 PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
                 reviewContentContaining(searchRequest.getKeyword()),
-                scrap.user.id.eq(myId));
+                scrap.user.id.eq(myId),
+                scrap.review.blocked.isFalse());
     }
 
     private BooleanExpression reviewContentContaining(String keyword) {
-        return keyword == null ? null : review.content.contains(keyword);
+        return keyword == null || keyword.isBlank() ? null : review.content.contains(keyword);
     }
 
     private Slice<Scrap> searchWithConditions(
@@ -61,7 +60,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, reviewer.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -73,7 +72,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, reviewer.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
@@ -87,7 +86,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .leftJoin(reviewer.followers, follow)
                     .groupBy(scrap, reviewer)
                     .where(conditions)
@@ -104,7 +103,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .leftJoin(review.hearts, heart)
                     .groupBy(scrap, review)
                     .where(conditions)
@@ -122,7 +121,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .leftJoin(review.scraps, otherScrap)
                     .groupBy(scrap, review)
                     .where(conditions)
@@ -132,18 +131,21 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(scrap)).collect(Collectors.toList());
         } else if (scrapProperty == REVIEW_NUMBER_OF_COMMENTS) {
-            NumberPath<Long> comments = Expressions.numberPath(Long.class, "comments");
+            NumberPath<Integer> commentCount = Expressions.numberPath(Integer.class, "comments");
+            NumberExpression<Integer> validCommentCount = new CaseBuilder()
+                    .when(comment.deleted.isFalse()).then(1)
+                    .otherwise(0);
 
             scraps = jpaQueryFactory
-                    .select(scrap, comment.count().as(comments))
+                    .select(scrap, validCommentCount.sum().as(commentCount))
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .leftJoin(review.comments, comment)
                     .groupBy(scrap, user)
                     .where(conditions)
-                    .orderBy(new OrderSpecifier<>(order, comments), defaultOrder)
+                    .orderBy(new OrderSpecifier<>(order, commentCount), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
                     .fetch()
@@ -154,7 +156,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.rating), defaultOrder)
                     .offset(pageable.getOffset())
@@ -166,7 +168,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.createdAt), defaultOrder)
                     .offset(pageable.getOffset())
@@ -178,7 +180,7 @@ public class ScrapRepositoryImpl implements ScrapRepositoryCustom {
                     .from(scrap)
                     .leftJoin(scrap.review, review).fetchJoin()
                     .leftJoin(scrap.user, user).fetchJoin()
-                    .leftJoin(review.user, reviewer).fetchJoin()
+                    .leftJoin(review.user, reviewer).fetchJoin().leftJoin(reviewer.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, scrap.createdAt))
                     .offset(pageable.getOffset())

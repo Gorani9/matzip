@@ -11,6 +11,7 @@ import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.domain.user.validation.Username;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -47,7 +48,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<Slice<Response>> searchUsersByUsername(
             @CurrentUser Long myId,
-            @RequestParam("username") @NotBlank String username,
+            @RequestParam("username") @NotBlank @Length(max = 30) String username,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String userProperty,

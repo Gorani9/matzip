@@ -45,8 +45,9 @@ public class MatzipAuthenticationFilter extends UsernamePasswordAuthenticationFi
             FilterChain chain,
             Authentication authResult) throws IOException {
         User user = ((UserPrincipal) authResult.getPrincipal()).getUser();
-        if (user.isBlocked()) {
-            ErrorResponse errorResponse = new ErrorResponse(ErrorType.USER_BLOCKED_OR_DELETED, "Current user is blocked.");
+        if (user.isBlocked() || user.isDeleted()) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    ErrorType.USER_BLOCKED_OR_DELETED, "Current user is blocked or deleted.");
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
             response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

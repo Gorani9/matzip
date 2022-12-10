@@ -24,14 +24,16 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
-import static com.matzip.server.domain.user.UserDocumentTest.getUserResponseFields;
+import static com.matzip.server.domain.DocumentFields.getNormalResponseField;
+import static com.matzip.server.domain.DocumentFields.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.restdocs.request.RequestDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = CommentController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
@@ -84,6 +86,7 @@ public class CommentDocumentTest {
                                         fieldWithPath("review_id").type(NUMBER).description("댓글이 달리는 리뷰 아이디"),
                                         fieldWithPath("content").type(STRING).description("댓글 내용")),
                                 responseFields(getCommentResponseFields())
+                                        .andWithPrefix("user.", getNormalResponseField())
                                         .andWithPrefix("user.", getUserResponseFields())
                 ));
     }
@@ -100,6 +103,7 @@ public class CommentDocumentTest {
                                 pathParameters(
                                         parameterWithName("comment-id").description("선택할 댓글 아이디")),
                                 responseFields(getCommentResponseFields())
+                                        .andWithPrefix("user.", getNormalResponseField())
                                         .andWithPrefix("user.", getUserResponseFields())
                 ));
     }
@@ -121,6 +125,7 @@ public class CommentDocumentTest {
                                 requestFields(
                                         fieldWithPath("content").type(STRING).description("수정할 댓글 내용")),
                                 responseFields(getCommentResponseFields())
+                                        .andWithPrefix("user.", getNormalResponseField())
                                         .andWithPrefix("user.", getUserResponseFields())
                 ));
     }

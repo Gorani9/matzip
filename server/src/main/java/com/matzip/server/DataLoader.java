@@ -22,7 +22,7 @@ public class DataLoader implements ApplicationRunner {
     @Transactional
     @Override
     public void run(ApplicationArguments args) {
-        if (userRepository.findByUsername("qwer").isEmpty())
-            userRepository.save(new User("qwer", passwordEncoder.encode(adminPassword)));
+        if (userRepository.findByUsername("admin").isEmpty())
+            userRepository.save(new User("admin", passwordEncoder.encode(adminPassword)));
     }
 }

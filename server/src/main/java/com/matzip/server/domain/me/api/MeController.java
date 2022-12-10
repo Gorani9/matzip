@@ -11,8 +11,10 @@ import com.matzip.server.domain.review.model.CommentProperty;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.UserProperty;
+import com.matzip.server.domain.user.validation.Username;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -64,7 +66,7 @@ public class MeController {
     @GetMapping("/followers")
     public ResponseEntity<Slice<UserDto.Response>> searchMyFollowers(
             @CurrentUser Long myId,
-            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "username", required = false) @Length(max = 30) String username,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String userProperty,
@@ -77,7 +79,7 @@ public class MeController {
     @GetMapping("/followings")
     public ResponseEntity<Slice<UserDto.Response>> searchMyFollowings(
             @CurrentUser Long myId,
-            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "username", required = false) @Length(max = 30) String username,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String userProperty,
@@ -90,21 +92,21 @@ public class MeController {
     @PutMapping("/follows/{username}")
     public ResponseEntity<MeDto.Response> followAnotherUser(
             @CurrentUser Long myId,
-            @PathVariable("username") String username) {
+            @PathVariable("username") @Username String username) {
         return ResponseEntity.ok().body(meService.followUser(myId, username));
     }
 
     @DeleteMapping("/follows/{username}")
     public ResponseEntity<MeDto.Response> unfollowAnotherUser(
             @CurrentUser Long myId,
-            @PathVariable("username") String username) {
+            @PathVariable("username") @Username String username) {
         return ResponseEntity.ok().body(meService.unfollowUser(myId, username));
     }
 
     @GetMapping("/reviews")
     public ResponseEntity<Slice<ReviewDto.Response>> searchMyReviews(
             @CurrentUser Long myId,
-            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "content", required = false) @Length(max = 100) String content,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String reviewProperty,
@@ -117,7 +119,7 @@ public class MeController {
     @GetMapping("/comments")
     public ResponseEntity<Slice<CommentDto.Response>> searchMyComments(
             @CurrentUser Long myId,
-            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "content", required = false) @Length(max = 100) String content,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String commentProperty,
@@ -130,21 +132,21 @@ public class MeController {
     @PutMapping("/hearts/{review-id}")
     public ResponseEntity<HeartDto.Response> putHeartOnReview(
             @CurrentUser Long myId,
-            @PathVariable("review-id") Long reviewId) {
+            @PathVariable("review-id") @Positive Long reviewId) {
         return ResponseEntity.ok().body(meService.heartReview(myId, reviewId));
     }
 
     @DeleteMapping("/hearts/{review-id}")
     public ResponseEntity<HeartDto.Response> deleteHeartFromReview(
             @CurrentUser Long myId,
-            @PathVariable("review-id") Long reviewId) {
+            @PathVariable("review-id") @Positive Long reviewId) {
         return ResponseEntity.ok().body(meService.deleteHeartFromReview(myId, reviewId));
     }
 
     @GetMapping("/scraps")
     public ResponseEntity<Slice<ScrapDto.Response>> searchMyScraps(
             @CurrentUser Long myId,
-            @RequestParam(value = "content", required = false) String content,
+            @RequestParam(value = "content", required = false) @Length(max = 100) String content,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String scrapProperty,
@@ -156,12 +158,16 @@ public class MeController {
 
     @PutMapping("/scraps/{review-id}")
     public ResponseEntity<ScrapDto.Response> putMyScrap(
-            @CurrentUser Long myId, @PathVariable("review-id") Long reviewId, @RequestBody @Valid ScrapDto.PostRequest postRequest) {
+            @CurrentUser Long myId,
+            @PathVariable("review-id") @Positive Long reviewId,
+            @RequestBody @Valid ScrapDto.PostRequest postRequest) {
         return ResponseEntity.ok().body(meService.scrapReview(myId, reviewId, postRequest));
     }
 
     @DeleteMapping("/scraps/{review-id}")
-    public ResponseEntity<Object> deleteMyScrap(@CurrentUser Long myId, @PathVariable("review-id") Long reviewId) {
+    public ResponseEntity<Object> deleteMyScrap(
+            @CurrentUser Long myId,
+            @PathVariable("review-id") @Positive Long reviewId) {
         meService.deleteMyScrap(myId, reviewId);
         return ResponseEntity.ok().build();
     }

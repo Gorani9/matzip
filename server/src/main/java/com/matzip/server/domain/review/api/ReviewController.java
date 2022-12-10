@@ -5,6 +5,7 @@ import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.review.service.ReviewService;
 import com.matzip.server.global.auth.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +26,7 @@ public class ReviewController {
     @GetMapping
     public ResponseEntity<Slice<ReviewDto.Response>> searchReviews(
             @CurrentUser Long myId,
-            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "keyword", required = false) @Length(max = 100) String keyword,
             @RequestParam(value = "page", required = false, defaultValue = "0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String reviewProperty,
@@ -37,21 +38,21 @@ public class ReviewController {
     }
 
     @PostMapping(consumes={"multipart/form-data"})
-    public ResponseEntity<ReviewDto.Response> postReview(
+    public ResponseEntity<ReviewDto.DetailedResponse> postReview(
             @CurrentUser Long myId,
             @ModelAttribute @Valid ReviewDto.PostRequest postRequest) {
         return ResponseEntity.ok().body(reviewService.postReview(myId, postRequest));
     }
 
     @GetMapping("/{review-id}")
-    public ResponseEntity<ReviewDto.Response> getReview(
+    public ResponseEntity<ReviewDto.DetailedResponse> getReview(
             @CurrentUser Long myId,
             @PathVariable("review-id") @Positive Long reviewId) {
         return ResponseEntity.ok().body(reviewService.fetchReview(myId, reviewId));
     }
 
     @PatchMapping(value="/{review-id}", consumes={"multipart/form-data"})
-    public ResponseEntity<ReviewDto.Response> patchReview(
+    public ResponseEntity<ReviewDto.DetailedResponse> patchReview(
             @CurrentUser Long myId,
             @PathVariable("review-id") @Positive Long reviewId,
             @ModelAttribute @Valid ReviewDto.PatchRequest patchRequest) {

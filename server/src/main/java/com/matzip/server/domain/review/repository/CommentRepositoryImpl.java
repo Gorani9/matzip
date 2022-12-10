@@ -39,7 +39,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
     }
 
     private BooleanExpression commentContentContaining(String keyword) {
-        return keyword == null ? null : comment.content.contains(keyword);
+        return keyword == null || keyword.isBlank() ? null : comment.content.contains(keyword);
     }
 
     private Slice<Comment> searchWithConditions(

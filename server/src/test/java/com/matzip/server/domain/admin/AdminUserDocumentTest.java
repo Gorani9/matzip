@@ -19,7 +19,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,10 +26,8 @@ import java.util.List;
 
 import static com.matzip.server.ApiDocumentUtils.getDocumentRequest;
 import static com.matzip.server.ApiDocumentUtils.getDocumentResponse;
+import static com.matzip.server.domain.DocumentFields.*;
 import static com.matzip.server.domain.me.MeDocumentTest.getMeResponseFields;
-import static com.matzip.server.domain.review.ReviewDocumentTest.getPageRequestParameters;
-import static com.matzip.server.domain.review.ReviewDocumentTest.getPageResponseFields;
-import static com.matzip.server.domain.user.UserDocumentTest.getUserResponseFields;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -60,14 +57,6 @@ public class AdminUserDocumentTest {
         user = new User("foo", "password");
     }
 
-    public static FieldDescriptor[] getAdminUserResponseFields() {
-        return new FieldDescriptor[]{
-                fieldWithPath("id").type(NUMBER).description("유저 아이디").optional(),
-                fieldWithPath("is_non_locked").type(BOOLEAN).description("유저 차단 여부"),
-                fieldWithPath("role").type(STRING).description("유저 권한"),
-        };
-    }
-
     @Test
     public void searchByUsername() throws Exception {
         given(adminUserService.searchUsers(any())).willReturn(new SliceImpl<>(
@@ -75,7 +64,7 @@ public class AdminUserDocumentTest {
 
         Parameters parameters = new Parameters(0, 20);
         parameters.putParameter("username", "foo");
-        mockMvc.perform(get("/api/v1/admin/users").queryParams(parameters))
+        mockMvc.perform(get("/admin/api/v1/users").queryParams(parameters))
                 .andExpect(status().isOk())
                 .andDo(document("admin-user-search",
                                 getDocumentRequest(),
@@ -84,6 +73,7 @@ public class AdminUserDocumentTest {
                                         .and(getPageRequestParameters())
                                         .and(parameterWithName("with-locked").description("차단된 유저 포함 여부").optional()),
                                 responseFields(getPageResponseFields())
+                                        .andWithPrefix("content[].", getNormalResponseField())
                                         .andWithPrefix("content[].", getAdminUserResponseFields())
                                         .andWithPrefix("content[].", getMeResponseFields())
                                         .andWithPrefix("content[].", getUserResponseFields())
@@ -94,15 +84,13 @@ public class AdminUserDocumentTest {
     public void fetchUserById() throws Exception {
         given(adminUserService.fetchUserById(any())).willReturn(new AdminDto.UserResponse(user));
 
-        mockMvc.perform(get("/api/v1/admin/users/{user-id}", "1"))
+        mockMvc.perform(get("/admin/api/v1/users/{user-id}", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("admin-user-fetch",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("user-id").description("선택할 유저 아이디")),
-                                responseFields(getAdminUserResponseFields())
-                                        .and(getMeResponseFields())
-                                        .and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getAdminUserResponseFields()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -111,7 +99,7 @@ public class AdminUserDocumentTest {
         AdminDto.UserPatchRequest request = new AdminDto.UserPatchRequest(true, true, true, 10);
         given(adminUserService.patchUserById(any(), any())).willReturn(new AdminDto.UserResponse(user));
 
-        mockMvc.perform(patch("/api/v1/admin/users/{user-id}", "1")
+        mockMvc.perform(patch("/admin/api/v1/users/{user-id}", "1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -124,9 +112,7 @@ public class AdminUserDocumentTest {
                                         fieldWithPath("profile_image_url").type(BOOLEAN).description("프로필 이미지 초기화 여부").optional(),
                                         fieldWithPath("profile_string").type(BOOLEAN).description("프로필 메시지 초기화 여부").optional(),
                                         fieldWithPath("matzip_level").type(NUMBER).description("설정할 유저 레벨").optional()),
-                                responseFields(getAdminUserResponseFields())
-                                        .and(getMeResponseFields())
-                                        .and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getAdminUserResponseFields()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -134,15 +120,13 @@ public class AdminUserDocumentTest {
     public void lockUser() throws Exception {
         given(adminUserService.lockUser(any())).willReturn(new AdminDto.UserResponse(user));
 
-        mockMvc.perform(put("/api/v1/admin/users/{user-id}/lock", "1"))
+        mockMvc.perform(put("/admin/api/v1/users/{user-id}/lock", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("admin-lock-user",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("user-id").description("선택할 유저 아이디")),
-                                responseFields(getAdminUserResponseFields())
-                                        .and(getMeResponseFields())
-                                        .and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getAdminUserResponseFields()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -150,15 +134,13 @@ public class AdminUserDocumentTest {
     public void unlockUser() throws Exception {
         given(adminUserService.unlockUser(any())).willReturn(new AdminDto.UserResponse(user));
 
-        mockMvc.perform(delete("/api/v1/admin/users/{user-id}/lock", "1"))
+        mockMvc.perform(delete("/admin/api/v1/users/{user-id}/lock", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("admin-unlock-user",
                                 getDocumentRequest(),
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("user-id").description("선택할 유저 아이디")),
-                                responseFields(getAdminUserResponseFields())
-                                        .and(getMeResponseFields())
-                                        .and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getAdminUserResponseFields()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
@@ -167,7 +149,7 @@ public class AdminUserDocumentTest {
         MeDto.PasswordChangeRequest request = new MeDto.PasswordChangeRequest("newPassword1!");
         given(adminUserService.changeUserPassword(any(), any())).willReturn(new AdminDto.UserResponse(user));
 
-        mockMvc.perform(put("/api/v1/admin/users/{user-id}/password", "1")
+        mockMvc.perform(put("/admin/api/v1/users/{user-id}/password", "1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -176,15 +158,13 @@ public class AdminUserDocumentTest {
                                 getDocumentResponse(),
                                 pathParameters(parameterWithName("user-id").description("선택할 유저 아이디")),
                                 requestFields(fieldWithPath("password").type(STRING).description("바꿀 비밀번호")),
-                                responseFields(getAdminUserResponseFields())
-                                        .and(getMeResponseFields())
-                                        .and(getUserResponseFields())
+                                responseFields(getNormalResponseField()).and(getAdminUserResponseFields()).and(getMeResponseFields()).and(getUserResponseFields())
                 ));
     }
 
     @Test
     public void deleteUser() throws Exception {
-        mockMvc.perform(delete("/api/v1/admin/users/{user-id}", "1"))
+        mockMvc.perform(delete("/admin/api/v1/users/{user-id}", "1"))
                 .andExpect(status().isOk())
                 .andDo(document("admin-user-delete",
                                 getDocumentRequest(),

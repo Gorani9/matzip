@@ -3,14 +3,14 @@
 :toclevels: 3
 :sectlinks:
 
-include::{docdir}/user.adoc[]
+include::{docfile}/../user.adoc[]
 
-include::{docdir}/review.adoc[]
+include::{docfile}/../review.adoc[]
 
-include::{docdir}/comment.adoc[]
+include::{docfile}/../comment.adoc[]
 
-include::{docdir}/me.adoc[]
+include::{docfile}/../me.adoc[]
 
 == Admin API
 
-include::{docdir}/admin-user.adoc[]
+include::{docfile}/../admin-user.adoc[]

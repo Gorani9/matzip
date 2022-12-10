@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
 @Tag("ControllerTest")
-class UserControllerTest {
+public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @MockBean
@@ -71,39 +71,66 @@ class UserControllerTest {
                 .andExpect(status().is(expectedStatus.getStatusCode()));
     }
 
+    public static String[] validUsernames = new String[]{
+            "maxLengthOfUsernameIs.30.chars",
+            "underscore_username",
+            "1111",
+            "using_dot.is_allowed",
+            ".start_with_dot_is_allowed"
+    };
+
+    public static String[] invalidUsernames = new String[]{
+            "",
+            "maxLengthOfUsername.Is.30.chars",
+            "specialForbidden!",
+            "space Forbidden",
+            "end_with_dot_is_not_allowed.",
+            "double_dot.._is_not_allowed",
+            "admin",
+            "Admin",
+            "ADMIN"
+    };
+
+    public static String[] validPasswords = new String[]{
+            "simplePassword1!",
+            "maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!"
+    };
+
+    public static String[] invalidPasswords = new String[]{
+            "short",
+            "veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!",
+            "noNumeric!",
+            "noSpecial1",
+            "no_upper_case1!",
+            "NO_LOWER_CASE1!"
+    };
+
     @Test
     @DisplayName("유저 회원가입 테스트: 유저네임, 비밀번호 검증")
     void signUpTest() throws Exception {
         signUp("foo","simplePassword1!", OK);
 
         /* validate username */
-        signUp("", "simplePassword1!", BAD_REQUEST);
-        signUp("maxLengthOfUsernameIs.30.chars", "simplePassword1!", OK);
-        signUp("maxLengthOfUsername.Is.30.chars", "simplePassword1!", BAD_REQUEST);
-        signUp("specialForbidden!", "simplePassword1!", BAD_REQUEST);
-        signUp("space Forbidden", "simplePassword1!", BAD_REQUEST);
-        signUp("underscore_username", "simplePassword1!", OK);
-        signUp("1111", "simplePassword1!", OK);
-        signUp("using_dot.is_allowed", "simplePassword1!", OK);
-        signUp(".start_with_dot_is_allowed", "simplePassword1!", OK);
-        signUp("end_with_dot_is_not_allowed.", "simplePassword1!", BAD_REQUEST);
-        signUp("double_dot.._is_not_allowed", "simplePassword1!", BAD_REQUEST);
+        for (String validUsername : validUsernames) signUp(validUsername, validPasswords[0], OK);
+        for (String invalidUsername : invalidUsernames) signUp(invalidUsername, validPasswords[0], BAD_REQUEST);
 
         /* validate password */
-        signUp("foo","maximumLengthOfPasswordIs50Characters!!!!!!!!!!!!!", OK);
-        signUp("foo","short", BAD_REQUEST);
-        signUp("foo","veryVeryLongPasswordThatIsOver50Characters!!!!!!!!!", BAD_REQUEST);
-        signUp("foo","noNumeric!", BAD_REQUEST);
-        signUp("foo","noSpecial1", BAD_REQUEST);
-        signUp("foo","no_upper_case1!", BAD_REQUEST);
-        signUp("foo","NO_LOWER_CASE1!", BAD_REQUEST);
-
+        for (String validPassword : validPasswords) signUp(validUsernames[0], validPassword, OK);
+        for (String invalidPassword : invalidPasswords) signUp(validUsernames[0], invalidPassword, BAD_REQUEST);
     }
 
     @Test
     @DisplayName("유저 검색 테스트: 파라미터 검증")
     void searchUsersByUsernameTest() throws Exception {
         Parameters parameters;
+
+        /* username length at most 30 */
+        parameters = new Parameters();
+        String username = "a".repeat(30);
+        parameters.putParameter("username", username);
+        searchUsersByUsername(parameters, OK);
+        parameters.putParameter("username", username + "a");
+        searchUsersByUsername(parameters, BAD_REQUEST);
 
         /* username must be included */
         parameters = new Parameters(0, 15);

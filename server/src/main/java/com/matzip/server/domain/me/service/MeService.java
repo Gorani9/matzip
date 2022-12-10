@@ -16,11 +16,13 @@ import com.matzip.server.domain.me.repository.HeartRepository;
 import com.matzip.server.domain.me.repository.ScrapRepository;
 import com.matzip.server.domain.review.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
+import com.matzip.server.domain.review.exception.AccessBlockedOrDeletedReviewException;
 import com.matzip.server.domain.review.exception.ReviewNotFoundException;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.CommentRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.exception.AccessBlockedOrDeletedUserException;
 import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.exception.UsernameNotFoundException;
 import com.matzip.server.domain.user.model.User;
@@ -76,14 +78,17 @@ public class MeService {
     @Transactional
     public void deleteMe(Long myId) {
         User me = userRepository.findMeById(myId);
-        userRepository.delete(me);
+        followRepository.deleteAll(me.getFollowers());
+        heartRepository.deleteAll(me.getHearts());
+        scrapRepository.deleteAll(me.getScraps());
+        me.delete();
     }
 
     @Transactional
     public MeDto.Response patchMe(Long myId, MeDto.PatchProfileRequest patchProfileRequest) {
         User me = userRepository.findMeById(myId);
-        Optional.ofNullable(patchProfileRequest.getProfileImage()).ifPresent(i -> imageService.uploadUserImage(me, i));
-        Optional.ofNullable(patchProfileRequest.getProfileString()).ifPresent(me::setProfileString);
+        Optional.ofNullable(patchProfileRequest.getImage()).ifPresent(i -> imageService.uploadUserImage(me, i));
+        Optional.ofNullable(patchProfileRequest.getProfile()).ifPresent(me::setProfileString);
         return new MeDto.Response(me);
     }
 
@@ -102,6 +107,7 @@ public class MeService {
         User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(followeeUsername)
                 .orElseThrow(() -> new UsernameNotFoundException(followeeUsername));
+        if (followee.isBlocked() || followee.isDeleted()) throw new AccessBlockedOrDeletedUserException(followeeUsername);
         if (me == followee) throw new FollowMeException();
         if (!me.isFollowing(followee)) followRepository.save(new Follow(me, followee));
         return new MeDto.Response(me);
@@ -112,6 +118,7 @@ public class MeService {
         User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(followeeUsername)
                 .orElseThrow(() -> new UsernameNotFoundException(followeeUsername));
+        if (followee.isBlocked() || followee.isDeleted()) throw new AccessBlockedOrDeletedUserException(followeeUsername);
         followRepository.findByFollowerIdAndFolloweeId(myId, followee.getId()).ifPresent(
                 f -> {
                     me.deleteFollowing(f);
@@ -141,6 +148,7 @@ public class MeService {
     public HeartDto.Response heartReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
         if (review.getUser() == me)
             throw new HeartMyReviewException();
         if (heartRepository.existsByUserIdAndReviewId(myId, reviewId))
@@ -153,6 +161,7 @@ public class MeService {
     public HeartDto.Response deleteHeartFromReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
         heartRepository.findByUserIdAndReviewId(myId, reviewId).ifPresent(
                 h -> {
                     me.deleteHeart(h);
@@ -167,6 +176,7 @@ public class MeService {
     public ScrapDto.Response scrapReview(Long myId, Long reviewId, ScrapDto.PostRequest postRequest) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
         if (review.getUser() == me)
             throw new ScrapMyReviewException();
         Scrap scrap = scrapRepository.findByUserIdAndReviewId(myId, reviewId)
@@ -179,6 +189,7 @@ public class MeService {
     public void deleteMyScrap(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
         scrapRepository.findByUserIdAndReviewId(myId, reviewId).ifPresent(
                 s -> {
                     me.deleteScrap(s);

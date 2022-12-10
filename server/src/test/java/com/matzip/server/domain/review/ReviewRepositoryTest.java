@@ -456,6 +456,32 @@ public class ReviewRepositoryTest {
     }
 
     @Test
+    @DisplayName("리뷰 검색 정렬 테스트: 리뷰 댓글수 기준 내림차순 정렬 - 삭제된 댓글 고려")
+    public void searchReviewsTest_Sort_Comments_ConsideringDeletion_Desc() {
+        // given
+        User user = userRepository.save(new User("user", PASSWORD));
+        Review review1 = reviewRepository.save(
+                new Review(user, new PostRequest("content", null, 10, "location")));
+        Review review2 = reviewRepository.save(
+                new Review(user, new PostRequest("content", null, 10, "location")));
+        Review review3 = reviewRepository.save(
+                new Review(user, new PostRequest("content", null, 10, "location")));
+        for (int i = 0; i < 9; i++) commentRepository.save(new Comment(
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review1, "comment"));
+        for (int i = 0; i < 3; i++) commentRepository.save(new Comment(
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review2, "comment"));
+        for (int i = 0; i < 4; i++) commentRepository.save(new Comment(
+                userRepository.save(new User(UUID.randomUUID().toString(), PASSWORD)), review3, "comment")).delete();
+        SearchRequest request = new SearchRequest("content", 0, 10, NUMBER_OF_COMMENTS, false);
+
+        // when
+        Slice<Review> reviews = reviewRepository.searchReviewsByKeyword(request);
+
+        // then
+        assertThat(reviews.getContent()).containsExactly(review1, review2, review3);
+    }
+
+    @Test
     @DisplayName("리뷰 검색 정렬 테스트: 리뷰 별점 기준 오름차순 정렬")
     public void searchReviewsTest_Sort_Rating_Asc() {
         // given

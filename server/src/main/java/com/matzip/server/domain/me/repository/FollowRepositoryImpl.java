@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.matzip.server.domain.me.model.QFollow.follow;
-import static com.matzip.server.domain.user.model.QUser.user;
 import static com.matzip.server.domain.user.model.UserProperty.*;
 
 @Repository
@@ -42,8 +41,10 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
                 searchRequest.getSort(),
                 PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
                 follower,
-                usernameContaining(searchRequest.getUsername()),
-                followee.id.eq(myId)).map(Follow::getFollower);
+                usernameContaining(follower, searchRequest.getUsername()),
+                followee.id.eq(myId),
+                follower.blocked.isFalse(),
+                follower.deleted.isFalse()).map(Follow::getFollower);
     }
 
     @Override
@@ -53,12 +54,14 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
                 searchRequest.getSort(),
                 PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
                 followee,
-                usernameContaining(searchRequest.getUsername()),
-                follower.id.eq(myId)).map(Follow::getFollowee);
+                usernameContaining(followee, searchRequest.getUsername()),
+                follower.id.eq(myId),
+                followee.blocked.isFalse(),
+                followee.deleted.isFalse()).map(Follow::getFollowee);
     }
 
-    private BooleanExpression usernameContaining(String username) {
-        return username == null ? null : user.username.contains(username);
+    private BooleanExpression usernameContaining(QUser qUser, String username) {
+        return username == null || username.isBlank() ? null : qUser.username.contains(username);
     }
 
     private Slice<Follow> searchWithConditions(
@@ -72,6 +75,7 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
                     .from(follow)
                     .leftJoin(follow.followee, followee).fetchJoin()
                     .leftJoin(follow.follower, follower).fetchJoin()
+                    .leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -83,8 +87,9 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
                     .from(follow)
                     .leftJoin(follow.followee, followee).fetchJoin()
                     .leftJoin(follow.follower, follower).fetchJoin()
+                    .leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
-                    .orderBy(new OrderSpecifier<>(order, user.username), defaultOrder)
+                    .orderBy(new OrderSpecifier<>(order, user.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
                     .fetch();
@@ -93,12 +98,13 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
             QFollow otherFollow = new QFollow("other_follow");
 
             follows = jpaQueryFactory
-                    .select(follow, user.count().as(followers))
+                    .select(follow, otherFollow.count().as(followers))
                     .from(follow)
                     .leftJoin(follow.followee, followee).fetchJoin()
                     .leftJoin(follow.follower, follower).fetchJoin()
                     .leftJoin(user.followers, otherFollow)
-                    .groupBy(user)
+                    .leftJoin(user.userImage).fetchJoin()
+                    .groupBy(follow)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, followers), defaultOrder)
                     .offset(pageable.getOffset())
@@ -111,8 +117,9 @@ public class FollowRepositoryImpl implements FollowRepositoryCustom {
                     .from(follow)
                     .leftJoin(follow.followee, followee).fetchJoin()
                     .leftJoin(follow.follower, follower).fetchJoin()
+                    .leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
-                    .orderBy(new OrderSpecifier<>(order, user.username), defaultOrder)
+                    .orderBy(new OrderSpecifier<>(order, user.createdAt), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
                     .fetch();

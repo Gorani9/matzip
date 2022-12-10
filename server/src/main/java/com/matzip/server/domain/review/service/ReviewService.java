@@ -28,18 +28,18 @@ public class ReviewService {
     private final ImageService imageService;
 
     @Transactional
-    public ReviewDto.Response postReview(Long myId, ReviewDto.PostRequest postRequest) {
+    public ReviewDto.DetailedResponse postReview(Long myId, ReviewDto.PostRequest postRequest) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.save(new Review(me, postRequest));
         imageService.uploadReviewImages(me, review, postRequest.getImages());
-        return ReviewDto.Response.of(review, me);
+        return new ReviewDto.DetailedResponse(review, me);
     }
 
-    public ReviewDto.Response fetchReview(Long myId, Long reviewId) {
+    public ReviewDto.DetailedResponse fetchReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
-        return ReviewDto.Response.of(review, me);
+        return new ReviewDto.DetailedResponse(review, me);
     }
 
     public Slice<ReviewDto.Response> searchReviews(Long myId, ReviewDto.SearchRequest searchRequest) {
@@ -49,7 +49,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewDto.Response patchReview(Long myId, Long reviewId, ReviewDto.PatchRequest patchRequest) {
+    public ReviewDto.DetailedResponse patchReview(Long myId, Long reviewId, ReviewDto.PatchRequest patchRequest) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
         if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
@@ -63,7 +63,7 @@ public class ReviewService {
             imageService.uploadReviewImages(me, review, patchRequest.getNewImages());
         if (Optional.ofNullable(patchRequest.getRating()).isPresent())
             review.setRating(patchRequest.getRating());
-        return ReviewDto.Response.of(review, me);
+        return new ReviewDto.DetailedResponse(review, me);
     }
 
     @Transactional

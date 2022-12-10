@@ -1,5 +1,5 @@
 == User API
-.공통 Response
+.Normal Response
 include::{snippets}/user-fetch/response-fields.adoc[]
 
 === CRUD

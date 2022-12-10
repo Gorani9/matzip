@@ -1,5 +1,5 @@
 === User
-.공통 Response
+.Normal Response
 include::{snippets}/admin-user-fetch/response-fields.adoc[]
 
 ==== Search User

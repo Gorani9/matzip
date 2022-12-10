@@ -5,6 +5,7 @@ import com.matzip.server.domain.admin.service.AdminUserService;
 import com.matzip.server.domain.me.dto.MeDto;
 import com.matzip.server.domain.user.model.UserProperty;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,13 +19,13 @@ import javax.validation.constraints.PositiveOrZero;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping("/admin/api/v1/users")
 public class AdminUserController {
     private final AdminUserService adminUserService;
 
     @GetMapping
     public ResponseEntity<Slice<AdminDto.UserResponse>> searchByUsername(
-            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "username", required = false) @Length(max = 30) String username,
             @RequestParam(value = "page", required = false, defaultValue ="0") @PositiveOrZero Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "20") @Positive @Max(100) Integer size,
             @RequestParam(value = "sort", required = false) String userProperty,

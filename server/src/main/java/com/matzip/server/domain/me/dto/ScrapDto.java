@@ -5,6 +5,7 @@ import com.matzip.server.domain.me.model.ScrapProperty;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
@@ -15,7 +16,7 @@ public class ScrapDto {
     @RequiredArgsConstructor
     @Getter
     public static class PostRequest {
-        @NotBlank
+        @NotBlank @Length(max = 100)
         private final String description;
     }
 

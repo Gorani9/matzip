@@ -5,9 +5,7 @@ import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -68,7 +66,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     }
 
     private BooleanExpression reviewContentContaining(String keyword) {
-        return keyword == null ? null : review.content.contains(keyword);
+        return keyword == null || keyword.isBlank() ? null : review.content.contains(keyword);
     }
 
     private Slice<Review> searchWithConditions(
@@ -142,16 +140,19 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(review)).collect(Collectors.toList());
         } else if (reviewProperty == NUMBER_OF_COMMENTS) {
-            NumberPath<Long> comments = Expressions.numberPath(Long.class, "comments");
+            NumberPath<Integer> commentCount = Expressions.numberPath(Integer.class, "comments");
+            NumberExpression<Integer> validCommentCount = new CaseBuilder()
+                    .when(comment.deleted.isFalse()).then(1)
+                    .otherwise(0);
 
             reviews = jpaQueryFactory
-                    .select(review, comment.count().as(comments))
+                    .select(review, validCommentCount.sum().as(commentCount))
                     .from(review)
                     .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.comments, comment)
                     .groupBy(review)
                     .where(conditions)
-                    .orderBy(new OrderSpecifier<>(order, comments), defaultOrder)
+                    .orderBy(new OrderSpecifier<>(order, commentCount), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
                     .fetch()

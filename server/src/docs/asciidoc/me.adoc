@@ -1,5 +1,5 @@
 == Me API
-.공통 Response
+.Normal Response
 include::{snippets}/me-fetch/response-fields.adoc[]
 
 === My Information

@@ -143,6 +143,14 @@ class ReviewControllerTest {
     void searchReviewsByContent() throws Exception {
         Parameters parameters;
 
+        /* keyword length at most 100 */
+        String keyword = "a".repeat(100);
+        parameters = new Parameters();
+        parameters.putParameter("keyword", keyword);
+        searchReviews(parameters, OK);
+        parameters.putParameter("keyword", keyword + "a");
+        searchReviews(parameters, BAD_REQUEST);
+
         /* page must be positive or zero */
         parameters = new Parameters(-1, 15);
         searchReviews(parameters, BAD_REQUEST);

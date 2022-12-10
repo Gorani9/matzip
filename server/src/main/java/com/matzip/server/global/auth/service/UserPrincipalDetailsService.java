@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -21,5 +23,10 @@ public class UserPrincipalDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new UsernameNotFoundException(String.format("User with username '%s' not found.", username)));
         return new UserPrincipal(user);
+    }
+
+    public boolean validate(String username) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        return (optionalUser.isPresent() && !optionalUser.get().isBlocked() && !optionalUser.get().isDeleted());
     }
 }
