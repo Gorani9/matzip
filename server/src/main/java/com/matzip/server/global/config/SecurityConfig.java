@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.POST, POST_WHITELIST).permitAll()
                 .antMatchers("/admin/api/v1/**").hasAnyAuthority("ADMIN")
                 .antMatchers("/api/v1/**").hasAnyAuthority("NORMAL")
-                .antMatchers(HttpMethod.GET, "/docs/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/docs/index.html").permitAll()
                 .anyRequest().authenticated();
         return http.build();
     }
