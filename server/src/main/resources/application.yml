@@ -12,18 +12,18 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 500
-
-jwt-secret-key: matzip-server
-
-admin-password: ${ADMIN_PASSWORD}
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.MySQL8Dialect
 
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_ACCESS_KEY}
+      access-key: ~
+      secret-key: ~
     s3:
-      bucket: ${AWS_BUCKET_NAME}
+      bucket: ~
     region:
       static: ap-northeast-2
     stack:
@@ -37,19 +37,9 @@ spring:
       on-profile: local
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  jpa:
-    generate-ddl: false
-    hibernate:
-      ddl-auto: none
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
-logging:
-  level:
-    org.hibernate.sql: debug
+    url: jdbc:mysql://localhost:3306/matzip_db
+    username: matzip_admin
+    password: MATZIP_admin_01
 
 ---
 
@@ -59,67 +49,4 @@ spring:
       on-profile: test
 
   datasource:
-    url: ${DB_TEST_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  jpa:
-    generate-ddl: true
-    hibernate:
-      ddl-auto: create
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
-logging:
-  level:
-    org.hibernate.sql: debug
-
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: prod1
-
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  jpa:
-    generate-ddl: false
-    hibernate:
-      ddl-auto: none
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
-logging:
-  level:
-    domain: warn
-
-server:
-  port: 8081
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: prod2
-
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  jpa:
-    generate-ddl: false
-    hibernate:
-      ddl-auto: none
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
-logging:
-  level:
-    domain: warn
-
-server:
-  port: 8082
+    url: jdbc:h2:mem:test
