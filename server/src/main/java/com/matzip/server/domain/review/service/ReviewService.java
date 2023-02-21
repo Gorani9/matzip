@@ -1,99 +1,134 @@
 package com.matzip.server.domain.review.service;
 
+import com.matzip.server.domain.comment.repository.CommentRepository;
 import com.matzip.server.domain.image.service.ImageService;
-import com.matzip.server.domain.review.dto.ReviewDto;
-import com.matzip.server.domain.review.exception.AccessBlockedOrDeletedReviewException;
-import com.matzip.server.domain.review.exception.ReviewChangeByAnonymousException;
-import com.matzip.server.domain.review.exception.ReviewNotFoundException;
+import com.matzip.server.domain.review.dto.ReviewDto.*;
+import com.matzip.server.domain.review.exception.*;
+import com.matzip.server.domain.review.model.Heart;
 import com.matzip.server.domain.review.model.Review;
+import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
+import com.matzip.server.domain.scrap.repository.ScrapRepository;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
+import com.matzip.server.global.common.dto.ListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 @Transactional(readOnly=true)
 public class ReviewService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final CommentRepository commentRepository;
+    private final ScrapRepository scrapRepository;
+    private final HeartRepository heartRepository;
     private final ImageService imageService;
 
     @Transactional
-    public ReviewDto.DetailedResponse postReview(Long myId, ReviewDto.PostRequest postRequest) {
+    public DetailedResponse postReview(Long myId, PostRequest request) {
         User me = userRepository.findMeById(myId);
-        Review review = reviewRepository.save(new Review(me, postRequest));
-        imageService.uploadReviewImages(me, review, postRequest.getImages());
-        return new ReviewDto.DetailedResponse(review, me);
-    }
+        Review review = reviewRepository.save(new Review(me, request));
 
-    public ReviewDto.DetailedResponse fetchReview(Long myId, Long reviewId) {
-        User me = userRepository.findMeById(myId);
-        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
-        return new ReviewDto.DetailedResponse(review, me);
-    }
+        review.getReviewImages().addAll(imageService.uploadImages(me.getUsername(), request.images()));
 
-    public Slice<ReviewDto.Response> searchReviews(Long myId, ReviewDto.SearchRequest searchRequest) {
-        User me = userRepository.findMeById(myId);
-        Slice<Review> reviews = reviewRepository.searchReviewsByKeyword(searchRequest);
-        return reviews.map(r -> ReviewDto.Response.of(r, me));
+        return new DetailedResponse(review, me);
     }
 
     @Transactional
-    public ReviewDto.DetailedResponse patchReview(Long myId, Long reviewId, ReviewDto.PatchRequest patchRequest) {
+    public DetailedResponse fetchReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
-        if (review.getUser() != me)
-            throw new ReviewChangeByAnonymousException();
-        if (Optional.ofNullable(patchRequest.getContent()).isPresent())
-            review.setContent(patchRequest.getContent());
-        if (Optional.ofNullable(patchRequest.getOldUrls()).isPresent())
-            imageService.deleteReviewImages(review, patchRequest.getOldUrls());
-        if (Optional.ofNullable(patchRequest.getNewImages()).isPresent())
-            imageService.uploadReviewImages(me, review, patchRequest.getNewImages());
-        if (Optional.ofNullable(patchRequest.getRating()).isPresent())
-            review.setRating(patchRequest.getRating());
-        return new ReviewDto.DetailedResponse(review, me);
+
+        review.setViews(review.getViews() + 1);
+
+        return new DetailedResponse(review, me);
+    }
+
+    public Slice<Response> searchReviews(Long myId, SearchRequest request) {
+        User me = userRepository.findMeById(myId);
+        Slice<Review> reviews = reviewRepository.searchReviewsByKeyword(request);
+        return reviews.map(r -> new Response(r, me));
+    }
+
+    @Transactional
+    public DetailedResponse patchReview(Long myId, Long reviewId, PatchRequest request) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+
+        if (review.getUser() != me) throw new ReviewAccessDeniedException();
+
+        if (request.oldUrls() != null) {
+            for (String oldUrl : request.oldUrls())
+                if (!review.getReviewImages().contains(oldUrl)) throw new ReviewImageUrlNotFound(oldUrl);
+        }
+
+        int imageCount = review.getReviewImages().size();
+        imageCount += request.images() == null ? 0 : request.images().size();
+        imageCount -= request.oldUrls() == null ? 0 : request.oldUrls().size();
+        if (imageCount < 1) throw new DeleteLastImageException();
+
+        if (request.images() != null)
+            review.getReviewImages().addAll(imageService.uploadImages(me.getUsername(), request.images()));
+        if (request.oldUrls() != null)
+            review.getReviewImages().removeAll(imageService.deleteImages(request.oldUrls()));
+        if (request.content() != null) review.setContent(request.content());
+        if (request.rating() != null) review.setRating(request.rating());
+
+        return new DetailedResponse(review, me);
     }
 
     @Transactional
     public void deleteReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
         Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
-        if (review.isBlocked() || review.isDeleted()) throw new AccessBlockedOrDeletedReviewException(reviewId);
-        if (review.getUser() != me)
-            throw new ReviewChangeByAnonymousException();
+
+        if (review.getUser() != me) throw new ReviewAccessDeniedException();
+
+        imageService.deleteImages(review.getReviewImages());
+
+        heartRepository.deleteAllByReviewId(reviewId);
+        commentRepository.deleteAllByReviewId(reviewId);
+        scrapRepository.deleteAllByReviewId(reviewId);
+
         review.delete();
+        reviewRepository.delete(review);
     }
 
-    public ReviewDto.HotResponse getHotReviews(Long myId) {
+    public ListResponse<Response> getHotReviews(Long myId) {
         User me = userRepository.findMeById(myId);
-        List<ReviewDto.Response> dailyHotReviews = reviewRepository
-                .fetchHotReviews(LocalDateTime.now().minusDays(1), 10)
-                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
-        List<ReviewDto.Response> weeklyHotReviews = reviewRepository
-                .fetchHotReviews(LocalDateTime.now().minusWeeks(1), 10)
-                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
-        List<ReviewDto.Response> monthlyHotReviews = reviewRepository
-                .fetchHotReviews(LocalDateTime.now().minusMonths(1), 10)
-                .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList());
-        return new ReviewDto.HotResponse(dailyHotReviews, weeklyHotReviews, monthlyHotReviews);
+
+        return new ListResponse<>(reviewRepository.fetchHotReviews().stream().map(r -> new Response(r, me)));
     }
 
-    public ReviewDto.HallOfFameResponse getHallOfFameReviews(Long myId) {
+    @Transactional
+    public DetailedResponse heartReview(Long myId, Long reviewId) {
         User me = userRepository.findMeById(myId);
-        return new ReviewDto.HallOfFameResponse(
-                reviewRepository.fetchHotReviews(null, 10)
-                        .stream().map(r -> ReviewDto.Response.of(r, me)).collect(Collectors.toList()));
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+
+        if (review.getUser() == me) throw new HeartMyReviewException();
+        if (heartRepository.existsByUserIdAndReviewId(myId, reviewId)) throw new DuplicateHeartException();
+
+        heartRepository.save(new Heart(me, review));
+
+        return new DetailedResponse(review, me);
+    }
+
+    @Transactional
+    public DetailedResponse deleteHeartFromReview(Long myId, Long reviewId) {
+        User me = userRepository.findMeById(myId);
+        Review review = reviewRepository.findById(reviewId).orElseThrow(() -> new ReviewNotFoundException(reviewId));
+
+        heartRepository.findByUserIdAndReviewId(myId, reviewId).ifPresent(
+                h -> {
+                    h.delete();
+                    heartRepository.delete(h);
+                }
+        );
+
+        return new DetailedResponse(review, me);
     }
 }

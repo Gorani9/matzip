@@ -1,6 +1,5 @@
 package com.matzip.server.domain.user.repository;
 
-import com.matzip.server.domain.admin.dto.AdminDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.model.UserProperty;
@@ -21,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.matzip.server.domain.me.model.QFollow.follow;
+import static com.matzip.server.domain.user.model.QFollow.follow;
 import static com.matzip.server.domain.user.model.QUser.user;
 import static com.matzip.server.domain.user.model.UserProperty.*;
 
@@ -33,23 +32,10 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
     @Override
     public Slice<User> searchUsersByUsername(UserDto.SearchRequest searchRequest) {
         return searchWithConditions(
-                searchRequest.getAsc() ? Order.ASC : Order.DESC,
-                searchRequest.getSort(),
-                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
-                usernameContaining(searchRequest.getUsername()),
-                user.blocked.isFalse(),
-                user.deleted.isFalse());
-    }
-
-    @Override
-    public Slice<User> adminSearchUsersByUsername(AdminDto.UserSearchRequest searchRequest) {
-        return searchWithConditions(
-                searchRequest.getAsc() ? Order.ASC : Order.DESC,
-                searchRequest.getSort(),
-                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
-                usernameContaining(searchRequest.getUsername()),
-                searchRequest.getWithBlocked() ? null : user.blocked.isFalse(),
-                user.deleted.isFalse());
+                searchRequest.asc() ? Order.ASC : Order.DESC,
+                searchRequest.sort(),
+                PageRequest.of(searchRequest.page(), searchRequest.size()),
+                usernameContaining(searchRequest.username()));
     }
 
     private BooleanExpression usernameContaining(String username) {
@@ -64,7 +50,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         if (userProperty == USERNAME) {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user).leftJoin(user.userImage).fetchJoin()
+                    .from(user)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -73,7 +59,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         } else if (userProperty == MATZIP_LEVEL) {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user).leftJoin(user.userImage).fetchJoin()
+                    .from(user)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
@@ -84,7 +70,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
 
             users = jpaQueryFactory
                     .select(user, follow.count().as(followers))
-                    .from(user).leftJoin(user.userImage).fetchJoin()
+                    .from(user)
                     .leftJoin(user.followers, follow)
                     .groupBy(user)
                     .where(conditions)
@@ -96,7 +82,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         } else {
             users = jpaQueryFactory
                     .select(user)
-                    .from(user).leftJoin(user.userImage).fetchJoin()
+                    .from(user)
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, user.createdAt))
                     .offset(pageable.getOffset())

@@ -5,7 +5,9 @@ import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.*;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -18,12 +20,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.matzip.server.domain.me.model.QFollow.follow;
-import static com.matzip.server.domain.me.model.QHeart.heart;
-import static com.matzip.server.domain.me.model.QScrap.scrap;
-import static com.matzip.server.domain.review.model.QComment.comment;
+import static com.matzip.server.domain.comment.model.QComment.comment;
+import static com.matzip.server.domain.review.model.QHeart.heart;
 import static com.matzip.server.domain.review.model.QReview.review;
 import static com.matzip.server.domain.review.model.ReviewProperty.*;
+import static com.matzip.server.domain.scrap.model.QScrap.scrap;
+import static com.matzip.server.domain.user.model.QFollow.follow;
 import static com.matzip.server.domain.user.model.QUser.user;
 
 @Repository
@@ -34,35 +36,19 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     @Override
     public Slice<Review> searchReviewsByKeyword(ReviewDto.SearchRequest searchRequest) {
         return searchWithConditions(
-                searchRequest.getAsc() ? Order.ASC : Order.DESC,
-                searchRequest.getSort(),
-                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
-                reviewContentContaining(searchRequest.getKeyword()),
-                review.blocked.isFalse(),
-                review.deleted.isFalse());
+                searchRequest.asc() ? Order.ASC : Order.DESC,
+                searchRequest.sort(),
+                PageRequest.of(searchRequest.page(), searchRequest.size()),
+                reviewContentContaining(searchRequest.keyword()));
     }
 
     @Override
-    public Slice<Review> searchMyReviewsByKeyword(ReviewDto.SearchRequest searchRequest, Long myId) {
-        return searchWithConditions(
-                searchRequest.getAsc() ? Order.ASC : Order.DESC,
-                searchRequest.getSort(),
-                PageRequest.of(searchRequest.getPage(), searchRequest.getSize()),
-                reviewContentContaining(searchRequest.getKeyword()),
-                user.id.eq(myId),
-                review.blocked.isFalse(),
-                review.deleted.isFalse());
-    }
-
-    @Override
-    public List<Review> fetchHotReviews(LocalDateTime from, int size) {
+    public List<Review> fetchHotReviews() {
         return searchWithConditions(
                 Order.DESC,
                 NUMBER_OF_HEARTS,
-                PageRequest.of(0, size),
-                from == null ? null : review.createdAt.after(from),
-                review.blocked.isFalse(),
-                review.deleted.isFalse()).getContent();
+                PageRequest.of(0, 10),
+                review.createdAt.after(LocalDateTime.now().minusWeeks(1))).getContent();
     }
 
     private BooleanExpression reviewContentContaining(String keyword) {
@@ -78,7 +64,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.user.username), defaultOrder)
                     .offset(pageable.getOffset())
@@ -88,7 +73,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.user.matzipLevel), defaultOrder)
                     .offset(pageable.getOffset())
@@ -100,7 +84,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, follow.count().as(followers))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
+                    .leftJoin(review.user, user).fetchJoin()
                     .leftJoin(user.followers, follow)
                     .groupBy(review)
                     .where(conditions)
@@ -115,7 +99,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, heart.count().as(hearts))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.hearts, heart)
                     .groupBy(review)
                     .where(conditions)
@@ -130,7 +113,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review, scrap.count().as(scraps))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.scraps, scrap)
                     .groupBy(review)
                     .where(conditions)
@@ -140,19 +122,15 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(review)).collect(Collectors.toList());
         } else if (reviewProperty == NUMBER_OF_COMMENTS) {
-            NumberPath<Integer> commentCount = Expressions.numberPath(Integer.class, "comments");
-            NumberExpression<Integer> validCommentCount = new CaseBuilder()
-                    .when(comment.deleted.isFalse()).then(1)
-                    .otherwise(0);
+            NumberPath<Long> comments = Expressions.numberPath(Long.class, "comments");
 
             reviews = jpaQueryFactory
-                    .select(review, validCommentCount.sum().as(commentCount))
+                    .select(review, comment.count().as(comments))
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .leftJoin(review.comments, comment)
                     .groupBy(review)
                     .where(conditions)
-                    .orderBy(new OrderSpecifier<>(order, commentCount), defaultOrder)
+                    .orderBy(new OrderSpecifier<>(order, comments), defaultOrder)
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize() + 1)
                     .fetch()
@@ -161,7 +139,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.rating), defaultOrder)
                     .offset(pageable.getOffset())
@@ -171,7 +148,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             reviews = jpaQueryFactory
                     .select(review)
                     .from(review)
-                    .leftJoin(review.user, user).fetchJoin().leftJoin(user.userImage).fetchJoin()
                     .where(conditions)
                     .orderBy(new OrderSpecifier<>(order, review.createdAt))
                     .offset(pageable.getOffset())

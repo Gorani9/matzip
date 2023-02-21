@@ -1,22 +1,14 @@
 package com.matzip.server.global.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.matzip.server.global.auth.filter.JwtAuthenticationFilter;
-import com.matzip.server.global.auth.filter.MatzipAuthenticationFilter;
-import com.matzip.server.global.auth.jwt.JwtProvider;
-import com.matzip.server.global.auth.jwt.MatzipAccessDeniedHandler;
-import com.matzip.server.global.auth.jwt.MatzipAuthenticationEntryPoint;
-import com.matzip.server.global.auth.service.UserPrincipalDetailsService;
+import com.matzip.server.global.auth.MatzipAccessDeniedHandler;
+import com.matzip.server.global.auth.MatzipAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,19 +22,14 @@ import java.util.Arrays;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtProvider jwtProvider;
     private final MatzipAuthenticationEntryPoint matzipAuthenticationEntryPoint;
     private final MatzipAccessDeniedHandler matzipAccessDeniedHandler;
-    private final UserPrincipalDetailsService userPrincipalDetailsService;
-    private final ObjectMapper objectMapper;
 
-    private final String[] GET_WHITELIST = new String[]{"/ping", "/api/v1/users/exists",};
+    private final String[] GET_WHITELIST = new String[]{"/ping", "/signup/exists",};
 
-    private final String[] POST_WHITELIST = new String[]{"/api/v1/users", "/api/v1/users/login",};
+    private final String[] POST_WHITELIST = new String[]{"/signup", "/login", "/admin/api/v1/login"};
 
-    private final String[] CORS_WHITELIST = new String[]{
-            "http://localhost:3000",
-            "https://zippy-heliotrope-6168d0.netlify.app",};
+    private final String[] CORS_WHITELIST = new String[]{"http://localhost:5173"};
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -50,21 +37,19 @@ public class SecurityConfig {
                 .httpBasic().disable()
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
+                .logout().disable()
                 .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement()
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(matzipAuthenticationEntryPoint)
                 .accessDeniedHandler(matzipAccessDeniedHandler)
                 .and()
-                .addFilter(new MatzipAuthenticationFilter(authenticationManager(), jwtProvider, objectMapper))
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider))
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, GET_WHITELIST).permitAll()
                 .antMatchers(HttpMethod.POST, POST_WHITELIST).permitAll()
                 .antMatchers("/admin/api/v1/**").hasAnyAuthority("ADMIN")
-                .antMatchers("/api/v1/**").hasAnyAuthority("NORMAL")
-                .antMatchers(HttpMethod.GET, "/docs/index.html").permitAll()
+                .antMatchers("/api/v1/**").hasAnyAuthority("USER")
                 .anyRequest().authenticated();
         return http.build();
     }
@@ -81,7 +66,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Arrays.asList(CORS_WHITELIST));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.addExposedHeader("Authorization");
+        config.addExposedHeader("Set-Cookie");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -89,15 +74,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
-        return new ProviderManager(daoAuthenticationProvider());
-    }
-
-    @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        daoAuthenticationProvider.setUserDetailsService(userPrincipalDetailsService);
-        return daoAuthenticationProvider;
+    public AuthenticationManager noAuthenticationManager() {
+        return authentication -> {
+            throw new IllegalStateException("Default authentication is disabled.");
+        };
     }
 }

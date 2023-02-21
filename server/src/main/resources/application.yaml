@@ -1,0 +1,39 @@
+spring:
+  profiles:
+    active: local
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 20MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 500
+    generate-ddl: false
+    hibernate:
+      ddl-auto: update
+
+cloud:
+  aws:
+    s3:
+      bucket: matzip
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: none
+        secure: true
+        http-only: false
+
+matzip:
+  admin:
+    username: ~
+    password: ~

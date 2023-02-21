@@ -1,0 +1,3 @@
+dev.matzip-server.link {
+    reverse_proxy host.docker.internal:8080
+}

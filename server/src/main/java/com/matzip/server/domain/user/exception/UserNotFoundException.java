@@ -1,10 +1,11 @@
 package com.matzip.server.domain.user.exception;
 
-import com.matzip.server.global.common.exception.DataNotFoundException;
-import com.matzip.server.global.common.exception.ErrorType;
+import com.matzip.server.global.common.exception.MatzipException;
 
-public class UserNotFoundException extends DataNotFoundException {
-    public UserNotFoundException(String identifier) {
-        super(ErrorType.USER_NOT_FOUND, String.format("User with %s not found.", identifier));
+import static com.matzip.server.global.common.exception.ErrorType.NotFound.USER_NOT_FOUND;
+
+public class UserNotFoundException extends MatzipException.NotFoundException {
+    public UserNotFoundException(String username) {
+        super(USER_NOT_FOUND, String.format("User with username '%s' not found.", username));
     }
 }

@@ -1,7 +1,5 @@
 package com.matzip.server.domain.review.model;
 
-import com.matzip.server.domain.review.exception.InvalidReviewPropertyException;
-
 import java.util.Arrays;
 
 public enum ReviewProperty {
@@ -23,8 +21,6 @@ public enum ReviewProperty {
     public static ReviewProperty from(String webNaming) {
         if (webNaming == null || webNaming.isBlank())
             return null;
-        return Arrays.stream(values()).filter(name -> name.webNaming.equals(webNaming)).findFirst().orElseThrow(
-                () -> new InvalidReviewPropertyException(webNaming)
-        );
+        return Arrays.stream(values()).filter(name -> name.webNaming.equals(webNaming)).findFirst().orElseThrow();
     }
 }

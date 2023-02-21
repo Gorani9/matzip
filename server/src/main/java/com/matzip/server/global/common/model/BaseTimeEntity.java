@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-public class BaseTimeEntity {
+public abstract class BaseTimeEntity {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
@@ -21,4 +21,6 @@ public class BaseTimeEntity {
 
     @LastModifiedDate
     private LocalDateTime modifiedAt;
+
+    public abstract void delete();
 }
