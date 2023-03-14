@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  caddy:
+    container_name: caddy
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: caddy run --watch --config /etc/caddy/Caddyfile
+
+  server:
+    container_name: spring
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      active: local
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/matzip_db
+      SPRING_DATASOURCE_USERNAME: matzip_admin
+      SPRING_DATASOURCE_PASSWORD: MATZIP_admin_01
+
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/data:/var/lib/mysql:rw
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: matzip_db
+      MYSQL_USER: matzip_admin
+      MYSQL_PASSWORD: MATZIP_admin_01
+      MYSQL_ROOT_PASSWORD: root

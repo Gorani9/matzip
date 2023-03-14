@@ -1,62 +1,123 @@
 package com.matzip.server.global.common.exception;
 
-public enum ErrorType {
-    INVALID_REQUEST(0),
+public interface ErrorType {
+    int getCode();
 
-    CHANGE_ADMIN_USER_STATUS(100),
-    DELETE_ADMIN_USER(101),
-    FOLLOW_ME(102),
-    HEART_MY_REVIEW(103),
-    SCRAP_MY_REVIEW(104),
-    DUPLICATE_HEART(105),
-    INVALID_USER_PROPERTY(106),
-    INVALID_REVIEW_PROPERTY(107),
-    INVALID_COMMENT_PROPERTY(108),
-    DELETE_REVIEW_LAST_IMAGE(109),
-    OVERLOAD_REVIEW_IMAGES(110),
+    enum BadRequest implements ErrorType {
+        BAD_REQUEST_DEFAULT(0),
+        INVALID_REQUEST_BODY(1),
+        INVALID_PARAMETER(2),
 
-    FILE_TOO_LARGE(900),
-    UNSUPPORTED_FILE_EXTENSION(901),
+        FOLLOW_ME(102),
+        HEART_MY_REVIEW(103),
+        SCRAP_MY_REVIEW(104),
+        DELETE_REVIEW_LAST_IMAGE(109),
+        UNSUPPORTED_FILE_EXTENSION(901),
+        ;
 
+        private final int errorCode;
 
-    NOT_ALLOWED(3000),
+        BadRequest(int errorCode) {
+            this.errorCode = errorCode;
+        }
 
-    USER_AUTH_FAILED(3100),
-    USER_ACCESS_DENIED(3101),
-    USER_BLOCKED_OR_DELETED(3102),
-    REVIEW_BLOCKED_OR_DELETED(3103),
-    COMMENT_BLOCKED_OR_DELETED(3104),
-
-    REVIEW_CHANGE_BY_ANONYMOUS(3200),
-    COMMENT_CHANGE_BY_ANONYMOUS(3201),
-
-
-    DATA_NOT_FOUND(4000),
-
-    USER_NOT_FOUND(4100),
-
-    REVIEW_NOT_FOUND(4200),
-    COMMENT_NOT_FOUND(4201),
-
-
-    CONFLICT(9000),
-
-    USER_CONFLICT(9100),
-
-
-    SERVER_ERROR(10000),
-
-    FILE_UPLOAD_FAIL(10100),
-    FILE_DELETE_FAIL(10101),
-    ;
-
-    private final int errorCode;
-
-    ErrorType(int errorCode) {
-        this.errorCode = errorCode;
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
     }
 
-    public int getErrorCode() {
-        return errorCode;
+    enum Unauthorized implements ErrorType {
+        UNAUTHORIZED_DEFAULT(1000),
+        LOGIN_FAILED(10001),
+        ;
+
+        private final int errorCode;
+
+        Unauthorized(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
+    }
+
+    enum Forbidden implements ErrorType {
+        FORBIDDEN_DEFAULT(3000),
+
+        REVIEW_ACCESS_DENIED(3200),
+        COMMENT_ACCESS_DENIED(3300),
+        ;
+
+        private final int errorCode;
+
+        Forbidden(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
+    }
+
+    enum NotFound implements ErrorType {
+        NOT_FOUND_DEFAULT(4000),
+        USER_NOT_FOUND(4100),
+        REVIEW_NOT_FOUND(4200),
+        REVIEW_IMAGE_URL_NOT_FOUND(4201),
+        COMMENT_NOT_FOUND(4300),
+        SCRAP_NOT_FOUND(4400),
+        ;
+
+        private final int errorCode;
+
+        NotFound(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
+    }
+
+    enum Conflict implements ErrorType {
+        CONFLICT_DEFAULT(9000),
+        USER_CONFLICT(9100),
+        DUPLICATE_HEART(9200),
+        DUPLICATE_SCRAP(9400),
+        ;
+
+        private final int errorCode;
+
+        Conflict(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
+    }
+
+    enum ServerError implements ErrorType {
+        SERVER_ERROR_DEFAULT(10000),
+        FILE_UPLOAD_FAIL(10100),
+        FILE_DELETE_FAIL(10101),
+        ;
+
+        private final int errorCode;
+
+        ServerError(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        @Override
+        public int getCode() {
+            return this.errorCode;
+        }
     }
 }

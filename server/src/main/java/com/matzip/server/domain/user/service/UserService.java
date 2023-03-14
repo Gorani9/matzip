@@ -1,18 +1,16 @@
 package com.matzip.server.domain.user.service;
 
-import com.matzip.server.domain.me.dto.MeDto;
-import com.matzip.server.domain.user.dto.UserDto.*;
-import com.matzip.server.domain.user.exception.AccessBlockedOrDeletedUserException;
-import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
-import com.matzip.server.domain.user.exception.UsernameNotFoundException;
+import com.matzip.server.domain.user.dto.UserDto.DetailedResponse;
+import com.matzip.server.domain.user.dto.UserDto.Response;
+import com.matzip.server.domain.user.dto.UserDto.SearchRequest;
+import com.matzip.server.domain.user.exception.FollowMeException;
+import com.matzip.server.domain.user.exception.UserNotFoundException;
+import com.matzip.server.domain.user.model.Follow;
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.domain.user.repository.FollowRepository;
 import com.matzip.server.domain.user.repository.UserRepository;
-import com.matzip.server.global.auth.jwt.JwtProvider;
-import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
-import com.matzip.server.global.auth.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,40 +19,47 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class UserService {
     private final UserRepository userRepository;
-
-    private final PasswordEncoder passwordEncoder;
-
-    private final JwtProvider jwtProvider;
-
-    public DuplicateResponse isUsernameTakenBySomeone(String username) {
-        return new DuplicateResponse(userRepository.existsByUsername(username));
-    }
-
-    @Transactional
-    public SignUpResponse createUser(SignUpRequest signUpRequest) {
-        String username = signUpRequest.getUsername();
-        String password = passwordEncoder.encode(signUpRequest.getPassword());
-        if (userRepository.existsByUsername(username))
-            throw new UsernameAlreadyExistsException(username);
-        User user = userRepository.save(new User(username, password));
-        UserPrincipal userPrincipal = new UserPrincipal(user);
-        String token = jwtProvider.generateAccessToken(new MatzipAuthenticationToken(
-                userPrincipal,
-                null,
-                userPrincipal.getAuthorities()));
-        return new SignUpResponse(new MeDto.Response(user), token);
-    }
+    private final FollowRepository followRepository;
 
     public DetailedResponse fetchUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
-        if (user.isBlocked() || user.isDeleted()) throw new AccessBlockedOrDeletedUserException(username);
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+
         return new DetailedResponse(user, me);
     }
 
-    public Slice<Response> searchUsers(Long myId, SearchRequest searchRequest) {
+    public Slice<Response> searchUsers(Long myId, SearchRequest request) {
         User me = userRepository.findMeById(myId);
-        Slice<User> users = userRepository.searchUsersByUsername(searchRequest);
-        return users.map(user -> Response.of(user, me));
+        Slice<User> users = userRepository.searchUsersByUsername(request);
+
+        return users.map(user -> new Response(user, me));
+    }
+
+    @Transactional
+    public Response followUser(Long myId, String username) {
+        User me = userRepository.findMeById(myId);
+        User followee = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+
+        if (me == followee) throw new FollowMeException();
+
+        if (me.getFollowings().stream().noneMatch(f -> f.getFollowee() == followee))
+            followRepository.save(new Follow(me, followee));
+
+        return new Response(followee, me);
+    }
+
+    @Transactional
+    public Response unfollowUser(Long myId, String username) {
+        User me = userRepository.findMeById(myId);
+        User followee = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
+
+        followRepository.findByFollowerIdAndFolloweeId(myId, followee.getId()).ifPresent(
+                f -> {
+                    f.delete();
+                    followRepository.delete(f);
+                }
+        );
+
+        return new Response(followee, me);
     }
 }

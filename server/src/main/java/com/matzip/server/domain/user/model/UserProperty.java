@@ -1,9 +1,10 @@
 package com.matzip.server.domain.user.model;
 
-import com.matzip.server.domain.user.exception.InvalidUserPropertyException;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 
+@RequiredArgsConstructor
 public enum UserProperty {
     USERNAME("username"),
     MATZIP_LEVEL("level"),
@@ -12,15 +13,9 @@ public enum UserProperty {
 
     private final String webNaming;
 
-    UserProperty(String webNaming) {
-        this.webNaming = webNaming;
-    }
-
     public static UserProperty from(String webNaming) {
         if (webNaming == null || webNaming.isBlank())
             return null;
-        return Arrays.stream(values()).filter(name -> name.webNaming.equals(webNaming)).findFirst().orElseThrow(
-                () -> new InvalidUserPropertyException(webNaming)
-        );
+        return Arrays.stream(values()).filter(name -> name.webNaming.equals(webNaming)).findFirst().orElseThrow();
     }
 }

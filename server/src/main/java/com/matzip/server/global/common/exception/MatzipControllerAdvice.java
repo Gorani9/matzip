@@ -1,80 +1,103 @@
 package com.matzip.server.global.common.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.matzip.server.global.common.dto.ErrorResponse;
+import com.matzip.server.global.common.exception.MatzipException.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class MatzipControllerAdvice {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
-    @ExceptionHandler(value=InvalidRequestException.class)
+    @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> badRequest(MatzipException e) {
-        logger.info(e.detail);
-        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.BAD_REQUEST);
     }
-
-    @ExceptionHandler(value=ConstraintViolationException.class)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> invalidFields(MethodArgumentNotValidException e) {
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_REQUEST_BODY.getCode(),
+                ErrorType.BadRequest.INVALID_REQUEST_BODY.name(),
+                e.getFieldErrors().stream().map(it -> it.getField() + " " + it.getDefaultMessage() + ".")
+                        .collect(Collectors.joining(" "))
+        ), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> bindException(BindException e) {
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_REQUEST_BODY.getCode(),
+                ErrorType.BadRequest.INVALID_REQUEST_BODY.name(),
+                e.getFieldErrors().stream().map(it -> it.getField() + " " + it.getDefaultMessage() + ".")
+                        .collect(Collectors.joining(" "))
+        ), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> jsonParseError() {
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_REQUEST_BODY.getCode(),
+                "INVALID_FIELD_TYPE",
+                "Check your request body fields type."
+        ), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> constraintViolation(ConstraintViolationException e) {
-        logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getMessage()),
-                HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_PARAMETER.getCode(),
+                ErrorType.BadRequest.INVALID_PARAMETER.name(),
+                e.getConstraintViolations().stream().map(it -> {
+                    String[] s = it.getPropertyPath().toString().split("\\.");
+                    return s[s.length - 1] + " " + it.getMessage() + ", but the input was '" + it.getInvalidValue() + "'.";
+                }).collect(Collectors.joining(" "))
+        ), HttpStatus.BAD_REQUEST);
     }
-    @ExceptionHandler(value=MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> constraintViolation(MethodArgumentNotValidException e) {
-        logger.info(Objects.requireNonNull(e.getFieldError()).getDefaultMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.INVALID_REQUEST, e.getFieldError().getDefaultMessage()),
-                HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> argumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_PARAMETER.getCode(),
+                "INVALID_PARAMETER_TYPE",
+                "Parameter '" + e.getName() + "' is not in valid type."
+        ), HttpStatus.BAD_REQUEST);
     }
-
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> maxUploadSizeExceededException(MaxUploadSizeExceededException e) {
-        logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.FILE_TOO_LARGE, e.getMessage()),
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<ErrorResponse> multipartException(MultipartException e) {
-        logger.info(e.getMessage());
-        return new ResponseEntity<>(
-                new ErrorResponse(ErrorType.FILE_UPLOAD_FAIL, e.getMessage()),
-                HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> missingParameter(MissingServletRequestParameterException e) {
+        e.printStackTrace();
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.INVALID_PARAMETER.getCode(),
+                "MISSING_PARAMETER",
+                "Parameter '" + e.getParameterName() + "' is missing."
+        ), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(value=NotAllowedException.class)
-    public ResponseEntity<ErrorResponse> notAllowed(MatzipException e) {
-        logger.info(e.detail);
-        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.FORBIDDEN);
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> unauthorized(MatzipException e) {
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(value=DataNotFoundException.class)
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> forbidden(MatzipException e) {
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(MatzipException e) {
-        logger.info(e.detail);
-        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(value=ConflictException.class)
+    @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> conflict(MatzipException e) {
-        logger.info(e.detail);
-        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(value=ServerErrorException.class)
+    @ExceptionHandler(ServerErrorException.class)
     public ResponseEntity<ErrorResponse> serverError(MatzipException e) {
-        logger.info(e.detail);
-        return new ResponseEntity<>(new ErrorResponse(e.errorType, e.detail), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(new ErrorResponse(e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

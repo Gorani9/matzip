@@ -1,7 +1,6 @@
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
-WORKDIR /root
-
-COPY ./server-0.0.1-SNAPSHOT.jar .
-
-CMD java -jar -Dspring.profiles.active=${active} server-0.0.1-SNAPSHOT.jar
+WORKDIR /app
+COPY ./server-0.0.1-SNAPSHOT.jar ./server.jar
+EXPOSE 8080
+CMD java -jar server.jar

@@ -1,59 +1,40 @@
 package com.matzip.server.domain.me.dto;
 
+import com.matzip.server.domain.auth.validation.Password;
+import com.matzip.server.domain.auth.validation.Username;
+import com.matzip.server.domain.comment.dto.CommentDto;
+import com.matzip.server.domain.review.dto.ReviewDto;
+import com.matzip.server.domain.scrap.dto.ScrapDto;
 import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.user.model.Follow;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.validation.Password;
-import com.matzip.server.domain.user.validation.Username;
+import com.matzip.server.global.common.dto.ListResponse;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
-
 @Validated
 public class MeDto {
-    @RequiredArgsConstructor
-    @Getter
-    public static class PasswordChangeRequest {
-        @Password
-        private final String password;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    public static class UsernameChangeRequest {
-        @Username
-        private final String username;
-    }
-
-
-    @RequiredArgsConstructor
-    @Getter
-    public static class PatchProfileRequest {
-        private final MultipartFile image;
-        @Length(max=50)
-        private final String profile;
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    public static class FollowRequest {
-        @NotBlank
-        private final String username;
-    }
+    public record PasswordChangeRequest(@Password String password) {}
+    public record UsernameChangeRequest(@Username String username) {}
+    public record PatchRequest(MultipartFile image, @Length(max=50) String profile) {}
 
     @Getter
-    public static class Response extends UserDto.Response {
-        private final LocalDateTime createdAt;
-        private final LocalDateTime modifiedAt;
+    public static class Response extends UserDto.DetailedResponse {
+        private final ListResponse<UserDto.Response> myFollowers;
+        private final ListResponse<UserDto.Response> myFollowings;
+        private final ListResponse<CommentDto.Response> comments;
+        private final ListResponse<ScrapDto.Response> scraps;
+        private final ListResponse<ReviewDto.Response> heartedReviews;
 
-        public Response(User user) {
-            super(user, user);
-            this.createdAt = user.getCreatedAt();
-            this.modifiedAt = user.getModifiedAt();
+        public Response(User me) {
+            super(me, me);
+            myFollowers = new ListResponse<>(me.getFollowers().stream().map(Follow::getFollower).map(u -> new UserDto.Response(u, me)));
+            myFollowings = new ListResponse<>(me.getFollowings().stream().map(Follow::getFollowee).map(u -> new UserDto.Response(u, me)));
+            comments = new ListResponse<>(me.getComments().stream().map(c -> new CommentDto.Response(c, me)));
+            scraps = new ListResponse<>(me.getScraps().stream().map(ScrapDto.Response::new));
+            heartedReviews = new ListResponse<>(me.getHearts().stream().map(c -> new ReviewDto.Response(c.getReview(), me)));
         }
     }
 }
