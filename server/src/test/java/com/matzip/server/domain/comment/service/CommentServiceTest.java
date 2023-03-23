@@ -2,11 +2,12 @@ package com.matzip.server.domain.comment.service;
 
 import com.matzip.server.domain.comment.dto.CommentDto.PatchRequest;
 import com.matzip.server.domain.comment.dto.CommentDto.PostRequest;
-import com.matzip.server.domain.comment.dto.CommentDto.Response;
 import com.matzip.server.domain.comment.exception.CommentAccessDeniedException;
 import com.matzip.server.domain.comment.exception.CommentNotFoundException;
 import com.matzip.server.domain.comment.model.Comment;
 import com.matzip.server.domain.comment.repository.CommentRepository;
+import com.matzip.server.domain.record.service.RecordService;
+import com.matzip.server.domain.review.dto.ReviewDto.Response;
 import com.matzip.server.domain.review.exception.ReviewNotFoundException;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.ReviewRepository;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -39,6 +41,8 @@ class CommentServiceTest {
     private ReviewRepository reviewRepository;
     @Autowired
     private CommentRepository commentRepository;
+    @MockBean
+    private RecordService recordService;
 
     private CommentService commentService;
     private List<User> users;
@@ -46,7 +50,7 @@ class CommentServiceTest {
     @PostConstruct
     void init() {
         users = TestDataUtils.testData();
-        commentService = new CommentService(userRepository, reviewRepository, commentRepository);
+        commentService = new CommentService(userRepository, reviewRepository, commentRepository, recordService);
     }
 
     @BeforeEach
@@ -67,8 +71,8 @@ class CommentServiceTest {
         Response response = commentService.postComment(user.getId(), request);
 
         // then
-        assertThat(response.getReviewId()).isEqualTo(review.getId());
-        assertThat(response.getContent()).isEqualTo(content);
+        assertThat(response.getId()).isEqualTo(review.getId());
+        assertThat(response.getComments()).extracting("content").contains(content);
     }
 
     @Test
@@ -99,8 +103,8 @@ class CommentServiceTest {
         Response response = commentService.patchComment(user.getId(), comment.getId(), request);
 
         // then
-        assertThat(response.getContent()).isEqualTo(newContent);
-        assertThat(response.getContent()).isNotEqualTo(oldContent);
+        assertThat(response.getComments()).extracting("content").contains(newContent);
+        assertThat(response.getComments()).extracting("content").doesNotContain(oldContent);
     }
 
     @Test

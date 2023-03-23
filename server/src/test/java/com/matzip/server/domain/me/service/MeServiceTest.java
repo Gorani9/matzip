@@ -8,7 +8,7 @@ import com.matzip.server.domain.me.dto.MeDto.UsernameChangeRequest;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
-import com.matzip.server.domain.scrap.repository.ScrapRepository;
+import com.matzip.server.domain.review.repository.ScrapRepository;
 import com.matzip.server.domain.user.dto.UserDto.Response;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.FollowRepository;

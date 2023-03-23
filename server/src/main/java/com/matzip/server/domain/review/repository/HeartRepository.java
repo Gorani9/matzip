@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface HeartRepository extends JpaRepository<Heart, Long> {
-    boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
     Optional<Heart> findByUserIdAndReviewId(Long userId, Long reviewId);
 
     @Modifying

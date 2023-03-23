@@ -1,5 +1,6 @@
 package com.matzip.server.domain.user.service;
 
+import com.matzip.server.domain.record.service.RecordService;
 import com.matzip.server.domain.user.dto.UserDto.DetailedResponse;
 import com.matzip.server.domain.user.dto.UserDto.Response;
 import com.matzip.server.domain.user.dto.UserDto.SearchRequest;
@@ -20,6 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final RecordService recordService;
+
+    public boolean isUsernameTakenBySomeone(String username) {
+        return userRepository.existsByUsername(username);
+    }
 
     public DetailedResponse fetchUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
@@ -36,20 +42,22 @@ public class UserService {
     }
 
     @Transactional
-    public Response followUser(Long myId, String username) {
+    public DetailedResponse followUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
 
         if (me == followee) throw new FollowMeException();
 
-        if (me.getFollowings().stream().noneMatch(f -> f.getFollowee() == followee))
+        if (followee.getFollowers().stream().noneMatch(f -> f.getFollower() == me)) {
             followRepository.save(new Follow(me, followee));
+            recordService.followUser(me, followee);
+        }
 
-        return new Response(followee, me);
+        return new DetailedResponse(followee, me);
     }
 
     @Transactional
-    public Response unfollowUser(Long myId, String username) {
+    public DetailedResponse unfollowUser(Long myId, String username) {
         User me = userRepository.findMeById(myId);
         User followee = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException(username));
 
@@ -57,9 +65,10 @@ public class UserService {
                 f -> {
                     f.delete();
                     followRepository.delete(f);
+                    recordService.unfollowUser(me, followee);
                 }
         );
 
-        return new Response(followee, me);
+        return new DetailedResponse(followee, me);
     }
 }

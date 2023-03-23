@@ -2,7 +2,6 @@ package com.matzip.server.global.common.model;
 
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
@@ -19,8 +18,12 @@ public abstract class BaseTimeEntity {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @CreatedDate
     private LocalDateTime modifiedAt;
 
     public abstract void delete();
+
+    public void update() {
+        this.modifiedAt = LocalDateTime.now();
+    }
 }

@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 import static com.matzip.server.domain.comment.model.QComment.comment;
 import static com.matzip.server.domain.review.model.QHeart.heart;
 import static com.matzip.server.domain.review.model.QReview.review;
+import static com.matzip.server.domain.review.model.QScrap.scrap;
 import static com.matzip.server.domain.review.model.ReviewProperty.*;
-import static com.matzip.server.domain.scrap.model.QScrap.scrap;
 import static com.matzip.server.domain.user.model.QFollow.follow;
 import static com.matzip.server.domain.user.model.QUser.user;
 

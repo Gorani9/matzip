@@ -2,6 +2,7 @@ package com.matzip.server.global.common.exception;
 
 import com.matzip.server.global.common.dto.ErrorResponse;
 import com.matzip.server.global.common.exception.MatzipException.*;
+import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -68,11 +69,18 @@ public class MatzipControllerAdvice {
     }
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> missingParameter(MissingServletRequestParameterException e) {
-        e.printStackTrace();
         return new ResponseEntity<>(new ErrorResponse(
                 ErrorType.BadRequest.INVALID_PARAMETER.getCode(),
                 "MISSING_PARAMETER",
                 "Parameter '" + e.getParameterName() + "' is missing."
+        ), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(FileSizeLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> fileSizeLimitExceeded() {
+        return new ResponseEntity<>(new ErrorResponse(
+                ErrorType.BadRequest.FILE_SIZE_LIMIT_EXCEEDED.getCode(),
+                "FILE_SIZE_LIMIT_EXCEEDED",
+                "File size limit exceeded. Maximum file size is 10MB."
         ), HttpStatus.BAD_REQUEST);
     }
 

@@ -1,14 +1,13 @@
 package com.matzip.server.domain.me.dto;
 
-import com.matzip.server.domain.auth.validation.Password;
-import com.matzip.server.domain.auth.validation.Username;
 import com.matzip.server.domain.comment.dto.CommentDto;
 import com.matzip.server.domain.review.dto.ReviewDto;
-import com.matzip.server.domain.scrap.dto.ScrapDto;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.Follow;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.common.dto.ListResponse;
+import com.matzip.server.global.common.validation.Password;
+import com.matzip.server.global.common.validation.Username;
 import lombok.Getter;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.validation.annotation.Validated;
@@ -25,16 +24,14 @@ public class MeDto {
         private final ListResponse<UserDto.Response> myFollowers;
         private final ListResponse<UserDto.Response> myFollowings;
         private final ListResponse<CommentDto.Response> comments;
-        private final ListResponse<ScrapDto.Response> scraps;
-        private final ListResponse<ReviewDto.Response> heartedReviews;
+        private final ListResponse<ReviewDto.Response> scraps;
 
         public Response(User me) {
             super(me, me);
             myFollowers = new ListResponse<>(me.getFollowers().stream().map(Follow::getFollower).map(u -> new UserDto.Response(u, me)));
             myFollowings = new ListResponse<>(me.getFollowings().stream().map(Follow::getFollowee).map(u -> new UserDto.Response(u, me)));
             comments = new ListResponse<>(me.getComments().stream().map(c -> new CommentDto.Response(c, me)));
-            scraps = new ListResponse<>(me.getScraps().stream().map(ScrapDto.Response::new));
-            heartedReviews = new ListResponse<>(me.getHearts().stream().map(c -> new ReviewDto.Response(c.getReview(), me)));
+            scraps = new ListResponse<>(me.getScraps().stream().map(ReviewDto.Response::new));
         }
     }
 }

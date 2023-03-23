@@ -1,14 +1,15 @@
 package com.matzip.server.domain.me.service;
 
-import com.matzip.server.domain.auth.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.comment.repository.CommentRepository;
 import com.matzip.server.domain.image.service.ImageService;
-import com.matzip.server.domain.me.dto.MeDto;
+import com.matzip.server.domain.me.dto.MeDto.PasswordChangeRequest;
 import com.matzip.server.domain.me.dto.MeDto.PatchRequest;
+import com.matzip.server.domain.me.dto.MeDto.Response;
+import com.matzip.server.domain.me.dto.MeDto.UsernameChangeRequest;
 import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
-import com.matzip.server.domain.scrap.repository.ScrapRepository;
-import com.matzip.server.domain.user.dto.UserDto.Response;
+import com.matzip.server.domain.review.repository.ScrapRepository;
+import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.FollowRepository;
 import com.matzip.server.domain.user.repository.UserRepository;
@@ -35,30 +36,25 @@ public class MeService {
     private final ImageService imageService;
 
     @Transactional
-    public void changePassword(Long myId, MeDto.PasswordChangeRequest passwordChangeRequest) {
+    public void changePassword(Long myId, PasswordChangeRequest passwordChangeRequest) {
         User me = userRepository.findMeById(myId);
 
         me.setPassword(passwordEncoder.encode(passwordChangeRequest.password()));
     }
 
     @Transactional
-    public Response changeUsername(Long myId, MeDto.UsernameChangeRequest usernameChangeRequest) {
+    public Response changeUsername(Long myId, UsernameChangeRequest usernameChangeRequest) {
         User me = userRepository.findMeById(myId);
         String username = usernameChangeRequest.username();
         if (userRepository.existsByUsername(username)) throw new UsernameAlreadyExistsException(username);
 
         me.setUsername(username);
-        return new Response(me, me);
+        return new Response(me);
     }
 
     public Response getMe(Long myId) {
         User me = userRepository.findMeById(myId);
-        return new Response(me, me);
-    }
-
-    public MeDto.Response getMeDetail(Long myId) {
-        User me = userRepository.findMeById(myId);
-        return new MeDto.Response(me);
+        return new Response(me);
     }
 
     @Transactional
@@ -88,6 +84,7 @@ public class MeService {
         if (request.image() != null) me.setUserImage(imageService.uploadImage(me.getUsername(), request.image()));
         if (request.profile() != null) me.setProfileString(request.profile());
 
-        return new Response(me, me);
+        me.update();
+        return new Response(me);
     }
 }

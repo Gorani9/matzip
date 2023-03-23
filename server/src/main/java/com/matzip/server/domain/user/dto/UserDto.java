@@ -21,6 +21,8 @@ public class UserDto {
         private final Boolean isMyFollowing;
         private final Boolean isMyFollower;
         private final Boolean isMe;
+        private final Integer numberOfFollowers;
+        private final Integer numberOfFollowings;
 
         public Response(User user, User me) {
             this.username = user.getUsername();
@@ -28,22 +30,20 @@ public class UserDto {
             this.profileString = user.getProfileString();
             this.matzipLevel = user.getMatzipLevel();
             this.createdAt = user.getCreatedAt();
-            this.isMyFollowing = me.getFollowings().stream().anyMatch(f -> f.getFollowee() == user);
-            this.isMyFollower = me.getFollowers().stream().anyMatch(f -> f.getFollower() == user);
+            this.isMyFollowing = user.getFollowers().stream().anyMatch(f -> f.getFollower() == me);
+            this.isMyFollower = user.getFollowings().stream().anyMatch(f -> f.getFollowee() == me);
             this.isMe = user == me;
+            this.numberOfFollowers = user.getFollowers().size();
+            this.numberOfFollowings = user.getFollowings().size();
         }
     }
 
     @Getter
     public static class DetailedResponse extends Response {
-        private final Integer numberOfFollowers;
-        private final Integer numberOfFollowings;
         private final ListResponse<ReviewDto.Response> reviews;
 
         public DetailedResponse(User user, User me) {
             super(user, me);
-            this.numberOfFollowers = user.getFollowers().size();
-            this.numberOfFollowings = user.getFollowings().size();
             this.reviews = new ListResponse<>(user.getReviews().stream().map(r -> new ReviewDto.Response(r, me)));
         }
     }

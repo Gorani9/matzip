@@ -1,12 +1,15 @@
 spring:
   profiles:
     active: local
+
   jackson:
     property-naming-strategy: SNAKE_CASE
+
   servlet:
     multipart:
-      max-file-size: 2MB
-      max-request-size: 20MB
+      max-file-size: 10MB
+      max-request-size: 100MB
+
   jpa:
     open-in-view: false
     properties:
@@ -14,26 +17,19 @@ spring:
         default_batch_fetch_size: 500
     generate-ddl: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
 cloud:
   aws:
+    credentials:
+      instance-profile: true
     s3:
-      bucket: matzip
+      bucket: matzip-bucket
     region:
       static: ap-northeast-2
     stack:
       auto: false
 
-server:
-  servlet:
-    session:
-      cookie:
-        same-site: none
-        secure: true
-        http-only: false
-
 matzip:
-  admin:
-    username: ~
-    password: ~
+  jwt:
+    secret: ~

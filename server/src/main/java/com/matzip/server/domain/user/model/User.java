@@ -3,7 +3,7 @@ package com.matzip.server.domain.user.model;
 import com.matzip.server.domain.comment.model.Comment;
 import com.matzip.server.domain.review.model.Heart;
 import com.matzip.server.domain.review.model.Review;
-import com.matzip.server.domain.scrap.model.Scrap;
+import com.matzip.server.domain.review.model.Scrap;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +36,7 @@ public class User extends BaseTimeEntity {
     private String userImage;
     private String profileString;
     private Integer matzipLevel = 0;
+    private Integer matzipPoint = 0;
 
     public User(String username, String password) {
         this.username = username;

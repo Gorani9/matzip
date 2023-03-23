@@ -9,6 +9,7 @@ spring:
   jpa:
     properties:
       hibernate:
+        show_sql: true
         auto_quote_keyword: true
         format_sql: true
         use_sql_comments: true

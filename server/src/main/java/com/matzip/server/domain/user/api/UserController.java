@@ -1,13 +1,13 @@
 package com.matzip.server.domain.user.api;
 
-import com.matzip.server.domain.auth.model.CurrentUser;
-import com.matzip.server.domain.auth.model.CurrentUsername;
-import com.matzip.server.domain.auth.validation.Username;
 import com.matzip.server.domain.user.dto.UserDto.DetailedResponse;
 import com.matzip.server.domain.user.dto.UserDto.Response;
 import com.matzip.server.domain.user.dto.UserDto.SearchRequest;
 import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.domain.user.service.UserService;
+import com.matzip.server.global.auth.model.CurrentUser;
+import com.matzip.server.global.auth.model.CurrentUsername;
+import com.matzip.server.global.common.validation.Username;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.Length;
@@ -20,6 +20,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.util.Map;
 
 @Slf4j
 @Validated
@@ -28,6 +29,14 @@ import javax.validation.constraints.PositiveOrZero;
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
+
+    @GetMapping("/exists")
+    public ResponseEntity<Object> checkDuplicateUsername(
+            @RequestParam @Username String username
+    ) {
+        Map<String, Boolean> responseBody = Map.of("result", userService.isUsernameTakenBySomeone(username));
+        return ResponseEntity.ok().body(responseBody);
+    }
 
     @GetMapping
     public ResponseEntity<Slice<Response>> searchUsersByUsername(
@@ -61,7 +70,7 @@ public class UserController {
     }
 
     @PutMapping("/{username}/follow")
-    public ResponseEntity<Response> followUserByUsername(
+    public ResponseEntity<DetailedResponse> followUserByUsername(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("username") @Username String username
@@ -71,7 +80,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/follow")
-    public ResponseEntity<Response> unfollowUserByUsername(
+    public ResponseEntity<DetailedResponse> unfollowUserByUsername(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("username") @Username String username
