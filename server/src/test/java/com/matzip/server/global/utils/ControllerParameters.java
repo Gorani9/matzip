@@ -183,10 +183,10 @@ public class ControllerParameters {
         public static String[] invalidContents = new String[]{"", "  ", null, "!".repeat(3001)};
         public static Object[] validImages = new Object[]{List.of(multipartFile), multipartFilesOfSize10};
         public static Object[] invalidImages = new Object[]{multipartFilesOfSize11, List.of()};
-        public static Object[] validRatings = new Object[]{"0","1","2","3","4","5","6","7","8","9","10"};
+        public static Object[] validRatings = new Object[]{"0","1","2","3","4","5"};
         public static Object[] invalidRatings = new Object[]{"-1","11","nonInt"};
-        public static String[] validLocations = new String[]{"somewhere"};
-        public static String[] invalidLocations = new String[]{"", "  ", null};
+        public static String[] validRestaurants = new String[]{"somewhere"};
+        public static String[] invalidRestaurants = new String[]{"", "  ", null};
     }
 
     public static class PatchReview {

@@ -37,7 +37,7 @@ public class ImageService {
     private String bucketName;
 
     private String generateFileName(String username, String originalFileName) {
-        return username + "-" + (originalFileName != null ? originalFileName + "-" : "") + simpleDateFormat.format(new Date());
+        return username + "-" + simpleDateFormat.format(new Date()) + (originalFileName != null ? "-" + originalFileName : "") ;
     }
 
     public String uploadImage(String username, MultipartFile image) {

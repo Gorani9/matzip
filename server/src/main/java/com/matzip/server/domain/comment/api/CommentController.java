@@ -1,11 +1,11 @@
 package com.matzip.server.domain.comment.api;
 
-import com.matzip.server.domain.auth.model.CurrentUser;
-import com.matzip.server.domain.auth.model.CurrentUsername;
-import com.matzip.server.domain.comment.dto.CommentDto;
 import com.matzip.server.domain.comment.dto.CommentDto.PatchRequest;
 import com.matzip.server.domain.comment.dto.CommentDto.PostRequest;
 import com.matzip.server.domain.comment.service.CommentService;
+import com.matzip.server.domain.review.dto.ReviewDto.Response;
+import com.matzip.server.global.auth.model.CurrentUser;
+import com.matzip.server.global.auth.model.CurrentUsername;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommentDto.Response> postComment(
+    public ResponseEntity<Response> postComment(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @RequestBody @Valid PostRequest request
@@ -37,7 +37,7 @@ public class CommentController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CommentDto.Response> patchComment(
+    public ResponseEntity<Response> patchComment(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @Positive Long commentId,
@@ -49,13 +49,12 @@ public class CommentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteComment(
+    public ResponseEntity<Response> deleteComment(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @Positive Long commentId
     ) {
         log.info("[{}(id={})] DELETE /api/v1/comments/{}", user, myId, commentId);
-        commentService.deleteComment(myId, commentId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(commentService.deleteComment(myId, commentId));
     }
 }

@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRepositoryCustom {
     Optional<Review> findById(Long id);
 
+    @Query("SELECT r FROM Review r LEFT JOIN FETCH r.comments WHERE r.id = :id")
+    Optional<Review> findByIdFetchJoinComments(@Param("id") Long id);
+
     @Modifying
     @Query("DELETE FROM Review r WHERE r.user.id = :userId OR r.id in :reviewIds")
     void deleteAllByUserIdOrReviewIds(@Param("userId") Long userId, @Param("reviewIds") List<Long> reviewIds);

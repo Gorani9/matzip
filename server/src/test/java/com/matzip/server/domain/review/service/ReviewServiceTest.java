@@ -2,18 +2,21 @@ package com.matzip.server.domain.review.service;
 
 import com.matzip.server.domain.comment.repository.CommentRepository;
 import com.matzip.server.domain.image.service.ImageService;
-import com.matzip.server.domain.review.dto.ReviewDto.DetailedResponse;
+import com.matzip.server.domain.record.service.RecordService;
 import com.matzip.server.domain.review.dto.ReviewDto.PatchRequest;
 import com.matzip.server.domain.review.dto.ReviewDto.PostRequest;
+import com.matzip.server.domain.review.dto.ReviewDto.Response;
+import com.matzip.server.domain.review.dto.ReviewDto.ScrapRequest;
 import com.matzip.server.domain.review.exception.*;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
-import com.matzip.server.domain.scrap.repository.ScrapRepository;
+import com.matzip.server.domain.review.repository.ScrapRepository;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
 import com.matzip.server.global.config.TestQueryDslConfig;
 import com.matzip.server.global.utils.TestDataUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,8 +28,10 @@ import org.springframework.test.context.ActiveProfiles;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +54,8 @@ class ReviewServiceTest {
     private HeartRepository heartRepository;
     @MockBean
     private ImageService imageService;
+    @MockBean
+    private RecordService recordService;
 
     private ReviewService reviewService;
     private List<User> users;
@@ -56,7 +63,8 @@ class ReviewServiceTest {
     @PostConstruct
     void init() {
         users = TestDataUtils.testData();
-        reviewService = new ReviewService(userRepository, reviewRepository, commentRepository, scrapRepository, heartRepository, imageService);
+        reviewService = new ReviewService(userRepository, reviewRepository, commentRepository,
+                                          scrapRepository, heartRepository, imageService, recordService);
 
         given(imageService.uploadImages(any(), any())).willReturn(List.of("https://" + UUID.randomUUID() + ".url"));
         given(imageService.deleteImages(any())).willReturn(List.of("https://" + UUID.randomUUID() + ".url"));
@@ -73,16 +81,16 @@ class ReviewServiceTest {
         // given
         User user = users.get(0);
         String content = "some content";
-        String location = "location";
+        String location = "restaurant";
         PostRequest request = new PostRequest(content, null, 5, location);
 
         // when
-        DetailedResponse response = reviewService.postReview(user.getId(), request);
+        Response response = reviewService.postReview(user.getId(), request);
 
         // then
         assertThat(response.getUser().getUsername()).isEqualTo(user.getUsername());
         assertThat(response.getContent()).isEqualTo(content);
-        assertThat(response.getLocation()).isEqualTo(location);
+        assertThat(response.getRestaurant()).isEqualTo(location);
         assertThat(response.getRating()).isEqualTo(5);
         assertThat(response.getViews()).isEqualTo(0);
     }
@@ -93,15 +101,13 @@ class ReviewServiceTest {
         // given
         User user = users.get(0);
         Review review = user.getReviews().get(0);
-        long beforeView = review.getViews();
 
         // when
-        DetailedResponse response = reviewService.fetchReview(user.getId(), review.getId());
+        Response response = reviewService.fetchReview(user.getId(), review.getId());
 
         // then
         assertThat(response.getId()).isEqualTo(review.getId());
         assertThat(response.getContent()).isEqualTo(review.getContent());
-        assertThat(response.getViews()).isEqualTo(beforeView + 1);
     }
 
     @Test
@@ -117,7 +123,7 @@ class ReviewServiceTest {
         PatchRequest request = new PatchRequest(newContent, null, null, null);
 
         // when
-        DetailedResponse response = reviewService.patchReview(user.getId(), review.getId(), request);
+        Response response = reviewService.patchReview(user.getId(), review.getId(), request);
 
         // then
         assertThat(response.getId()).isEqualTo(review.getId());
@@ -237,7 +243,7 @@ class ReviewServiceTest {
         long beforeHeartCount = review.getHearts().size();
 
         // when
-        DetailedResponse response = reviewService.heartReview(user.getId(), review.getId());
+        Response response = reviewService.heartReview(user.getId(), review.getId());
 
         // then
         assertThat(response.getNumberOfHearts()).isEqualTo(beforeHeartCount + 1);
@@ -290,7 +296,7 @@ class ReviewServiceTest {
         long beforeHeartCount = review.getHearts().size();
 
         // when
-        DetailedResponse response = reviewService.deleteHeartFromReview(user.getId(), review.getId());
+        Response response = reviewService.deleteHeartFromReview(user.getId(), review.getId());
 
         // then
         assertThat(response.getNumberOfHearts()).isEqualTo(beforeHeartCount - 1);
@@ -319,10 +325,87 @@ class ReviewServiceTest {
         long beforeHeartCount = review.getHearts().size();
 
         // when
-        DetailedResponse response = reviewService.deleteHeartFromReview(user.getId(), review.getId());
+        Response response = reviewService.deleteHeartFromReview(user.getId(), review.getId());
 
         // then
         assertThat(response.getNumberOfHearts()).isEqualTo(beforeHeartCount);
         assertThat(response.getViews()).isEqualTo(beforeView);
+    }
+
+    @Test
+    @DisplayName("스크랩 생성 테스트: 정상")
+    void putScrapTest_New() {
+        // given
+        User user = userRepository.findByUsername("user-01").orElseThrow();
+        Review review = users.get(2).getReviews().get(0);
+        String description = "post scrap test";
+        ScrapRequest request = new ScrapRequest(description);
+
+        // when
+        Response response = reviewService.putScrap(user.getId(), review.getId(), request);
+
+        // then
+        assertThat(response.getId()).isEqualTo(review.getId());
+        assertThat(response.getScrapDescription()).isEqualTo(description);
+    }
+
+    @Test
+    @DisplayName("스크랩 생성 테스트: 내 리뷰를 스크랩하는 경우")
+    void putScrapTest_ScrapMyReview() {
+        // given
+        User user = userRepository.findByUsername("user-01").orElseThrow();
+        Review review = user.getReviews().get(0);
+        String description = "post scrap test";
+        ScrapRequest request = new ScrapRequest(description);
+
+        // then
+        Assertions.assertThatThrownBy(() -> reviewService.putScrap(user.getId(), review.getId(), request))
+                .isInstanceOf(ScrapMyReviewException.class);
+    }
+
+    @Test
+    @DisplayName("스크랩 수정 테스트: 정상")
+    void putScrapTest() {
+        // given
+        User user = userRepository.findByUsername("user-02").orElseThrow();
+        Review review = users.get(0).getReviews().get(0);
+
+        String beforeDescription = user.getScraps()
+                .stream().filter(s -> Objects.equals(s.getReview().getId(), review.getId())).findFirst().orElseThrow()
+                .getDescription();
+        String description = "patch scrap test";
+        ScrapRequest request = new ScrapRequest(description);
+
+        // when
+        Response response = reviewService.putScrap(user.getId(), review.getId(), request);
+
+        // then
+        assertThat(response.getScrapDescription()).isEqualTo(description);
+        assertThat(response.getScrapDescription()).isNotEqualTo(beforeDescription);
+    }
+
+    @Test
+    @DisplayName("스크랩 삭제 테스트: 정상")
+    void deleteScrapTest() {
+        // given
+        User user = userRepository.findByUsername("user-02").orElseThrow();
+        Review review = users.get(0).getReviews().get(0);
+
+        // when
+        reviewService.deleteScrap(user.getId(), review.getId());
+
+        // then
+        assertThat(scrapRepository.findByUserIdAndReviewId(user.getId(), review.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("스크랩 삭제 테스트: 스크랩을 안 한 경우")
+    void deleteScrapTest_NoScrap() {
+        // given
+        User user = userRepository.findByUsername("user-03").orElseThrow();
+        Review review = users.get(0).getReviews().get(0);
+
+        // then
+        assertThatNoException().isThrownBy(() -> reviewService.deleteScrap(user.getId(), review.getId()));
     }
 }

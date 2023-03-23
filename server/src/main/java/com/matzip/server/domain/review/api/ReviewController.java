@@ -1,10 +1,10 @@
 package com.matzip.server.domain.review.api;
 
-import com.matzip.server.domain.auth.model.CurrentUser;
-import com.matzip.server.domain.auth.model.CurrentUsername;
 import com.matzip.server.domain.review.dto.ReviewDto.*;
 import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.review.service.ReviewService;
+import com.matzip.server.global.auth.model.CurrentUser;
+import com.matzip.server.global.auth.model.CurrentUsername;
 import com.matzip.server.global.common.dto.ListResponse;
 import com.matzip.server.global.common.validation.NullableNotBlank;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class ReviewController {
     }
 
     @PostMapping(consumes={"multipart/form-data"})
-    public ResponseEntity<DetailedResponse> postReview(
+    public ResponseEntity<Response> postReview(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @ModelAttribute @Valid PostRequest request
@@ -64,12 +64,12 @@ public class ReviewController {
                          \t rating = {}
                          \t location = {}
                          """,
-                 user, myId, request.content(), request.images().size(), request.rating(), request.location());
+                 user, myId, request.content(), request.images().size(), request.rating(), request.restaurant());
         return ResponseEntity.ok(reviewService.postReview(myId, request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DetailedResponse> fetchReview(
+    public ResponseEntity<Response> fetchReview(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @NotNull @Positive Long reviewId
@@ -79,14 +79,15 @@ public class ReviewController {
     }
 
     @PatchMapping(value="/{id}", consumes={"multipart/form-data"})
-    public ResponseEntity<DetailedResponse> patchReview(
+    public ResponseEntity<Response> patchReview(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @NotNull @Positive Long reviewId,
             @ModelAttribute @Valid PatchRequest request
     ) {
         log.info("""
-                         [{}(id={})] PATCH /api/v1/reviews/{}\t content = {}
+                         [{}(id={})] PATCH /api/v1/reviews/{}
+                         \t content = {}
                          \t #new images = {}
                          \t old images = {}
                          \t rating = {}""",
@@ -116,7 +117,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}/heart")
-    public ResponseEntity<DetailedResponse> putHeartOnReview(
+    public ResponseEntity<Response> putHeartOnReview(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @NotNull @Positive Long reviewId
@@ -126,12 +127,32 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/heart")
-    public ResponseEntity<DetailedResponse> deleteHeartFromReview(
+    public ResponseEntity<Response> deleteHeartFromReview(
             @CurrentUser Long myId,
             @CurrentUsername String user,
             @PathVariable("id") @NotNull @Positive Long reviewId
     ) {
         log.info("[{}(id={})] DELETE /api/v1/reviews/{}/heart", user, myId, reviewId);
         return ResponseEntity.ok(reviewService.deleteHeartFromReview(myId, reviewId));
+    }
+
+    @PutMapping("/{id}/scrap")
+    public ResponseEntity<Response> putScrap(
+            @CurrentUser Long myId,
+            @CurrentUsername String user,
+            @PathVariable("id") @Positive Long reviewId,
+            @RequestBody @Valid ScrapRequest request
+    ) {
+        log.info("[{}(id={})] PUT /api/v1/{}/scraps", user, myId, reviewId);
+        return ResponseEntity.ok(reviewService.putScrap(myId, reviewId, request));
+    }
+    @DeleteMapping("/{id}/scrap")
+    public ResponseEntity<Response> deleteScrap(
+            @CurrentUser Long myId,
+            @CurrentUsername String user,
+            @PathVariable("id") @Positive Long reviewId
+    ) {
+        log.info("[{}(id={})] DELETE /api/v1/{}/scraps", user, myId, reviewId);
+        return ResponseEntity.ok(reviewService.deleteScrap(myId, reviewId));
     }
 }

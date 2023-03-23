@@ -1,8 +1,7 @@
 package com.matzip.server.domain.user.api;
 
-import com.matzip.server.domain.auth.model.MatzipAuthenticationToken;
-import com.matzip.server.domain.auth.model.UserPrincipal;
 import com.matzip.server.domain.user.service.UserService;
+import com.matzip.server.global.utils.ControllerParameters;
 import com.matzip.server.global.utils.ControllerParameters.Common;
 import com.matzip.server.global.utils.ControllerParameters.Login;
 import com.matzip.server.global.utils.ControllerParameters.SearchUser;
@@ -14,7 +13,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.security.core.Authentication;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,8 +24,6 @@ import java.util.stream.Stream;
 import static com.matzip.server.global.common.exception.ErrorType.BadRequest.INVALID_PARAMETER;
 import static com.matzip.server.global.utils.TestParameterUtils.makeFieldList;
 import static org.hamcrest.core.Is.is;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,7 +38,27 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
-    private final Authentication auth = new MatzipAuthenticationToken(new UserPrincipal(0L, "test"));
+    @Test
+    @DisplayName("Username 중복 체크 입력 파라미터 검증")
+    void usernameDuplicateCheckValidation() throws Exception {
+        List<Pair<Object, Integer>> usernames = Stream.of(
+                Stream.of(ControllerParameters.Signup.validUsernames).map(u -> new Pair<Object, Integer>(u, null)),
+                Stream.of(ControllerParameters.Signup.invalidUsernames).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
+        ).flatMap(o -> o).collect(Collectors.toList());
+
+        List<Pair<List<Object>, Pair<Integer, Integer>>> combinations = makeFieldList(usernames);
+
+        for (Pair<List<Object>, Pair<Integer, Integer>> combination : combinations) {
+            Pair<Integer, Integer> result = combination.second;
+
+            mockMvc.perform(
+                    get("/api/v1/users/exists")
+                            .param("username", (String) combination.first.get(0))
+                            .contentType(MediaType.APPLICATION_JSON)
+            ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
+            ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
+        }
+    }
 
     @Test
     @DisplayName("회원 검색 파라미터 검증")
@@ -80,7 +97,6 @@ class UserControllerTest {
                             .queryParam("size", (String) combination.first.get(2))
                             .queryParam("sort", (String) combination.first.get(3))
                             .queryParam("asc", (String) combination.first.get(4))
-                            .with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
@@ -101,7 +117,6 @@ class UserControllerTest {
 
             mockMvc.perform(
                     get("/api/v1/users/{username}", combination.first.get(0))
-                            .with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
@@ -122,8 +137,6 @@ class UserControllerTest {
 
             mockMvc.perform(
                     put("/api/v1/users/{username}/follow", combination.first.get(0))
-                            .with(csrf())
-                            .with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
@@ -144,8 +157,6 @@ class UserControllerTest {
 
             mockMvc.perform(
                     delete("/api/v1/users/{username}/follow", combination.first.get(0))
-                            .with(csrf())
-                            .with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }

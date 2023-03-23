@@ -28,6 +28,17 @@ import static com.matzip.server.domain.user.model.UserProperty.*;
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
+    private static final User anonymous = new User("anonymousUser", "");
+
+    @Override
+    public User findMeById(Long id) {
+        if (id == 0L) return anonymous;
+        else return jpaQueryFactory
+                .select(user)
+                .from(user)
+                .where(user.id.eq(id))
+                .fetchOne();
+    }
 
     @Override
     public Slice<User> searchUsersByUsername(UserDto.SearchRequest searchRequest) {

@@ -2,8 +2,6 @@ package com.matzip.server.domain.me.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.matzip.server.domain.auth.model.MatzipAuthenticationToken;
-import com.matzip.server.domain.auth.model.UserPrincipal;
 import com.matzip.server.domain.me.service.MeService;
 import com.matzip.server.global.utils.ControllerParameters.Common;
 import com.matzip.server.global.utils.ControllerParameters.PatchMe;
@@ -18,7 +16,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
@@ -34,8 +31,6 @@ import static com.matzip.server.global.common.exception.ErrorType.BadRequest.INV
 import static com.matzip.server.global.utils.TestParameterUtils.makeFieldList;
 import static org.hamcrest.core.Is.is;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -53,7 +48,6 @@ class MeControllerTest {
     private MeService meService;
 
     private final Gson gson = new GsonBuilder().setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES).create();
-    private final Authentication auth = new MatzipAuthenticationToken(new UserPrincipal(0L, "test"));
 
     @Test
     @DisplayName("내 정보 수정 파라미터 검증")
@@ -78,8 +72,7 @@ class MeControllerTest {
             }
 
             mockMvc.perform(
-                    request.with(csrf()).with(authentication(auth))
-                            .param("profile", (String) combination.first.get(1))
+                    request.param("profile", (String) combination.first.get(1))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second))
             ).andDo(print());
@@ -107,7 +100,6 @@ class MeControllerTest {
                     put("/api/v1/me/username")
                             .contentType(APPLICATION_JSON)
                             .content(gson.toJson(request))
-                            .with(csrf()).with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second))
             ).andDo(print());
@@ -135,7 +127,6 @@ class MeControllerTest {
                     put("/api/v1/me/password")
                             .contentType(APPLICATION_JSON)
                             .content(gson.toJson(request))
-                            .with(csrf()).with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second))
             ).andDo(print());

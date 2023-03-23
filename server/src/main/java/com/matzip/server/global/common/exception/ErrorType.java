@@ -7,6 +7,8 @@ public interface ErrorType {
         BAD_REQUEST_DEFAULT(0),
         INVALID_REQUEST_BODY(1),
         INVALID_PARAMETER(2),
+        FILE_SIZE_LIMIT_EXCEEDED(3),
+        INVALID_JWT_TOKEN(4),
 
         FOLLOW_ME(102),
         HEART_MY_REVIEW(103),
@@ -29,7 +31,7 @@ public interface ErrorType {
 
     enum Unauthorized implements ErrorType {
         UNAUTHORIZED_DEFAULT(1000),
-        LOGIN_FAILED(10001),
+        LOGIN_FAILED(1001),
         ;
 
         private final int errorCode;
@@ -46,7 +48,6 @@ public interface ErrorType {
 
     enum Forbidden implements ErrorType {
         FORBIDDEN_DEFAULT(3000),
-
         REVIEW_ACCESS_DENIED(3200),
         COMMENT_ACCESS_DENIED(3300),
         ;
@@ -69,7 +70,6 @@ public interface ErrorType {
         REVIEW_NOT_FOUND(4200),
         REVIEW_IMAGE_URL_NOT_FOUND(4201),
         COMMENT_NOT_FOUND(4300),
-        SCRAP_NOT_FOUND(4400),
         ;
 
         private final int errorCode;
@@ -88,7 +88,6 @@ public interface ErrorType {
         CONFLICT_DEFAULT(9000),
         USER_CONFLICT(9100),
         DUPLICATE_HEART(9200),
-        DUPLICATE_SCRAP(9400),
         ;
 
         private final int errorCode;

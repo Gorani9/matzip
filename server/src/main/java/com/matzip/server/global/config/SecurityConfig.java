@@ -1,7 +1,9 @@
 package com.matzip.server.global.config;
 
-import com.matzip.server.global.auth.MatzipAccessDeniedHandler;
-import com.matzip.server.global.auth.MatzipAuthenticationEntryPoint;
+import com.matzip.server.global.auth.filter.MatzipAccessDeniedHandler;
+import com.matzip.server.global.auth.filter.MatzipAuthenticationEntryPoint;
+import com.matzip.server.global.auth.filter.MatzipFilter;
+import com.matzip.server.global.auth.service.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,12 +27,18 @@ import java.util.Arrays;
 public class SecurityConfig {
     private final MatzipAuthenticationEntryPoint matzipAuthenticationEntryPoint;
     private final MatzipAccessDeniedHandler matzipAccessDeniedHandler;
+    private final JwtProvider jwtProvider;
 
-    private final String[] GET_WHITELIST = new String[]{"/ping", "/signup/exists",};
+    private final String[] GET_WHITELIST = new String[]{
+            "/api/v1/reviews",
+            "/api/v1/reviews/**",
+            "/api/v1/users",
+            "/api/v1/users/**",
+    };
 
-    private final String[] POST_WHITELIST = new String[]{"/signup", "/login", "/admin/api/v1/login"};
+    private final String[] POST_WHITELIST = new String[]{"/api/v1/auth/signup", "/api/v1/auth/login"};
 
-    private final String[] CORS_WHITELIST = new String[]{"http://localhost:5173"};
+    private final String[] CORS_WHITELIST = new String[]{"http://localhost:5173", "https://matzip.vercel.app"};
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -39,18 +48,18 @@ public class SecurityConfig {
                 .and()
                 .logout().disable()
                 .csrf().disable()
-                .sessionManagement()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(matzipAuthenticationEntryPoint)
                 .accessDeniedHandler(matzipAccessDeniedHandler)
                 .and()
+                .addFilter(new MatzipFilter(noAuthenticationManager(), jwtProvider))
                 .authorizeRequests()
-                .antMatchers(HttpMethod.GET, GET_WHITELIST).permitAll()
-                .antMatchers(HttpMethod.POST, POST_WHITELIST).permitAll()
-                .antMatchers("/admin/api/v1/**").hasAnyAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET, GET_WHITELIST).hasAnyAuthority("USER", "ANONYMOUS")
+                .antMatchers(HttpMethod.POST, POST_WHITELIST).hasAnyAuthority("USER", "ANONYMOUS")
                 .antMatchers("/api/v1/**").hasAnyAuthority("USER")
-                .anyRequest().authenticated();
+                .anyRequest().denyAll();
         return http.build();
     }
 
@@ -66,7 +75,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Arrays.asList(CORS_WHITELIST));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.addExposedHeader("Set-Cookie");
+        config.addExposedHeader("Authorization");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

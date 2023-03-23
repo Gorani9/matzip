@@ -8,9 +8,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
+    @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.review WHERE c.id = :id")
+    Optional<Comment> findById(Long id);
+
     @Modifying
     @Query("DELETE FROM Comment c WHERE c.review.id = :reviewId")
     void deleteAllByReviewId(@Param("reviewId")Long reviewId);

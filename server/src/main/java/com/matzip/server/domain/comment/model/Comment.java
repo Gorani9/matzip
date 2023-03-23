@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name="comment")
@@ -23,7 +22,6 @@ public class Comment extends BaseTimeEntity {
     @JoinColumn
     private Review review;
 
-    @NotBlank
     private String content;
 
     public Comment(User user, Review review, String content) {

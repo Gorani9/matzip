@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import java.time.LocalDateTime;
 
 @Validated
 public class CommentDto {
@@ -30,12 +31,16 @@ public class CommentDto {
     @Getter
     public static class Response {
         private final Long id;
+        private final LocalDateTime createdAt;
+        private final LocalDateTime modifiedAt;
         private final Long reviewId;
         private final UserDto.Response user;
         private final String content;
 
         public Response(Comment comment, User user) {
             this.id = comment.getId();
+            this.createdAt = comment.getCreatedAt();
+            this.modifiedAt = comment.getModifiedAt();
             this.reviewId = comment.getReview().getId();
             this.user = new UserDto.Response(comment.getUser(), user);
             this.content = comment.getContent();

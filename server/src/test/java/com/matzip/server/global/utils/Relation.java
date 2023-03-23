@@ -4,7 +4,7 @@ import com.matzip.server.domain.comment.model.Comment;
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.model.Heart;
 import com.matzip.server.domain.review.model.Review;
-import com.matzip.server.domain.scrap.model.Scrap;
+import com.matzip.server.domain.review.model.Scrap;
 import com.matzip.server.domain.user.model.Follow;
 import com.matzip.server.domain.user.model.User;
 

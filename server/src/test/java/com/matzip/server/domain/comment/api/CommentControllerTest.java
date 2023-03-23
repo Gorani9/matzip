@@ -2,8 +2,6 @@ package com.matzip.server.domain.comment.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.matzip.server.domain.auth.model.MatzipAuthenticationToken;
-import com.matzip.server.domain.auth.model.UserPrincipal;
 import com.matzip.server.domain.comment.service.CommentService;
 import com.matzip.server.global.utils.ControllerParameters.Common;
 import com.matzip.server.global.utils.TestParameterUtils.Pair;
@@ -14,7 +12,6 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,8 +27,6 @@ import static com.matzip.server.global.common.exception.ErrorType.BadRequest.INV
 import static com.matzip.server.global.utils.TestParameterUtils.makeFieldList;
 import static org.hamcrest.core.Is.is;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,7 +42,6 @@ class CommentControllerTest {
     private CommentService commentService;
 
     private final Gson gson = new GsonBuilder().setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES).create();
-    private final Authentication auth = new MatzipAuthenticationToken(new UserPrincipal(0L, "test"));
 
     @Test
     @DisplayName("댓글 생성 파라미터 검증")
@@ -74,7 +68,6 @@ class CommentControllerTest {
                     post("/api/v1/comments")
                             .contentType(APPLICATION_JSON)
                             .content(gson.toJson(request))
-                            .with(csrf()).with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
@@ -105,7 +98,6 @@ class CommentControllerTest {
                     patch("/api/v1/comments/{id}", combination.first.get(0))
                             .contentType(APPLICATION_JSON)
                             .content(gson.toJson(request))
-                            .with(csrf()).with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
@@ -126,7 +118,6 @@ class CommentControllerTest {
 
             mockMvc.perform(
                     delete("/api/v1/comments/{id}", combination.first.get(0))
-                            .with(csrf()).with(authentication(auth))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }
