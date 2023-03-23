@@ -71,6 +71,7 @@
 
 ### 2.2. 인프라 구조
 
+![Infra](https://user-images.githubusercontent.com/41163414/227232489-f7f462a3-0a8c-4545-911c-3e3c2910a727.png)
 
 ## 3. Getting Started
 
