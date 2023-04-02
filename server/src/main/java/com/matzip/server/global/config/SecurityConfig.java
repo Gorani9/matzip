@@ -32,6 +32,7 @@ public class SecurityConfig {
             "/api/v1/reviews/**",
             "/api/v1/users",
             "/api/v1/users/**",
+            "/api/v1/search/**",
     };
 
     private final String[] POST_WHITELIST = new String[]{"/api/v1/auth/signup", "/api/v1/auth/login"};

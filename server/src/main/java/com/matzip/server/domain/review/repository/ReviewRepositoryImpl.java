@@ -50,6 +50,9 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     }
 
     private BooleanExpression reviewContentMatchAgainst(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
         NumberTemplate<Double> score = Expressions.numberTemplate(
                 Double.class, "function('match',{0},{1})", review.content, keyword + "*");
         return score.gt(0);

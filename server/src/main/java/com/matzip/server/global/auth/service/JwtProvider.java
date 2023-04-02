@@ -1,7 +1,6 @@
 package com.matzip.server.global.auth.service;
 
 import com.matzip.server.domain.record.repository.LoginRecordRepository;
-import com.matzip.server.domain.user.model.User;
 import com.matzip.server.global.auth.exception.InvalidJwtException;
 import com.matzip.server.global.auth.model.MatzipAuthenticationToken;
 import com.matzip.server.global.auth.model.UserPrincipal;
@@ -28,7 +27,6 @@ public class JwtProvider {
 
     private final static String PREFIX = "Bearer ";
     private final static Integer EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 2;
-    private final static User anonymousUser = new User("anonymousUser", "");
 
     public String generateToken(String username) {
         Claims claims = Jwts.claims().setSubject(username);
@@ -40,9 +38,7 @@ public class JwtProvider {
     }
 
     public Authentication getAuthentication(String token) {
-        if (token == null || token.isBlank()) {
-            return new MatzipAuthenticationToken(new UserPrincipal(anonymousUser));
-        } else if (!token.startsWith(PREFIX)) {
+        if (token == null || token.isBlank() || !token.startsWith(PREFIX)) {
             throw new InvalidJwtException();
         }
 
