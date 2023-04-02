@@ -23,7 +23,16 @@ public class ReviewRecord {
         this.commentCount = 0;
     }
 
+    public ReviewRecord(String key) {
+        this.key = key;
+        this.lastViewedAt = LocalDateTime.now();
+        this.commentCount = 0;
+    }
+
     public static String buildKey(Long userId, Long reviewId) {
         return userId + ":" + reviewId;
+    }
+    public static String buildKey(String userIp, Long reviewId) {
+        return userIp + ":" + reviewId;
     }
 }

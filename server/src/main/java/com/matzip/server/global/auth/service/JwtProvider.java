@@ -23,7 +23,7 @@ public class JwtProvider {
     private final UserPrincipalDetailsService userPrincipalDetailsService;
     private final LoginRecordRepository loginRecordRepository;
 
-    @Value("${matzip.jwt.secret}")
+    @Value("${jwt.secret}")
     private String SECRET;
 
     private final static String PREFIX = "Bearer ";
@@ -59,7 +59,7 @@ public class JwtProvider {
         loginRecordRepository.findById(userDetails.getUserId()).ifPresentOrElse( loginRecord -> {
             if (!loginRecord.getToken().equals(token)) throw new InvalidJwtException();
         }, () -> {
-            log.error("LoginRecord not found");
+            log.error("LoginRecord not found for user: " + userDetails.getUsername());
             throw new InvalidJwtException();
         });
 

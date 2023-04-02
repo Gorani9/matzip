@@ -1,13 +1,10 @@
 package com.matzip.server.domain.review.repository;
 
-import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.model.ReviewProperty;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberPath;
+import com.matzip.server.domain.search.dto.SearchDto.ReviewSearch;
+import com.querydsl.core.types.*;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +24,7 @@ import static com.matzip.server.domain.review.model.QScrap.scrap;
 import static com.matzip.server.domain.review.model.ReviewProperty.*;
 import static com.matzip.server.domain.user.model.QFollow.follow;
 import static com.matzip.server.domain.user.model.QUser.user;
+import static com.querydsl.core.types.dsl.Expressions.numberPath;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,7 +32,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Slice<Review> searchReviewsByKeyword(ReviewDto.SearchRequest searchRequest) {
+    public Slice<Review> searchReviewsByKeyword(ReviewSearch searchRequest) {
         return searchWithConditions(
                 searchRequest.asc() ? Order.ASC : Order.DESC,
                 searchRequest.sort(),
@@ -43,12 +41,18 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     }
 
     @Override
-    public List<Review> fetchHotReviews() {
+    public Slice<Review> searchReviewsByKeywordUsingFullText(ReviewSearch searchRequest) {
         return searchWithConditions(
-                Order.DESC,
-                NUMBER_OF_HEARTS,
-                PageRequest.of(0, 10),
-                review.createdAt.after(LocalDateTime.now().minusWeeks(1))).getContent();
+                searchRequest.asc() ? Order.ASC : Order.DESC,
+                searchRequest.sort(),
+                PageRequest.of(searchRequest.page(), searchRequest.size()),
+                reviewContentMatchAgainst(searchRequest.keyword()));
+    }
+
+    private BooleanExpression reviewContentMatchAgainst(String keyword) {
+        NumberTemplate<Double> score = Expressions.numberTemplate(
+                Double.class, "function('match',{0},{1})", review.content, keyword + "*");
+        return score.gt(0);
     }
 
     private BooleanExpression reviewContentContaining(String keyword) {
@@ -79,7 +83,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .limit(pageable.getPageSize() + 1)
                     .fetch();
         } else if (reviewProperty == ReviewProperty.REVIEWER_NUMBER_OF_FOLLOWERS) {
-            NumberPath<Long> followers = Expressions.numberPath(Long.class, "followers");
+            NumberPath<Long> followers = numberPath(Long.class, "followers");
 
             reviews = jpaQueryFactory
                     .select(review, follow.count().as(followers))
@@ -94,7 +98,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(review)).collect(Collectors.toList());
         } else if (reviewProperty == NUMBER_OF_HEARTS) {
-            NumberPath<Long> hearts = Expressions.numberPath(Long.class, "hearts");
+            NumberPath<Long> hearts = numberPath(Long.class, "hearts");
 
             reviews = jpaQueryFactory
                     .select(review, heart.count().as(hearts))
@@ -108,7 +112,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(review)).collect(Collectors.toList());
         } else if (reviewProperty == NUMBER_OF_SCRAPS) {
-            NumberPath<Long> scraps = Expressions.numberPath(Long.class, "scraps");
+            NumberPath<Long> scraps = numberPath(Long.class, "scraps");
 
             reviews = jpaQueryFactory
                     .select(review, scrap.count().as(scraps))
@@ -122,7 +126,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                     .fetch()
                     .stream().map(t -> t.get(review)).collect(Collectors.toList());
         } else if (reviewProperty == NUMBER_OF_COMMENTS) {
-            NumberPath<Long> comments = Expressions.numberPath(Long.class, "comments");
+            NumberPath<Long> comments = numberPath(Long.class, "comments");
 
             reviews = jpaQueryFactory
                     .select(review, comment.count().as(comments))

@@ -49,47 +49,6 @@ class ReviewControllerTest {
     private final Gson gson = new GsonBuilder().setFieldNamingPolicy(LOWER_CASE_WITH_UNDERSCORES).create();
 
     @Test
-    @DisplayName("리뷰 검색 파라미터 검증")
-    void searchReviewsValidation() throws Exception {
-        List<Pair<Object, Integer>> keywords = Stream.of(
-                Stream.of(Common.validNullableNotBlankMax30).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidNullableNotBlankMax30).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> pages = Stream.of(
-                Stream.of(Common.validPages).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidPages).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> sizes = Stream.of(
-                Stream.of(Common.validSizes).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidSizes).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> sorts = Stream.of(
-                Stream.of(Common.validReviewProperties).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidReviewProperties).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> asc = Stream.of(
-                Stream.of(Common.validAsc).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidAsc).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-
-        List<Pair<List<Object>, Pair<Integer, Integer>>> combinations = makeFieldList(keywords, pages, sizes, sorts, asc);
-
-        for (Pair<List<Object>, Pair<Integer, Integer>> combination : combinations) {
-            Pair<Integer, Integer> result = combination.second;
-
-            mockMvc.perform(
-                    get("/api/v1/reviews")
-                            .queryParam("keyword", (String) combination.first.get(0))
-                            .queryParam("page", (String) combination.first.get(1))
-                            .queryParam("size", (String) combination.first.get(2))
-                            .queryParam("sort", (String) combination.first.get(3))
-                            .queryParam("asc", (String) combination.first.get(4))
-            ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
-            ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
-        }
-    }
-
-    @Test
     @DisplayName("리뷰 생성 파라미터 검증")
     void postReviewValidation() throws Exception {
         List<Pair<Object, Integer>> images = Stream.of(

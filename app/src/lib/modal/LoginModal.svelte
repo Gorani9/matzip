@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-    import { API } from '$lib/api';
-    import { dialogs, getClose } from "svelte-dialogs";
+    import {goto} from '$app/navigation';
+    import {API} from '$lib/api';
+    import {dialogs, getClose} from "svelte-dialogs";
     import SignUpModal from "$lib/modal/SignUpModal.svelte";
     import {onMount} from "svelte";
     import {ME, TOKEN, User} from "../dto/User";

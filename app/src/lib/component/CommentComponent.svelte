@@ -54,7 +54,8 @@
         {/if}
     </div>
     {#if editing}
-        <CommentEditComponent review={review} comment={comment} isEdit={true} bind:editing={editing} on:cancel={toggleEdit} />
+        <CommentEditComponent bind:review={review} bind:comment={comment} isEdit={true} bind:editing={editing}
+                              on:cancel={toggleEdit} />
     {:else}
         <div class="comment-content">{comment.content}</div>
     {/if}

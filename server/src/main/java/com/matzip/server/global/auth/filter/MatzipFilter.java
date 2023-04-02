@@ -1,6 +1,7 @@
 package com.matzip.server.global.auth.filter;
 
 import com.matzip.server.global.auth.exception.InvalidJwtException;
+import com.matzip.server.global.auth.model.UserPrincipal;
 import com.matzip.server.global.auth.service.JwtProvider;
 import com.matzip.server.global.common.dto.ErrorResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,13 +28,21 @@ public class MatzipFilter extends BasicAuthenticationFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain chain) throws IOException, ServletException {
+
+        String clientIP = request.getHeader("X-Forwarded-For");
+        if (clientIP == null) {
+            clientIP = request.getRemoteAddr();
+        }
+
         try {
             Authentication authentication = jwtProvider.getAuthentication(request.getHeader("Authorization"));
+            ((UserPrincipal) authentication.getPrincipal()).setUserIp(clientIP);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (InvalidJwtException e) {
             request.setAttribute("error-response", new ErrorResponse(e));
+        } catch (Exception ignored) {
         }
 
         chain.doFilter(request, response);

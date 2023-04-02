@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import { API } from '$lib/api';
+    import {onMount} from 'svelte';
+    import {goto} from '$app/navigation';
+    import {API} from '$lib/api';
     import {dialogs, getClose} from "svelte-dialogs";
     import {ME, TOKEN, User} from "../dto/User";
     import LoadingComponent from "$lib/component/LoadingComponent.svelte";
@@ -25,10 +25,8 @@
 
     const handleUsernameChange = async ()  => {
         const invalidUsername = !/^(?!.*\.{2})(?!.*\.$)[\w.]{1,30}$/.test(username);
-        const json = (await API.checkUsername(username)).json();
-        const usernameExists = json.exists;
-
-        console.log("usernameExists", usernameExists);
+        const json = await (await API.checkUsername(username)).json();
+        const usernameExists = json.result;
 
         isValidUsername = !!username && !invalidUsername && !usernameExists;
     };

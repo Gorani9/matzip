@@ -1,6 +1,6 @@
 package com.matzip.server.domain.user.repository;
 
-import com.matzip.server.domain.user.dto.UserDto;
+import com.matzip.server.domain.search.dto.SearchDto.UserSearch;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.model.UserProperty;
 import com.querydsl.core.types.Order;
@@ -41,7 +41,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
     }
 
     @Override
-    public Slice<User> searchUsersByUsername(UserDto.SearchRequest searchRequest) {
+    public Slice<User> searchUsersByUsername(UserSearch searchRequest) {
         return searchWithConditions(
                 searchRequest.asc() ? Order.ASC : Order.DESC,
                 searchRequest.sort(),

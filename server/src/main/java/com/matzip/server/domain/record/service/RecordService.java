@@ -6,7 +6,9 @@ import com.matzip.server.domain.record.repository.LoginRecordRepository;
 import com.matzip.server.domain.record.repository.ReviewRecordRepository;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.user.model.User;
+import com.matzip.server.global.auth.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,17 +87,33 @@ public class RecordService {
         loginRecordRepository.save(loginRecord);
     }
 
+    public void changeUsername(User user, String token) {
+        loginRecordRepository.findById(user.getId()).ifPresent(loginRecord -> {
+            loginRecord.setToken(token);
+            loginRecordRepository.save(loginRecord);
+        });
+    }
+
     public void logout(Long userId) {
         loginRecordRepository.findById(userId).ifPresent(loginRecord -> loginRecord.setToken(null));
     }
 
     public void view(Review review, User user) {
-        Optional<ReviewRecord> reviewRecordOptional = reviewRecordRepository
-                .findById(ReviewRecord.buildKey(user.getId(), review.getId()));
+        String key;
+        if (user.getId() == null) {
+            String userIp = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUserIp();
+            key = ReviewRecord.buildKey(userIp, review.getId());
+        } else {
+            key = ReviewRecord.buildKey(user.getId(), review.getId());
+        }
+
+        Optional<ReviewRecord> reviewRecordOptional = reviewRecordRepository.findById(key);
 
         ReviewRecord reviewRecord;
         if (reviewRecordOptional.isEmpty()) {
-            reviewRecord = new ReviewRecord(user.getId(), review.getId());
+            reviewRecord = new ReviewRecord(key);
+            givePoints(review.getUser(), POINTS_PER_REVIEW);
+            review.setViews(review.getViews() + 1);
         } else {
             reviewRecord = reviewRecordOptional.get();
             if (reviewRecord.getLastViewedAt().isBefore(LocalDateTime.now().minusDays(1))) {
@@ -128,7 +146,7 @@ public class RecordService {
 
     public void deleteComment(Review review, User user) {
         reviewRecordRepository.findById(ReviewRecord.buildKey(user.getId(), review.getId())).ifPresent(reviewRecord -> {
-            takePoints(review.getUser(), POINTS_PER_ACTION);
+            takePoints(review.getUser(), POINTS_PER_COMMENT);
             takePoints(user, Math.max(0, POINTS_PER_COMMENT - (reviewRecord.getCommentCount() - 1)));
             reviewRecordRepository.save(reviewRecord);
         });

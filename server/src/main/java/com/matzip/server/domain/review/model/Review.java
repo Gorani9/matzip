@@ -28,6 +28,7 @@ public class Review extends BaseTimeEntity {
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn
     private User user;
+    @Column(name = "content", columnDefinition = "VARCHAR(255) NOT NULL, FULLTEXT full_text_idx_content (content)")
     private String content;
     private Integer rating;
     private String restaurant;

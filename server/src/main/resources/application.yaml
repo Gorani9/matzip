@@ -15,21 +15,43 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 500
+        dialect: com.matzip.server.global.config.DialectConfig
     generate-ddl: false
     hibernate:
       ddl-auto: validate
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/matzip_db
+    username: matzip_admin
+    password: MATZIP_admin_01
+
+  redis:
+    host: localhost
+    port: 6379
 
 cloud:
   aws:
     credentials:
       instance-profile: true
     s3:
-      bucket: matzip-bucket
+      bucket: matzip-bucket-dev
     region:
       static: ap-northeast-2
     stack:
       auto: false
 
-matzip:
-  jwt:
-    secret: ~
+jwt:
+  secret: u7x!A%D*G-KaPdSgVkXp2s5v8y/B?E(H
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local
+
+cloud:
+  aws:
+    credentials:
+      instance-profile: false
+      profile-name: my-aws

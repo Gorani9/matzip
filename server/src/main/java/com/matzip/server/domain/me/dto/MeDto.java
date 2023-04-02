@@ -18,6 +18,7 @@ public class MeDto {
     public record PasswordChangeRequest(@Password String password) {}
     public record UsernameChangeRequest(@Username String username) {}
     public record PatchRequest(MultipartFile image, @Length(max=50) String profile) {}
+    public record UsernameResponse(Response response, String token) {}
 
     @Getter
     public static class Response extends UserDto.DetailedResponse {

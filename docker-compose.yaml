@@ -23,12 +23,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/matzip_db
-      SPRING_DATASOURCE_USERNAME: matzip_admin
-      SPRING_DATASOURCE_PASSWORD: MATZIP_admin_01
       SPRING_REDIS_HOST: host.docker.internal
-      SPRING_REDIS_PORT: 6379
 
   rdb:
     container_name: mysql

@@ -3,7 +3,6 @@ package com.matzip.server.domain.review.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.matzip.server.domain.comment.dto.CommentDto;
 import com.matzip.server.domain.review.model.Review;
-import com.matzip.server.domain.review.model.ReviewProperty;
 import com.matzip.server.domain.review.model.Scrap;
 import com.matzip.server.domain.user.dto.UserDto;
 import com.matzip.server.domain.user.model.User;
@@ -25,14 +24,22 @@ import java.util.stream.Collectors;
 
 @Validated
 public class ReviewDto {
-    public record SearchRequest(String keyword, Integer page, Integer size, ReviewProperty sort, Boolean asc) {}
-
     public record PostRequest(
             @NotBlank @Length(max=3000) String content,
             @NotEmpty @Size(min=1, max=10) List<MultipartFile> images,
             @NotNull @Range(min=0, max=5) Integer rating,
             @NotBlank String restaurant
-    ) {}
+    ) {
+        @Override
+        public String toString() {
+            return "PostRequest{" +
+                   "content='" + content + '\'' +
+                   ", #images=" + images.size() +
+                   ", rating=" + rating +
+                   ", restaurant='" + restaurant + '\'' +
+                   '}';
+        }
+    }
 
     public record PatchRequest (
             @NullableNotBlank @Length(max=3000) String content,
@@ -40,7 +47,19 @@ public class ReviewDto {
             @JsonProperty("old_urls")
             @Size(min=1, max=10) List<@NotBlank @URL String> oldUrls,
             @Range(min=0, max=5) Integer rating
-    ) {}
+    ) {
+        @Override
+        public String toString() {
+            return "PatchRequest{" +
+                   "content='" + content + '\'' +
+                   ", #images=" + (images == null ? "null" : images.size()) +
+                   ", oldUrls=" + (oldUrls == null ? "null" : oldUrls.stream()
+                           .map(s -> s.substring(s.lastIndexOf('/') + 1))
+                           .collect(Collectors.joining(", "))) +
+                   ", rating=" + rating +
+                   '}';
+        }
+    }
 
     public record ScrapRequest(@NotBlank @Length(max=100) String description) {}
 

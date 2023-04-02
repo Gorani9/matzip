@@ -5,6 +5,8 @@ import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.me.dto.MeDto.PasswordChangeRequest;
 import com.matzip.server.domain.me.dto.MeDto.PatchRequest;
 import com.matzip.server.domain.me.dto.MeDto.UsernameChangeRequest;
+import com.matzip.server.domain.me.dto.MeDto.UsernameResponse;
+import com.matzip.server.domain.record.service.RecordService;
 import com.matzip.server.domain.review.model.Review;
 import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
@@ -13,12 +15,14 @@ import com.matzip.server.domain.user.dto.UserDto.Response;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.FollowRepository;
 import com.matzip.server.domain.user.repository.UserRepository;
+import com.matzip.server.global.auth.service.JwtProvider;
 import com.matzip.server.global.config.TestQueryDslConfig;
 import com.matzip.server.global.utils.TestDataUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -36,6 +40,7 @@ import static org.mockito.BDDMockito.given;
 
 @DataJpaTest
 @Import(TestQueryDslConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @DisplayName("MeService 테스트")
 class MeServiceTest {
@@ -54,6 +59,10 @@ class MeServiceTest {
     private final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     @MockBean
     private ImageService imageService;
+    @MockBean
+    private RecordService recordService;
+    @MockBean
+    private JwtProvider jwtProvider;
 
     private MeService meService;
     private List<User> users;
@@ -62,7 +71,7 @@ class MeServiceTest {
     void init() {
         users = TestDataUtils.testData();
         meService = new MeService(userRepository, reviewRepository, commentRepository, scrapRepository,
-                                  heartRepository, followRepository, passwordEncoder, imageService);
+                                  heartRepository, followRepository, passwordEncoder, imageService, recordService, jwtProvider);
 
         given(imageService.uploadImage(any(), any())).willReturn("https://" + UUID.randomUUID() + ".url");
         given(imageService.deleteImage(any())).willReturn("https://" + UUID.randomUUID() + ".url");
@@ -100,11 +109,11 @@ class MeServiceTest {
         UsernameChangeRequest request = new UsernameChangeRequest(newUsername);
 
         // when
-        Response response = meService.changeUsername(user.getId(), request);
+        UsernameResponse response = meService.changeUsername(user.getId(), request);
 
         // then
-        assertThat(response.getUsername()).isEqualTo(newUsername);
-        assertThat(response.getUsername()).isNotEqualTo(oldUsername);
+        assertThat(response.response().getUsername()).isEqualTo(newUsername);
+        assertThat(response.response().getUsername()).isNotEqualTo(oldUsername);
     }
 
     @Test
