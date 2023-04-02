@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { API } from '$lib/api';
     import {dialogs, getClose} from "svelte-dialogs";
-    import {ME, User} from "../dto/User";
+    import {ME, TOKEN, User} from "../dto/User";
 
     const close = getClose();
 
@@ -12,9 +12,8 @@
 
     const handleUsernameChange = async ()  => {
         const invalidUsername = !/^(?!.*\.{2})(?!.*\.$)[\w.]{1,30}$/.test(username);
-        const usernameExists = await API.checkUsername(username);
-
-        console.log("usernameExists", usernameExists);
+        const json = await (await API.checkUsername(username)).json();
+        const usernameExists = json.result;
 
         isValidUsername = !!username && !invalidUsername && !usernameExists;
     };
@@ -26,7 +25,8 @@
             close("Success");
 
             const json = await response.json();
-            ME.update(() => User.fromJson(json));
+            ME.update(() => User.fromJson(json.response));
+            TOKEN.update(() => json.token);
 
         } else {
             await dialogs.error("유저네임 변경에 실패했습니다. 다시 시도해주세요.");

@@ -2,10 +2,8 @@ package com.matzip.server.domain.me.service;
 
 import com.matzip.server.domain.comment.repository.CommentRepository;
 import com.matzip.server.domain.image.service.ImageService;
-import com.matzip.server.domain.me.dto.MeDto.PasswordChangeRequest;
-import com.matzip.server.domain.me.dto.MeDto.PatchRequest;
-import com.matzip.server.domain.me.dto.MeDto.Response;
-import com.matzip.server.domain.me.dto.MeDto.UsernameChangeRequest;
+import com.matzip.server.domain.me.dto.MeDto.*;
+import com.matzip.server.domain.record.service.RecordService;
 import com.matzip.server.domain.review.repository.HeartRepository;
 import com.matzip.server.domain.review.repository.ReviewRepository;
 import com.matzip.server.domain.review.repository.ScrapRepository;
@@ -13,6 +11,7 @@ import com.matzip.server.domain.user.exception.UsernameAlreadyExistsException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.FollowRepository;
 import com.matzip.server.domain.user.repository.UserRepository;
+import com.matzip.server.global.auth.service.JwtProvider;
 import com.matzip.server.global.common.model.BaseTimeEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +33,8 @@ public class MeService {
     private final FollowRepository followRepository;
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
+    private final RecordService recordService;
+    private final JwtProvider jwtProvider;
 
     @Transactional
     public void changePassword(Long myId, PasswordChangeRequest passwordChangeRequest) {
@@ -43,13 +44,16 @@ public class MeService {
     }
 
     @Transactional
-    public Response changeUsername(Long myId, UsernameChangeRequest usernameChangeRequest) {
+    public UsernameResponse changeUsername(Long myId, UsernameChangeRequest usernameChangeRequest) {
         User me = userRepository.findMeById(myId);
         String username = usernameChangeRequest.username();
         if (userRepository.existsByUsername(username)) throw new UsernameAlreadyExistsException(username);
 
         me.setUsername(username);
-        return new Response(me);
+        String token = jwtProvider.generateToken(username);
+        recordService.changeUsername(me, token);
+
+        return new UsernameResponse(new Response(me), token);
     }
 
     public Response getMe(Long myId) {

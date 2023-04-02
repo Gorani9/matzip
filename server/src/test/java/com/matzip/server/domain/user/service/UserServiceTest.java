@@ -3,7 +3,6 @@ package com.matzip.server.domain.user.service;
 import com.matzip.server.domain.record.service.RecordService;
 import com.matzip.server.domain.user.dto.UserDto.DetailedResponse;
 import com.matzip.server.domain.user.dto.UserDto.Response;
-import com.matzip.server.domain.user.dto.UserDto.SearchRequest;
 import com.matzip.server.domain.user.exception.FollowMeException;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.FollowRepository;
@@ -14,20 +13,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Slice;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.annotation.PostConstruct;
 
-import static com.matzip.server.domain.user.model.UserProperty.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Import(TestQueryDslConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @DisplayName("UserService 테스트")
 class UserServiceTest {
@@ -61,23 +60,6 @@ class UserServiceTest {
 
         // then
         assertThat(response.getUsername()).isEqualTo(username);
-    }
-
-    @Test
-    @DisplayName("회원 검색 테스트")
-    void searchUserTest() {
-        // given
-        User user = userRepository.findByUsername("user-01").orElseThrow();
-        String username = "user";
-        SearchRequest request = new SearchRequest(username, 0, 5, USERNAME, true);
-
-        // when
-        Slice<Response> responses = userService.searchUsers(user.getId(), request);
-
-        // then
-        assertThat(responses.getNumberOfElements()).isEqualTo(5);
-        assertThat(responses.getContent()).extracting("username")
-                .containsExactlyInAnyOrder("user-01", "user-02", "user-03", "user-04", "user-05");
     }
 
     @Test

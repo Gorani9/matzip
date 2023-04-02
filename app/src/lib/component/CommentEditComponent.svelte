@@ -49,6 +49,7 @@
 
         if (response.ok) {
             review = Review.fromJson(json);
+            editing = false;
         } else if (response.status === 403) {
             await dialogs.modal(LoginModal, {redirect: null});
         } else {

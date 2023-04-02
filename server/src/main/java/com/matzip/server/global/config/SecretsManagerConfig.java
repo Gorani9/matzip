@@ -14,7 +14,7 @@ import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueReques
 import java.util.Map;
 
 @Configuration
-@Profile("dev")
+@Profile("prod")
 public class SecretsManagerConfig implements BeanFactoryPostProcessor {
     private final SecretsManagerClient client = SecretsManagerClient.builder().region(Region.AP_NORTHEAST_2).build();
 

@@ -11,6 +11,7 @@ import java.util.List;
 public class UserPrincipal implements UserDetails {
     private final User user;
     private final List<GrantedAuthority> grantedAuthorities;
+    private String userIp;
 
     public UserPrincipal(User user) {
         this.user = user;
@@ -56,5 +57,13 @@ public class UserPrincipal implements UserDetails {
 
     public Long getUserId() {
         return user.getId();
+    }
+
+    public String getUserIp() {
+        return userIp;
+    }
+
+    public void setUserIp(String userIp) {
+        this.userIp = userIp;
     }
 }

@@ -2,15 +2,12 @@ package com.matzip.server.domain.user.dto;
 
 import com.matzip.server.domain.review.dto.ReviewDto;
 import com.matzip.server.domain.user.model.User;
-import com.matzip.server.domain.user.model.UserProperty;
 import com.matzip.server.global.common.dto.ListResponse;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 public class UserDto {
-    public record SearchRequest(String username, Integer page, Integer size, UserProperty sort, Boolean asc) {}
-
     @Getter
     public static class Response {
         protected final String username;

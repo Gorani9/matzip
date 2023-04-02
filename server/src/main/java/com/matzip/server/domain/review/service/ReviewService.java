@@ -3,7 +3,10 @@ package com.matzip.server.domain.review.service;
 import com.matzip.server.domain.comment.repository.CommentRepository;
 import com.matzip.server.domain.image.service.ImageService;
 import com.matzip.server.domain.record.service.RecordService;
-import com.matzip.server.domain.review.dto.ReviewDto.*;
+import com.matzip.server.domain.review.dto.ReviewDto.PatchRequest;
+import com.matzip.server.domain.review.dto.ReviewDto.PostRequest;
+import com.matzip.server.domain.review.dto.ReviewDto.Response;
+import com.matzip.server.domain.review.dto.ReviewDto.ScrapRequest;
 import com.matzip.server.domain.review.exception.*;
 import com.matzip.server.domain.review.model.Heart;
 import com.matzip.server.domain.review.model.Review;
@@ -13,9 +16,7 @@ import com.matzip.server.domain.review.repository.ReviewRepository;
 import com.matzip.server.domain.review.repository.ScrapRepository;
 import com.matzip.server.domain.user.model.User;
 import com.matzip.server.domain.user.repository.UserRepository;
-import com.matzip.server.global.common.dto.ListResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,12 +54,6 @@ public class ReviewService {
         recordService.view(review, me);
 
         return new Response(review, me);
-    }
-
-    public Slice<Response> searchReviews(Long myId, SearchRequest request) {
-        User me = userRepository.findMeById(myId);
-        Slice<Review> reviews = reviewRepository.searchReviewsByKeyword(request);
-        return reviews.map(r -> new Response(r, me));
     }
 
     @Transactional
@@ -107,12 +102,6 @@ public class ReviewService {
         review.delete();
         reviewRepository.delete(review);
         recordService.deleteReview(me);
-    }
-
-    public ListResponse<Response> getHotReviews(Long myId) {
-        User me = userRepository.findMeById(myId);
-
-        return new ListResponse<>(reviewRepository.fetchHotReviews().stream().map(r -> new Response(r, me)));
     }
 
     @Transactional

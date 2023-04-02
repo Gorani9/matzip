@@ -51,7 +51,7 @@ export const API = {
 
     /* Search API */
     "getReviews": async () => {
-        return await fetch(DOMAIN + "/api/v1/reviews?" + new URLSearchParams({
+        return await fetch(DOMAIN + "/api/v1/search/reviews?" + new URLSearchParams({
             "page": "0",
             "size": "100"
         }), {
@@ -66,7 +66,7 @@ export const API = {
         sort: "username" | "level" | "followers",
         asc: boolean
     ) => {
-        return await fetch(DOMAIN + "/api/v1/users?" + new URLSearchParams({
+        return await fetch(DOMAIN + "/api/v1/search/users?" + new URLSearchParams({
             "page": "0",
             "size": "100",
             "username": username,
@@ -84,7 +84,7 @@ export const API = {
         sort: "username" | "level" | "followers" | "hearts" | "scraps" | "comments" | "rating",
         asc: boolean
     ) => {
-        return await fetch(DOMAIN + "/api/v1/reviews?" + new URLSearchParams({
+        return await fetch(DOMAIN + "/api/v1/search/reviews?" + new URLSearchParams({
             "page": "0",
             "size": "100",
             "keyword": keyword,
@@ -204,6 +204,10 @@ export const API = {
     "deleteReview": async (reviewId: number) => {
         return await fetch(DOMAIN + "/api/v1/reviews/" + reviewId, {
             method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': token || ""
+            }
         });
     },
 
@@ -241,7 +245,7 @@ export const API = {
         });
     },
     "deleteScrap": async (reviewId: number) => {
-        return await fetch(DOMAIN + "/api/v1/scraps/" + reviewId + "/scrap", {
+        return await fetch(DOMAIN + "/api/v1/reviews/" + reviewId + "/scrap", {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',

@@ -1,0 +1,28 @@
+{
+  "properties" : {
+    "id" : {
+      "type" : "keyword"
+    },
+    "content" : {
+      "type" : "text",
+      "analyzer" : "korean"
+    },
+    "rating": {
+      "type": "integer"
+    },
+    "restaurant": {
+      "type": "keyword"
+    },
+    "views": {
+      "type": "integer"
+    },
+    "createdAt" : {
+      "type" : "date",
+      "format": "uuuu-MM-dd'T'HH:mm:ss.SSS||epoch_millis"
+    },
+    "modifiedAt" : {
+      "type" : "date",
+      "format": "uuuu-MM-dd'T'HH:mm:ss.SSS||epoch_millis"
+    }
+  }
+}

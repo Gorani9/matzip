@@ -2,8 +2,6 @@ package com.matzip.server.domain.user.api;
 
 import com.matzip.server.domain.user.service.UserService;
 import com.matzip.server.global.utils.ControllerParameters;
-import com.matzip.server.global.utils.ControllerParameters.Common;
-import com.matzip.server.global.utils.ControllerParameters.Login;
 import com.matzip.server.global.utils.ControllerParameters.SearchUser;
 import com.matzip.server.global.utils.TestParameterUtils.Pair;
 import org.junit.jupiter.api.DisplayName;
@@ -55,48 +53,6 @@ class UserControllerTest {
                     get("/api/v1/users/exists")
                             .param("username", (String) combination.first.get(0))
                             .contentType(MediaType.APPLICATION_JSON)
-            ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
-            ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
-        }
-    }
-
-    @Test
-    @DisplayName("회원 검색 파라미터 검증")
-    void searchByUsernameValidation() throws Exception {
-        List<Pair<Object, Integer>> usernames = Stream.of(
-                Stream.of(Login.validUsernames).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Login.invalidUsernames).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> pages = Stream.of(
-                Stream.of(Common.validPages).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidPages).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> sizes = Stream.of(
-                Stream.of(Common.validSizes).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidSizes).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> sorts = Stream.of(
-                Stream.of(Common.validUserProperties).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidUserProperties).map(u -> new Pair<Object, Integer>(u,
-                                                                                         INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-        List<Pair<Object, Integer>> asc = Stream.of(
-                Stream.of(Common.validAsc).map(u -> new Pair<Object, Integer>(u, null)),
-                Stream.of(Common.invalidAsc).map(u -> new Pair<Object, Integer>(u, INVALID_PARAMETER.getCode()))
-        ).flatMap(o -> o).collect(Collectors.toList());
-
-        List<Pair<List<Object>, Pair<Integer, Integer>>> combinations = makeFieldList(usernames, pages, sizes, sorts, asc);
-
-        for (Pair<List<Object>, Pair<Integer, Integer>> combination : combinations) {
-            Pair<Integer, Integer> result = combination.second;
-
-            mockMvc.perform(
-                    get("/api/v1/users")
-                            .queryParam("username", (String) combination.first.get(0))
-                            .queryParam("page", (String) combination.first.get(1))
-                            .queryParam("size", (String) combination.first.get(2))
-                            .queryParam("sort", (String) combination.first.get(3))
-                            .queryParam("asc", (String) combination.first.get(4))
             ).andExpect(result.first == -1 ? status().isOk() : status().isBadRequest()
             ).andExpect(result.first == -1 ? status().isOk() : jsonPath("$.error_code", is(result.second)));
         }

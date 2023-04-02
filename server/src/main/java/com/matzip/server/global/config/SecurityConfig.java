@@ -1,7 +1,6 @@
 package com.matzip.server.global.config;
 
-import com.matzip.server.global.auth.filter.MatzipAccessDeniedHandler;
-import com.matzip.server.global.auth.filter.MatzipAuthenticationEntryPoint;
+import com.matzip.server.global.auth.filter.MatzipExceptionHandler;
 import com.matzip.server.global.auth.filter.MatzipFilter;
 import com.matzip.server.global.auth.service.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +24,7 @@ import java.util.Arrays;
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final MatzipAuthenticationEntryPoint matzipAuthenticationEntryPoint;
-    private final MatzipAccessDeniedHandler matzipAccessDeniedHandler;
+    private final MatzipExceptionHandler matzipExceptionHandler;
     private final JwtProvider jwtProvider;
 
     private final String[] GET_WHITELIST = new String[]{
@@ -51,8 +49,8 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .exceptionHandling()
-                .authenticationEntryPoint(matzipAuthenticationEntryPoint)
-                .accessDeniedHandler(matzipAccessDeniedHandler)
+                .authenticationEntryPoint(matzipExceptionHandler)
+                .accessDeniedHandler(matzipExceptionHandler)
                 .and()
                 .addFilter(new MatzipFilter(noAuthenticationManager(), jwtProvider))
                 .authorizeRequests()
